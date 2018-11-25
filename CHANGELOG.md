@@ -1,5 +1,12 @@
 # Change Log
 
+## [v0.1.1](https://github.com/moorara/cherry/tree/v0.1.1) (2018-11-25)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.1.0...v0.1.1)
+
+**Merged pull requests:**
+
+- Fix release script [\#2](https://github.com/moorara/cherry/pull/2) ([moorara](https://github.com/moorara))
+
 ## [v0.1.0](https://github.com/moorara/cherry/tree/v0.1.0) (2018-11-25)
 **Merged pull requests:**
 
