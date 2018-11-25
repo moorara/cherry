@@ -8,18 +8,13 @@ import (
 )
 
 type mockLogger struct {
-	LogPassedKV []interface{}
-	LogError    error
+	LogInKV     []interface{}
+	LogOutError error
 }
 
 func (m *mockLogger) Log(kv ...interface{}) error {
-	m.LogPassedKV = kv
-	return m.LogError
-}
-
-func TestNewNopLogger(t *testing.T) {
-	logger := NewNopLogger()
-	assert.NotNil(t, logger)
+	m.LogInKV = kv
+	return m.LogOutError
 }
 
 func TestNewLogger(t *testing.T) {
@@ -32,11 +27,102 @@ func TestNewLogger(t *testing.T) {
 		{"LevelInfo", "app", "info"},
 		{"LevelWarn", "app", "warn"},
 		{"LevelError", "app", "error"},
+		{"LevelNone", "app", "none"},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := NewLogger(tc.loggerName, tc.logLevel)
+			l := new(mockLogger)
+			logger := NewLogger(l, tc.loggerName, tc.logLevel)
+			assert.NotNil(t, logger)
+		})
+	}
+}
+
+func TestNewNopLogger(t *testing.T) {
+	logger := NewNopLogger()
+	assert.NotNil(t, logger)
+}
+
+func TestNewJSONLogger(t *testing.T) {
+	tests := []struct {
+		name       string
+		loggerName string
+		logLevel   string
+	}{
+		{"LevelDebug", "app", "debug"},
+		{"LevelInfo", "app", "info"},
+		{"LevelWarn", "app", "warn"},
+		{"LevelError", "app", "error"},
+		{"LevelNone", "app", "none"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			logger := NewJSONLogger(tc.loggerName, tc.logLevel)
+			assert.NotNil(t, logger)
+		})
+	}
+}
+
+func TestNewFmtLogger(t *testing.T) {
+	tests := []struct {
+		name       string
+		loggerName string
+		logLevel   string
+	}{
+		{"LevelDebug", "app", "debug"},
+		{"LevelInfo", "app", "info"},
+		{"LevelWarn", "app", "warn"},
+		{"LevelError", "app", "error"},
+		{"LevelNone", "app", "none"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			logger := NewFmtLogger(tc.loggerName, tc.logLevel)
+			assert.NotNil(t, logger)
+		})
+	}
+}
+
+func TestWith(t *testing.T) {
+	tests := []struct {
+		name       string
+		mockLogger mockLogger
+		kv         []interface{}
+	}{
+		{
+			"Success",
+			mockLogger{},
+			[]interface{}{"version", "0.1.0", "revision", "1234567", "context", "test"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			logger := &Logger{Logger: &tc.mockLogger}
+			logger = logger.With(tc.kv...)
+			assert.NotNil(t, logger)
+		})
+	}
+}
+
+func TestSyncLogger(t *testing.T) {
+	tests := []struct {
+		name       string
+		mockLogger mockLogger
+	}{
+		{
+			"Success",
+			mockLogger{},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			logger := &Logger{Logger: &tc.mockLogger}
+			logger = logger.SyncLogger()
 			assert.NotNil(t, logger)
 		})
 	}
@@ -44,24 +130,27 @@ func TestNewLogger(t *testing.T) {
 
 func TestLogger(t *testing.T) {
 	tests := []struct {
-		name       string
-		mockLogger mockLogger
-		kv         []interface{}
-		expectedKV []interface{}
+		name          string
+		mockLogger    mockLogger
+		kv            []interface{}
+		expectedError error
+		expectedKV    []interface{}
 	}{
-		{
-			"OK",
-			mockLogger{},
-			[]interface{}{"key", "value", "message", "content"},
-			[]interface{}{"key", "value", "message", "content"},
-		},
 		{
 			"Error",
 			mockLogger{
-				LogError: errors.New("error"),
+				LogOutError: errors.New("log error"),
 			},
-			[]interface{}{"key", "value", "message", "content"},
-			[]interface{}{"key", "value", "message", "content"},
+			[]interface{}{"message", "operation failed", "reason", "no capacity"},
+			errors.New("log error"),
+			[]interface{}{"message", "operation failed", "reason", "no capacity"},
+		},
+		{
+			"Success",
+			mockLogger{},
+			[]interface{}{"message", "operation succeeded", "region", "home"},
+			nil,
+			[]interface{}{"message", "operation succeeded", "region", "home"},
 		},
 	}
 
@@ -69,30 +158,38 @@ func TestLogger(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Run("DebugLevel", func(t *testing.T) {
 				logger := &Logger{Logger: &tc.mockLogger}
-				err := logger.Debug(tc.kv)
-				assert.Equal(t, tc.mockLogger.LogError, err)
-				assert.Equal(t, tc.expectedKV, tc.mockLogger.LogPassedKV[2])
+				err := logger.Debug(tc.kv...)
+				assert.Equal(t, tc.expectedError, err)
+				for _, val := range tc.expectedKV {
+					assert.Contains(t, tc.mockLogger.LogInKV, val)
+				}
 			})
 
 			t.Run("InfoLevel", func(t *testing.T) {
 				logger := &Logger{Logger: &tc.mockLogger}
-				err := logger.Info(tc.kv)
-				assert.Equal(t, tc.mockLogger.LogError, err)
-				assert.Equal(t, tc.expectedKV, tc.mockLogger.LogPassedKV[2])
+				err := logger.Info(tc.kv...)
+				assert.Equal(t, tc.expectedError, err)
+				for _, val := range tc.expectedKV {
+					assert.Contains(t, tc.mockLogger.LogInKV, val)
+				}
 			})
 
 			t.Run("WarnLevel", func(t *testing.T) {
 				logger := &Logger{Logger: &tc.mockLogger}
-				err := logger.Warn(tc.kv)
-				assert.Equal(t, tc.mockLogger.LogError, err)
-				assert.Equal(t, tc.expectedKV, tc.mockLogger.LogPassedKV[2])
+				err := logger.Warn(tc.kv...)
+				assert.Equal(t, tc.expectedError, err)
+				for _, val := range tc.expectedKV {
+					assert.Contains(t, tc.mockLogger.LogInKV, val)
+				}
 			})
 
 			t.Run("ErrorLevel", func(t *testing.T) {
 				logger := &Logger{Logger: &tc.mockLogger}
-				err := logger.Error(tc.kv)
-				assert.Equal(t, tc.mockLogger.LogError, err)
-				assert.Equal(t, tc.expectedKV, tc.mockLogger.LogPassedKV[2])
+				err := logger.Error(tc.kv...)
+				assert.Equal(t, tc.expectedError, err)
+				for _, val := range tc.expectedKV {
+					assert.Contains(t, tc.mockLogger.LogInKV, val)
+				}
 			})
 		})
 	}

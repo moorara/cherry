@@ -14,16 +14,16 @@ version=$(cat VERSION)
 revision=$(git rev-parse --short HEAD)
 branch=$(git rev-parse --abbrev-ref HEAD)
 goversion=$(go version | cut -d' ' -f3)
-buildtime=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 buildtool='script'
+buildtime=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 version_flag="-X $(go list ./cmd/version).Version=$version"
 revision_flag="-X $(go list ./cmd/version).Revision=$revision"
 branch_flag="-X $(go list ./cmd/version).Branch=$branch"
 goversion_flag="-X $(go list ./cmd/version).GoVersion=$goversion"
-buildtime_flag="-X $(go list ./cmd/version).BuildTime=$buildtime"
 buildtool_flag="-X $(go list ./cmd/version).BuildTool=$buildtool"
-ldflags="$version_flag $revision_flag $branch_flag $goversion_flag $buildtime_flag $buildtool_flag"
+buildtime_flag="-X $(go list ./cmd/version).BuildTime=$buildtime"
+ldflags="$version_flag $revision_flag $branch_flag $goversion_flag $buildtool_flag $buildtime_flag"
 
 platforms="linux-386 linux-amd64 darwin-386 darwin-amd64 windows-386 windows-amd64"
 
