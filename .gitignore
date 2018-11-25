@@ -1,0 +1,13 @@
+# Compiled files
+main
+cherry
+cherry-*
+
+# Test files
+*.log
+*.out
+*.test
+coverage/
+
+# Exceptions
+!Dockerfile.test
