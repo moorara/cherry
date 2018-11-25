@@ -23,7 +23,7 @@ blue='\033[1;36m'
 nocolor='\033[0m'
 
 version_file="VERSION"
-binary_prefix="./build/flax"
+binary_prefix="./build/cherry"
 
 
 function whitelist_variable {
