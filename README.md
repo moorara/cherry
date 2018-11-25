@@ -3,7 +3,7 @@
 
 # Cherry
 
-This is a **work-in-progress** opinionated tool for buidling, releasing, and deploying Go applications.
+This is a **work-in-progress** opinionated tool for buidling, releasing, and deploying applications.
 
 ## Commands
 
