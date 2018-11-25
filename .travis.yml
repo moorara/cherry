@@ -1,0 +1,25 @@
+dist: xenial
+
+services:
+  - docker
+
+jobs:
+  include:
+
+    - stage: "Tests"
+      name: "Unit Tests"
+      language: go
+      go: 1.11
+      env:
+        - GO111MODULE=on
+      script:
+        - make test
+
+    - stage: "Build"
+      name: "Docker Images"
+      language: go
+      go: 1.11
+      env:
+        - GO111MODULE=on
+      script:
+        - make docker
