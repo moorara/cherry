@@ -11,8 +11,9 @@ const (
 
 // Config defines the configuration values
 var Config = struct {
-	Name     string
-	LogLevel string
+	Name              string
+	LogLevel          string
+	CherryGithubToken string
 }{
 	Name:     defaultName,
 	LogLevel: defaultLogLevel,

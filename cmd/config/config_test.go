@@ -8,14 +8,16 @@ import (
 
 func TestConfig(t *testing.T) {
 	tests := []struct {
-		name             string
-		expectedName     string
-		expectedLogLevel string
+		name                      string
+		expectedName              string
+		expectedLogLevel          string
+		expectedCherryGithubToken string
 	}{
 		{
-			name:             "Defauts",
-			expectedName:     defaultName,
-			expectedLogLevel: defaultLogLevel,
+			name:                      "Defauts",
+			expectedName:              defaultName,
+			expectedLogLevel:          defaultLogLevel,
+			expectedCherryGithubToken: "",
 		},
 	}
 
@@ -23,6 +25,7 @@ func TestConfig(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedName, Config.Name)
 			assert.Equal(t, tc.expectedLogLevel, Config.LogLevel)
+			assert.Equal(t, tc.expectedCherryGithubToken, Config.CherryGithubToken)
 		})
 	}
 }
