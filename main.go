@@ -12,9 +12,8 @@ import (
 
 func main() {
 	logger := log.NewJSONLogger(config.Config.Name, config.Config.LogLevel)
-	// logger = logger.SyncLogger()
 	logger = logger.With(
-		"cherry", map[string]string{
+		config.Config.Name, map[string]string{
 			"version":   version.Version,
 			"revision":  version.Revision,
 			"branch":    version.Branch,
@@ -23,6 +22,9 @@ func main() {
 			"buildTime": version.BuildTime,
 		},
 	)
+
+	// Uncomment this for the logger to be used safely by multiple goroutines
+	// logger = logger.SyncLogger()
 
 	ui := command.NewLoggerUI(logger)
 
