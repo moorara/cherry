@@ -1,4 +1,4 @@
-package util
+package git
 
 import (
 	"errors"
@@ -7,9 +7,30 @@ import (
 	"strings"
 )
 
+type (
+	// Git is the interface for a git client
+	Git interface {
+		IsRepoClean() (bool, error)
+		GetRepoName() (string, error)
+	}
+
+	git struct {
+		workDir string
+	}
+)
+
+// New creates a new git client
+func New(workDir string) Git {
+	return &git{
+		workDir: workDir,
+	}
+}
+
 // IsRepoClean determines if the Git repo has any uncommitted changes
-func IsRepoClean() (bool, error) {
+func (g *git) IsRepoClean() (bool, error) {
 	cmd := exec.Command("git", "status", "--porcelain")
+	cmd.Dir = g.workDir
+
 	out, err := cmd.Output()
 	if err != nil {
 		return false, err
@@ -19,8 +40,10 @@ func IsRepoClean() (bool, error) {
 }
 
 // GetRepoName returns the name of Git repo
-func GetRepoName() (string, error) {
+func (g *git) GetRepoName() (string, error) {
 	cmd := exec.Command("git", "remote", "-v")
+	cmd.Dir = g.workDir
+
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
