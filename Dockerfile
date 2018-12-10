@@ -11,4 +11,4 @@ RUN apk add --no-cache ca-certificates git
 COPY --from=builder /workspace/cherry /usr/local/bin/
 RUN chown -R nobody:nogroup /usr/local/bin/cherry
 USER nobody
-CMD cherry
+ENTRYPOINT [ "cherry" ]

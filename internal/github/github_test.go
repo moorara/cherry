@@ -6,9 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/moorara/cherry/pkg/log"
 	"github.com/moorara/cherry/pkg/metrics"
 	"github.com/stretchr/testify/assert"
@@ -51,31 +53,84 @@ func TestMakeRequest(t *testing.T) {
 		method             string
 		endpoint           string
 		contentType        string
-		body               io.Reader
+		body               string
 		expectedError      string
 		expectedStatusCode int
 		expectedBody       string
 	}{
 		{
+			name:               "InvalidRequest",
+			mockStatusCode:     0,
+			mockBody:           "",
+			token:              "github-token",
+			repo:               "username/repo",
+			ctx:                context.Background(),
+			method:             "GET",
+			endpoint:           " ",
+			contentType:        "",
+			body:               "",
+			expectedError:      `invalid character " " in host name`,
+			expectedStatusCode: 0,
+			expectedBody:       "",
+		},
+		{
+			name:               "DoError",
+			mockStatusCode:     0,
+			mockBody:           "",
+			token:              "github-token",
+			repo:               "username/repo",
+			ctx:                context.Background(),
+			method:             "GET",
+			endpoint:           "no_slash",
+			contentType:        "",
+			body:               "",
+			expectedError:      "invalid URL port",
+			expectedStatusCode: 0,
+			expectedBody:       "",
+		},
+		{
 			name:               "Success200",
 			mockStatusCode:     200,
-			mockBody:           `{}`,
+			mockBody:           `{ "login": "moorara" }`,
 			token:              "github-token",
 			repo:               "username/repo",
 			ctx:                context.Background(),
 			method:             "GET",
 			endpoint:           "/users/moorara",
-			contentType:        "application/json",
-			body:               nil,
+			contentType:        "",
+			body:               "",
 			expectedError:      "",
 			expectedStatusCode: 200,
-			expectedBody:       `{}`,
+			expectedBody:       `{ "login": "moorara" }`,
+		},
+		{
+			name:               "Success201",
+			mockStatusCode:     201,
+			mockBody:           `{ "id": 1, "name": "1.0.0", "tag_name": "v1.0.0" }`,
+			token:              "github-token",
+			repo:               "username/repo",
+			ctx:                context.Background(),
+			method:             "POST",
+			endpoint:           "/repos/moorara/cherry/releases",
+			contentType:        "application/json",
+			body:               `{ "name": "1.0.0", "tag_name": "v1.0.0" }`,
+			expectedError:      "",
+			expectedStatusCode: 201,
+			expectedBody:       `{ "id": 1, "name": "1.0.0", "tag_name": "v1.0.0" }`,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "token "+tc.token, r.Header.Get("Authorization"))
+				assert.Equal(t, "moorara/cherry", r.Header.Get("User-Agent"))
+				assert.Equal(t, "application/vnd.github.v3+json", r.Header.Get("Accept"))
+				assert.Equal(t, "deflate, gzip;q=1.0, *;q=0.5", r.Header.Get("Accept-Encoding"))
+				if tc.contentType != "" && tc.body != "" {
+					assert.Equal(t, tc.contentType, r.Header.Get("Content-Type"))
+				}
+
 				w.WriteHeader(tc.mockStatusCode)
 				w.Write([]byte(tc.mockBody))
 			}))
@@ -92,11 +147,16 @@ func TestMakeRequest(t *testing.T) {
 				repo:    tc.repo,
 			}
 
+			var body io.Reader
+			if tc.body != "" {
+				body = strings.NewReader(tc.body)
+			}
+
 			url := ts.URL + tc.endpoint
-			res, err := gh.makeRequest(tc.ctx, tc.method, url, tc.contentType, tc.body)
+			res, err := gh.makeRequest(tc.ctx, tc.method, url, tc.contentType, body)
 
 			if tc.expectedError != "" {
-				assert.Equal(t, tc.expectedError, err.Error())
+				assert.Contains(t, err.Error(), tc.expectedError)
 				assert.Nil(t, res)
 			} else {
 				assert.NoError(t, err)
@@ -125,6 +185,28 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 		enabled        bool
 		expectedError  string
 	}{
+		{
+			name:           "RequestError",
+			mockStatusCode: 0,
+			mockBody:       "",
+			token:          "github-token",
+			repo:           "username/repo",
+			ctx:            context.Background(),
+			branch:         "master",
+			enabled:        true,
+			expectedError:  "EOF",
+		},
+		{
+			name:           "BadStatusCode",
+			mockStatusCode: 400,
+			mockBody:       `{ "enabled": true }`,
+			token:          "github-token",
+			repo:           "username/repo",
+			ctx:            context.Background(),
+			branch:         "master",
+			enabled:        true,
+			expectedError:  "unexpected status code 400",
+		},
 		{
 			name:           "Enable",
 			mockStatusCode: 200,
@@ -172,10 +254,10 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 
 			err := gh.BranchProtectionForAdmin(tc.ctx, tc.branch, tc.enabled)
 
-			if tc.expectedError == "" {
-				assert.NoError(t, err)
+			if tc.expectedError != "" {
+				assert.Contains(t, err.Error(), tc.expectedError)
 			} else {
-				assert.Equal(t, tc.expectedError, err.Error())
+				assert.NoError(t, err)
 			}
 		})
 	}
@@ -198,20 +280,65 @@ func TestCreateRelease(t *testing.T) {
 		expectedRelease *Release
 	}{
 		{
-			name:           "",
+			name:            "RequestError",
+			mockStatusCode:  0,
+			mockBody:        "",
+			token:           "github-token",
+			repo:            "username/repo",
+			ctx:             context.Background(),
+			branch:          "master",
+			version:         "0.1.0",
+			changelog:       "change log description",
+			draf:            false,
+			prerelease:      false,
+			expectedError:   "EOF",
+			expectedRelease: nil,
+		},
+		{
+			name:            "BadStatusCode",
+			mockStatusCode:  400,
+			mockBody:        "",
+			token:           "github-token",
+			repo:            "username/repo",
+			ctx:             context.Background(),
+			branch:          "master",
+			version:         "0.1.0",
+			changelog:       "change log description",
+			draf:            false,
+			prerelease:      false,
+			expectedError:   "unexpected status code 400",
+			expectedRelease: nil,
+		},
+		{
+			name:            "InvalidResponse",
+			mockStatusCode:  201,
+			mockBody:        `{ invalid }`,
+			token:           "github-token",
+			repo:            "username/repo",
+			ctx:             context.Background(),
+			branch:          "master",
+			version:         "0.1.0",
+			changelog:       "change log description",
+			draf:            false,
+			prerelease:      false,
+			expectedError:   "invalid character 'i' looking for beginning of object key string",
+			expectedRelease: nil,
+		},
+		{
+			name:           "Success",
 			mockStatusCode: 201,
-			mockBody:       `{ "id": "aaaa", "name": "0.1.0", "draft": false, "prerelease": false }`,
+			mockBody:       `{ "id": 1, "name": "0.1.0", "tag_name": "v0.1.0" }`,
 			token:          "github-token",
 			repo:           "username/repo",
 			ctx:            context.Background(),
 			branch:         "master",
 			version:        "0.1.0",
-			changelog:      "change log",
+			changelog:      "change log description",
 			draf:           false,
 			prerelease:     false,
 			expectedError:  "",
 			expectedRelease: &Release{
-				ID:         "aaaa",
+				ID:         1,
 				Name:       "0.1.0",
 				Draft:      false,
 				Prerelease: false,
@@ -240,12 +367,14 @@ func TestCreateRelease(t *testing.T) {
 				repo:       tc.repo,
 			}
 
-			_, err := gh.CreateRelease(tc.ctx, tc.branch, tc.version, tc.changelog, tc.draf, tc.prerelease)
+			release, err := gh.CreateRelease(tc.ctx, tc.branch, tc.version, tc.changelog, tc.draf, tc.prerelease)
 
-			if tc.expectedError == "" {
-				assert.NoError(t, err)
+			if tc.expectedError != "" {
+				assert.Contains(t, err.Error(), tc.expectedError)
+				assert.Nil(t, release)
 			} else {
-				assert.Equal(t, tc.expectedError, err.Error())
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedRelease, release)
 			}
 		})
 	}
@@ -253,23 +382,128 @@ func TestCreateRelease(t *testing.T) {
 
 func TestUploadAssets(t *testing.T) {
 	tests := []struct {
-		name           string
-		mockStatusCode int
-		mockBody       string
-		token          string
-		repo           string
-		ctx            context.Context
-		version        string
-		assets         []string
-		expectedError  string
-	}{}
+		name                      string
+		mockGetReleaseStatusCode  int
+		mockGetReleaseBody        string
+		mockUploadAssetStatusCode int
+		mockUploadAssetBody       string
+		token                     string
+		repo                      string
+		ctx                       context.Context
+		version                   string
+		assets                    []string
+		expectedError             string
+	}{
+		{
+			name:                     "GetReleaseRequestError",
+			mockGetReleaseStatusCode: 0,
+			mockGetReleaseBody:       "",
+			token:                    "github-token",
+			repo:                     "username/repo",
+			ctx:                      context.Background(),
+			version:                  "0.1.0",
+			assets:                   []string{},
+			expectedError:            "EOF",
+		},
+		{
+			name:                     "GetReleaseBadStatusCode",
+			mockGetReleaseStatusCode: 400,
+			mockGetReleaseBody:       "",
+			token:                    "github-token",
+			repo:                     "username/repo",
+			ctx:                      context.Background(),
+			version:                  "0.1.0",
+			assets:                   []string{},
+			expectedError:            "unexpected status code 400",
+		},
+		{
+			name:                     "GetReleaseInvalidResponse",
+			mockGetReleaseStatusCode: 200,
+			mockGetReleaseBody:       `{ invalid }`,
+			token:                    "github-token",
+			repo:                     "username/repo",
+			ctx:                      context.Background(),
+			version:                  "0.1.0",
+			assets:                   []string{},
+			expectedError:            "invalid character 'i' looking for beginning of object key string",
+		},
+		{
+			name:                     "NoAsset",
+			mockGetReleaseStatusCode: 200,
+			mockGetReleaseBody:       `{ "id": 1 }`,
+			token:                    "github-token",
+			repo:                     "username/repo",
+			ctx:                      context.Background(),
+			version:                  "0.1.0",
+			assets:                   []string{"./test/nil"},
+			expectedError:            "open test/nil: no such file or directory",
+		},
+		{
+			name:                     "EmptyAsset",
+			mockGetReleaseStatusCode: 200,
+			mockGetReleaseBody:       `{ "id": 1 }`,
+			token:                    "github-token",
+			repo:                     "username/repo",
+			ctx:                      context.Background(),
+			version:                  "0.1.0",
+			assets:                   []string{"./test/empty"},
+			expectedError:            "EOF",
+		},
+		{
+			name:                      "UploadAssetRequestError",
+			mockGetReleaseStatusCode:  200,
+			mockGetReleaseBody:        `{ "id": 1 }`,
+			mockUploadAssetStatusCode: 0,
+			mockUploadAssetBody:       "",
+			token:                     "github-token",
+			repo:                      "username/repo",
+			ctx:                       context.Background(),
+			version:                   "0.1.0",
+			assets:                    []string{"./test/asset"},
+			expectedError:             "read: connection reset by peer",
+		},
+		{
+			name:                      "UploadAssetBadStatusCode",
+			mockGetReleaseStatusCode:  200,
+			mockGetReleaseBody:        `{ "id": 1 }`,
+			mockUploadAssetStatusCode: 500,
+			mockUploadAssetBody:       "",
+			token:                     "github-token",
+			repo:                      "username/repo",
+			ctx:                       context.Background(),
+			version:                   "0.1.0",
+			assets:                    []string{"./test/asset"},
+			expectedError:             "unexpected status code 500",
+		},
+		{
+			name:                      "Successful",
+			mockGetReleaseStatusCode:  200,
+			mockGetReleaseBody:        `{ "id": 1 }`,
+			mockUploadAssetStatusCode: 201,
+			mockUploadAssetBody:       `{}`,
+			token:                     "github-token",
+			repo:                      "username/repo",
+			ctx:                       context.Background(),
+			version:                   "0.1.0",
+			assets:                    []string{"./test/asset"},
+			expectedError:             "",
+		},
+	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(tc.mockStatusCode)
-				w.Write([]byte(tc.mockBody))
-			}))
+			r := mux.NewRouter()
+			r.Methods("GET").Path("/repos/{owner}/{repo}/releases/tags/{tag}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tc.mockGetReleaseStatusCode)
+				w.Write([]byte(tc.mockGetReleaseBody))
+			})
+
+			r.Methods("POST").Path("/repos/{owner}/{repo}/releases/{id}/assets").Queries("name", "{name}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tc.mockUploadAssetStatusCode)
+				w.Write([]byte(tc.mockUploadAssetBody))
+			})
+
+			ts := httptest.NewServer(r)
 			defer ts.Close()
 
 			logger := log.NewNopLogger()
@@ -287,10 +521,10 @@ func TestUploadAssets(t *testing.T) {
 
 			err := gh.UploadAssets(tc.ctx, tc.version, tc.assets)
 
-			if tc.expectedError == "" {
-				assert.NoError(t, err)
+			if tc.expectedError != "" {
+				assert.Contains(t, err.Error(), tc.expectedError)
 			} else {
-				assert.Equal(t, tc.expectedError, err.Error())
+				assert.NoError(t, err)
 			}
 		})
 	}

@@ -89,10 +89,10 @@ func (u *LoggerUI) Error(message string) {
 
 // Ask implements cli.Ui Ask method
 func (u *LoggerUI) Ask(query string) (string, error) {
-	return "", errors.New("logger ui does not support reading")
+	return "", errors.New("logger ui does not support input")
 }
 
 // AskSecret implements cli.Ui AskSecret method
 func (u *LoggerUI) AskSecret(query string) (string, error) {
-	return "", errors.New("logger ui does not support reading")
+	return "", errors.New("logger ui does not support input")
 }

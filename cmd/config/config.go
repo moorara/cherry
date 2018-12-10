@@ -13,9 +13,9 @@ const (
 // Config defines the configuration values
 var Config = struct {
 	Name        string `flag:"-" env:"-" file:"-"`
-	LogLevel    string `flag:"log.level" env:"CHERRY_LOG_LEVEL" file:"CHERRY_LOG_LEVEL_FILE"`
-	LogJSON     bool   `flag:"log.json" env:"CHERRY_LOG_JSON" file:"CHERRY_LOG_JSON_FILE"`
-	GithubToken string `flag:"github.token" env:"CHERRY_GITHUB_TOKEN" file:"CHERRY_GITHUB_TOKEN_FILE"`
+	LogLevel    string `flag:"-" env:"CHERRY_LOG_LEVEL" file:"CHERRY_LOG_LEVEL_FILE"`
+	LogJSON     bool   `flag:"-" env:"CHERRY_LOG_JSON" file:"CHERRY_LOG_JSON_FILE"`
+	GithubToken string `flag:"-" env:"CHERRY_GITHUB_TOKEN" file:"CHERRY_GITHUB_TOKEN_FILE"`
 }{
 	Name:     defaultName,
 	LogLevel: defaultLogLevel,
