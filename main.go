@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/mitchellh/cli"
@@ -12,6 +13,7 @@ import (
 
 func main() {
 	logger := log.NewJSONLogger(config.Config.Name, config.Config.LogLevel)
+	logger = logger.SyncLogger()
 	logger = logger.With(
 		config.Config.Name, map[string]string{
 			"version":   version.Version,
@@ -23,10 +25,12 @@ func main() {
 		},
 	)
 
-	// Uncomment this for the logger to be used safely by multiple goroutines
-	// logger = logger.SyncLogger()
-
-	ui := command.NewLoggerUI(logger)
+	var ui cli.Ui
+	if config.Config.LogJSON {
+		ui = command.NewLoggerUI(logger)
+	} else {
+		ui = command.NewUI().Colored().Concurrent()
+	}
 
 	app := cli.NewCLI(config.Config.Name, version.Get())
 	app.Args = os.Args[1:]
@@ -44,7 +48,7 @@ func main() {
 
 	status, err := app.Run()
 	if err != nil {
-		logger.Error("message", err.Error(), "error", err)
+		ui.Error(fmt.Sprintf("An error occurred: %s", err))
 	}
 
 	os.Exit(status)

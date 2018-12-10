@@ -53,7 +53,7 @@ type (
 
 	// Release is the model for GitHub release
 	Release struct {
-		ID         string `json:"id"`
+		ID         int    `json:"id"`
 		Name       string `json:"name"`
 		Draft      bool   `json:"draft"`
 		Prerelease bool   `json:"prerelease"`
@@ -93,7 +93,9 @@ func (gh *github) makeRequest(ctx context.Context, method, url, contentType stri
 	}
 
 	req.Header.Set("Authorization", "token "+gh.token)
+	req.Header.Set("User-Agent", "moorara/cherry") // ref: https://developer.github.com/v3/#user-agent-required
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
+	req.Header.Set("Accept-Encoding", "deflate, gzip;q=1.0, *;q=0.5")
 	if contentType != "" && body != nil {
 		req.Header.Set("Content-Type", contentType)
 	}
@@ -128,7 +130,7 @@ func (gh *github) BranchProtectionForAdmin(ctx context.Context, branch string, e
 
 	if res.StatusCode != statusCode {
 		err := util.NewHTTPError(res)
-		gh.logger.Error("message", "Error on enabling branch protection for admins.", "error", err, "method", method, "url", url, "resBody", err.Body)
+		gh.logger.Error("message", "Error on changing branch protection for admins.", "error", err, "method", method, "url", url, "resBody", err.Body)
 		return err
 	}
 
@@ -204,6 +206,7 @@ func (gh *github) UploadAssets(ctx context.Context, version string, assets []str
 			gh.logger.Error("message", "Error on opening asset file.", "error", err)
 			return err
 		}
+
 		// Read the first 512 bytes of file to determine the mime type of asset
 		buff := make([]byte, 512)
 		_, err = file.Read(buff)
@@ -220,9 +223,16 @@ func (gh *github) UploadAssets(ctx context.Context, version string, assets []str
 		// SEEK_SET: seek relative to the origin of the file
 		file.Seek(0, os.SEEK_SET)
 
-		url := fmt.Sprintf("%s/repos/%s/releases/%s/assets?name=%s", gh.uploadAddr, gh.repo, release.ID, netURL.QueryEscape(assetFileName))
-		res, err := gh.makeRequest(ctx, "GET", url, contentType, file)
+		method := "POST"
+		url := fmt.Sprintf("%s/repos/%s/releases/%d/assets?name=%s", gh.uploadAddr, gh.repo, release.ID, netURL.QueryEscape(assetFileName))
+		res, err := gh.makeRequest(ctx, method, url, contentType, file)
 		if err != nil {
+			return err
+		}
+
+		if res.StatusCode != 201 {
+			err := util.NewHTTPError(res)
+			gh.logger.Error("message", "Error on uploading release asset.", "error", err, "method", method, "url", url, "resBody", err.Body)
 			return err
 		}
 
