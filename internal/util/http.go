@@ -12,6 +12,12 @@ type (
 		StatusCode int
 		Body       string
 	}
+
+	// HTTPResult is the result of an http request
+	HTTPResult struct {
+		Res *http.Response
+		Err error
+	}
 )
 
 // NewHTTPError creates a new instance of HTTPError

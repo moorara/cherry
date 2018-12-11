@@ -100,13 +100,26 @@ func (gh *github) makeRequest(ctx context.Context, method, url, contentType stri
 		req.Header.Set("Content-Type", contentType)
 	}
 
-	res, err := gh.client.Do(req)
-	if err != nil {
-		gh.logger.Error("message", "Error on making request.", "error", err, "method", method, "url", url, "contentType", contentType)
-		return nil, err
-	}
+	done := make(chan util.HTTPResult, 1)
 
-	return res, nil
+	go func() {
+		res, err := gh.client.Do(req)
+		if err != nil {
+			gh.logger.Error("message", "Error on making request.", "error", err, "method", method, "url", url, "contentType", contentType)
+		}
+
+		done <- util.HTTPResult{
+			Res: res,
+			Err: err,
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case result := <-done:
+		return result.Res, result.Err
+	}
 }
 
 func (gh *github) BranchProtectionForAdmin(ctx context.Context, branch string, enabled bool) error {
