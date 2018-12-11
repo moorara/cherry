@@ -43,6 +43,9 @@ func TestNew(t *testing.T) {
 }
 
 func TestMakeRequest(t *testing.T) {
+	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Millisecond)
+	defer cancel()
+
 	tests := []struct {
 		name               string
 		mockStatusCode     int
@@ -79,6 +82,17 @@ func TestMakeRequest(t *testing.T) {
 			contentType:   "",
 			body:          "",
 			expectedError: "invalid URL port",
+		},
+		{
+			name:          "ContextTimeout",
+			token:         "github-token",
+			repo:          "username/repo",
+			ctx:           contextWithTimeout,
+			method:        "GET",
+			endpoint:      "/users/moorara",
+			contentType:   "",
+			body:          "",
+			expectedError: "context deadline exceeded",
 		},
 		{
 			name:               "Success200",
@@ -121,6 +135,7 @@ func TestMakeRequest(t *testing.T) {
 					assert.Equal(t, tc.contentType, r.Header.Get("Content-Type"))
 				}
 
+				time.Sleep(2 * time.Millisecond)
 				w.WriteHeader(tc.mockStatusCode)
 				w.Write([]byte(tc.mockBody))
 			}))
@@ -164,6 +179,9 @@ func TestMakeRequest(t *testing.T) {
 }
 
 func TestBranchProtectionForAdmin(t *testing.T) {
+	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Millisecond)
+	defer cancel()
+
 	tests := []struct {
 		name           string
 		mockStatusCode int
@@ -175,18 +193,17 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 		enabled        bool
 		expectedError  string
 	}{
-		// TODO:
-		/* {
-			name:           "RequestError",
-			mockStatusCode: 0,
-			mockBody:       "",
+		{
+			name:           "ContextTimeout",
+			mockStatusCode: 200,
+			mockBody:       `{}`,
 			token:          "github-token",
 			repo:           "username/repo",
-			ctx:            context.Background(),
+			ctx:            contextWithTimeout,
 			branch:         "master",
 			enabled:        true,
-			expectedError:  "EOF",
-		}, */
+			expectedError:  "context deadline exceeded",
+		},
 		{
 			name:           "BadStatusCode",
 			mockStatusCode: 400,
@@ -225,6 +242,7 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				time.Sleep(2 * time.Millisecond)
 				w.WriteHeader(tc.mockStatusCode)
 				w.Write([]byte(tc.mockBody))
 			}))
@@ -254,6 +272,9 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 }
 
 func TestCreateRelease(t *testing.T) {
+	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Millisecond)
+	defer cancel()
+
 	tests := []struct {
 		name            string
 		mockStatusCode  int
@@ -269,21 +290,20 @@ func TestCreateRelease(t *testing.T) {
 		expectedError   string
 		expectedRelease *Release
 	}{
-		// TODO:
-		/* {
-			name:           "RequestError",
-			mockStatusCode: 0,
-			mockBody:       "",
+		{
+			name:           "ContextTimeout",
+			mockStatusCode: 200,
+			mockBody:       `{}`,
 			token:          "github-token",
 			repo:           "username/repo",
-			ctx:            context.Background(),
+			ctx:            contextWithTimeout,
 			branch:         "master",
 			version:        "0.1.0",
 			changelog:      "change log description",
 			draf:           false,
 			prerelease:     false,
-			expectedError:  "EOF",
-		}, */
+			expectedError:  "context deadline exceeded",
+		},
 		{
 			name:           "BadStatusCode",
 			mockStatusCode: 400,
@@ -336,6 +356,7 @@ func TestCreateRelease(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				time.Sleep(2 * time.Millisecond)
 				w.WriteHeader(tc.mockStatusCode)
 				w.Write([]byte(tc.mockBody))
 			}))
@@ -367,6 +388,9 @@ func TestCreateRelease(t *testing.T) {
 }
 
 func TestUploadAssets(t *testing.T) {
+	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Millisecond)
+	defer cancel()
+
 	tests := []struct {
 		name                      string
 		mockGetReleaseStatusCode  int
@@ -380,18 +404,17 @@ func TestUploadAssets(t *testing.T) {
 		assets                    []string
 		expectedError             string
 	}{
-		// TODO:
-		/* {
-			name:                     "GetReleaseRequestError",
-			mockGetReleaseStatusCode: 0,
-			mockGetReleaseBody:       "",
+		{
+			name:                     "GetReleaseContextTimeout",
+			mockGetReleaseStatusCode: 200,
+			mockGetReleaseBody:       `{}`,
 			token:                    "github-token",
 			repo:                     "username/repo",
-			ctx:                      context.Background(),
+			ctx:                      contextWithTimeout,
 			version:                  "0.1.0",
 			assets:                   []string{},
-			expectedError:            "EOF",
-		}, */
+			expectedError:            "context deadline exceeded",
+		},
 		{
 			name:                     "GetReleaseBadStatusCode",
 			mockGetReleaseStatusCode: 400,
@@ -436,8 +459,7 @@ func TestUploadAssets(t *testing.T) {
 			assets:                   []string{"./test/empty"},
 			expectedError:            "EOF",
 		},
-		// TODO:
-		/* {
+		{
 			name:                      "UploadAssetRequestError",
 			mockGetReleaseStatusCode:  200,
 			mockGetReleaseBody:        `{ "id": 1 }`,
@@ -449,7 +471,7 @@ func TestUploadAssets(t *testing.T) {
 			version:                   "0.1.0",
 			assets:                    []string{"./test/asset"},
 			expectedError:             "read: connection reset by peer",
-		}, */
+		},
 		{
 			name:                      "UploadAssetBadStatusCode",
 			mockGetReleaseStatusCode:  200,
@@ -482,11 +504,13 @@ func TestUploadAssets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			r := mux.NewRouter()
 			r.Methods("GET").Path("/repos/{owner}/{repo}/releases/tags/{tag}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				time.Sleep(2 * time.Millisecond)
 				w.WriteHeader(tc.mockGetReleaseStatusCode)
 				w.Write([]byte(tc.mockGetReleaseBody))
 			})
 
 			r.Methods("POST").Path("/repos/{owner}/{repo}/releases/{id}/assets").Queries("name", "{name}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				time.Sleep(2 * time.Millisecond)
 				w.WriteHeader(tc.mockUploadAssetStatusCode)
 				w.Write([]byte(tc.mockUploadAssetBody))
 			})
