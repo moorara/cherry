@@ -179,11 +179,9 @@ func TestMakeRequest(t *testing.T) {
 }
 
 func TestBranchProtectionForAdmin(t *testing.T) {
-	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Millisecond)
-	defer cancel()
-
 	tests := []struct {
 		name           string
+		mockAPI        bool
 		mockStatusCode int
 		mockBody       string
 		token          string
@@ -194,18 +192,18 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 		expectedError  string
 	}{
 		{
-			name:           "ContextTimeout",
-			mockStatusCode: 200,
-			mockBody:       `{}`,
-			token:          "github-token",
-			repo:           "username/repo",
-			ctx:            contextWithTimeout,
-			branch:         "master",
-			enabled:        true,
-			expectedError:  "context deadline exceeded",
+			name:          "RequestError",
+			mockAPI:       false,
+			token:         "github-token",
+			repo:          "username/repo",
+			ctx:           context.Background(),
+			branch:        "master",
+			enabled:       true,
+			expectedError: "unsupported protocol scheme",
 		},
 		{
 			name:           "BadStatusCode",
+			mockAPI:        true,
 			mockStatusCode: 400,
 			mockBody:       `{ "enabled": true }`,
 			token:          "github-token",
@@ -217,6 +215,7 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 		},
 		{
 			name:           "Enable",
+			mockAPI:        true,
 			mockStatusCode: 200,
 			mockBody:       `{ "enabled": true }`,
 			token:          "github-token",
@@ -228,6 +227,7 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 		},
 		{
 			name:           "Disable",
+			mockAPI:        true,
 			mockStatusCode: 204,
 			mockBody:       `{ "enabled": false }`,
 			token:          "github-token",
@@ -241,13 +241,6 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				time.Sleep(2 * time.Millisecond)
-				w.WriteHeader(tc.mockStatusCode)
-				w.Write([]byte(tc.mockBody))
-			}))
-			defer ts.Close()
-
 			logger := log.NewNopLogger()
 			metrics := metrics.New("test")
 			client := &http.Client{}
@@ -255,9 +248,21 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 				logger:  logger,
 				metrics: metrics,
 				client:  client,
-				apiAddr: ts.URL,
 				token:   tc.token,
 				repo:    tc.repo,
+			}
+
+			if tc.mockAPI {
+				r := mux.NewRouter()
+				r.Methods("POST", "DELETE").Path("/repos/{owner}/{repo}/branches/{branch}/protection/enforce_admins").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(tc.mockStatusCode)
+					w.Write([]byte(tc.mockBody))
+				})
+
+				ts := httptest.NewServer(r)
+				defer ts.Close()
+
+				gh.apiAddr = ts.URL
 			}
 
 			err := gh.BranchProtectionForAdmin(tc.ctx, tc.branch, tc.enabled)
@@ -272,11 +277,9 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 }
 
 func TestCreateRelease(t *testing.T) {
-	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Millisecond)
-	defer cancel()
-
 	tests := []struct {
 		name            string
+		mockAPI         bool
 		mockStatusCode  int
 		mockBody        string
 		token           string
@@ -291,21 +294,21 @@ func TestCreateRelease(t *testing.T) {
 		expectedRelease *Release
 	}{
 		{
-			name:           "ContextTimeout",
-			mockStatusCode: 200,
-			mockBody:       `{}`,
-			token:          "github-token",
-			repo:           "username/repo",
-			ctx:            contextWithTimeout,
-			branch:         "master",
-			version:        "0.1.0",
-			changelog:      "change log description",
-			draf:           false,
-			prerelease:     false,
-			expectedError:  "context deadline exceeded",
+			name:          "RequestError",
+			mockAPI:       false,
+			token:         "github-token",
+			repo:          "username/repo",
+			ctx:           context.Background(),
+			branch:        "master",
+			version:       "0.1.0",
+			changelog:     "change log description",
+			draf:          false,
+			prerelease:    false,
+			expectedError: "unsupported protocol scheme",
 		},
 		{
 			name:           "BadStatusCode",
+			mockAPI:        true,
 			mockStatusCode: 400,
 			mockBody:       "",
 			token:          "github-token",
@@ -320,6 +323,7 @@ func TestCreateRelease(t *testing.T) {
 		},
 		{
 			name:           "InvalidResponse",
+			mockAPI:        true,
 			mockStatusCode: 201,
 			mockBody:       `{ invalid }`,
 			token:          "github-token",
@@ -334,6 +338,7 @@ func TestCreateRelease(t *testing.T) {
 		},
 		{
 			name:           "Success",
+			mockAPI:        true,
 			mockStatusCode: 201,
 			mockBody:       `{ "id": 1, "name": "0.1.0", "tag_name": "v0.1.0" }`,
 			token:          "github-token",
@@ -355,13 +360,6 @@ func TestCreateRelease(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				time.Sleep(2 * time.Millisecond)
-				w.WriteHeader(tc.mockStatusCode)
-				w.Write([]byte(tc.mockBody))
-			}))
-			defer ts.Close()
-
 			logger := log.NewNopLogger()
 			metrics := metrics.New("test")
 			client := &http.Client{}
@@ -369,9 +367,21 @@ func TestCreateRelease(t *testing.T) {
 				logger:  logger,
 				metrics: metrics,
 				client:  client,
-				apiAddr: ts.URL,
 				token:   tc.token,
 				repo:    tc.repo,
+			}
+
+			if tc.mockAPI {
+				r := mux.NewRouter()
+				r.Methods("POST").Path("/repos/{owner}/{repo}/releases").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(tc.mockStatusCode)
+					w.Write([]byte(tc.mockBody))
+				})
+
+				ts := httptest.NewServer(r)
+				defer ts.Close()
+
+				gh.apiAddr = ts.URL
 			}
 
 			release, err := gh.CreateRelease(tc.ctx, tc.branch, tc.version, tc.changelog, tc.draf, tc.prerelease)
@@ -388,13 +398,12 @@ func TestCreateRelease(t *testing.T) {
 }
 
 func TestUploadAssets(t *testing.T) {
-	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Millisecond)
-	defer cancel()
-
 	tests := []struct {
 		name                      string
+		mockAPI                   bool
 		mockGetReleaseStatusCode  int
 		mockGetReleaseBody        string
+		mockUploadAPI             bool
 		mockUploadAssetStatusCode int
 		mockUploadAssetBody       string
 		token                     string
@@ -405,18 +414,18 @@ func TestUploadAssets(t *testing.T) {
 		expectedError             string
 	}{
 		{
-			name:                     "GetReleaseContextTimeout",
-			mockGetReleaseStatusCode: 200,
-			mockGetReleaseBody:       `{}`,
-			token:                    "github-token",
-			repo:                     "username/repo",
-			ctx:                      contextWithTimeout,
-			version:                  "0.1.0",
-			assets:                   []string{},
-			expectedError:            "context deadline exceeded",
+			name:          "GetReleaseRequestError",
+			mockAPI:       false,
+			token:         "github-token",
+			repo:          "username/repo",
+			ctx:           context.Background(),
+			version:       "0.1.0",
+			assets:        []string{},
+			expectedError: "unsupported protocol scheme",
 		},
 		{
 			name:                     "GetReleaseBadStatusCode",
+			mockAPI:                  true,
 			mockGetReleaseStatusCode: 400,
 			mockGetReleaseBody:       "",
 			token:                    "github-token",
@@ -428,6 +437,7 @@ func TestUploadAssets(t *testing.T) {
 		},
 		{
 			name:                     "GetReleaseInvalidResponse",
+			mockAPI:                  true,
 			mockGetReleaseStatusCode: 200,
 			mockGetReleaseBody:       `{ invalid }`,
 			token:                    "github-token",
@@ -439,6 +449,7 @@ func TestUploadAssets(t *testing.T) {
 		},
 		{
 			name:                     "NoAsset",
+			mockAPI:                  true,
 			mockGetReleaseStatusCode: 200,
 			mockGetReleaseBody:       `{ "id": 1 }`,
 			token:                    "github-token",
@@ -450,6 +461,7 @@ func TestUploadAssets(t *testing.T) {
 		},
 		{
 			name:                     "EmptyAsset",
+			mockAPI:                  true,
 			mockGetReleaseStatusCode: 200,
 			mockGetReleaseBody:       `{ "id": 1 }`,
 			token:                    "github-token",
@@ -460,22 +472,24 @@ func TestUploadAssets(t *testing.T) {
 			expectedError:            "EOF",
 		},
 		{
-			name:                      "UploadAssetRequestError",
-			mockGetReleaseStatusCode:  200,
-			mockGetReleaseBody:        `{ "id": 1 }`,
-			mockUploadAssetStatusCode: 0,
-			mockUploadAssetBody:       "",
-			token:                     "github-token",
-			repo:                      "username/repo",
-			ctx:                       context.Background(),
-			version:                   "0.1.0",
-			assets:                    []string{"./test/asset"},
-			expectedError:             "read: connection reset by peer",
+			name:                     "UploadAssetRequestError",
+			mockAPI:                  true,
+			mockGetReleaseStatusCode: 200,
+			mockGetReleaseBody:       `{ "id": 1 }`,
+			mockUploadAPI:            false,
+			token:                    "github-token",
+			repo:                     "username/repo",
+			ctx:                      context.Background(),
+			version:                  "0.1.0",
+			assets:                   []string{"./test/asset"},
+			expectedError:            "unsupported protocol scheme",
 		},
 		{
 			name:                      "UploadAssetBadStatusCode",
+			mockAPI:                   true,
 			mockGetReleaseStatusCode:  200,
 			mockGetReleaseBody:        `{ "id": 1 }`,
+			mockUploadAPI:             true,
 			mockUploadAssetStatusCode: 500,
 			mockUploadAssetBody:       "",
 			token:                     "github-token",
@@ -487,8 +501,10 @@ func TestUploadAssets(t *testing.T) {
 		},
 		{
 			name:                      "Successful",
+			mockAPI:                   true,
 			mockGetReleaseStatusCode:  200,
 			mockGetReleaseBody:        `{ "id": 1 }`,
+			mockUploadAPI:             true,
 			mockUploadAssetStatusCode: 201,
 			mockUploadAssetBody:       `{}`,
 			token:                     "github-token",
@@ -502,33 +518,41 @@ func TestUploadAssets(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			r := mux.NewRouter()
-			r.Methods("GET").Path("/repos/{owner}/{repo}/releases/tags/{tag}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				time.Sleep(2 * time.Millisecond)
-				w.WriteHeader(tc.mockGetReleaseStatusCode)
-				w.Write([]byte(tc.mockGetReleaseBody))
-			})
-
-			r.Methods("POST").Path("/repos/{owner}/{repo}/releases/{id}/assets").Queries("name", "{name}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				time.Sleep(2 * time.Millisecond)
-				w.WriteHeader(tc.mockUploadAssetStatusCode)
-				w.Write([]byte(tc.mockUploadAssetBody))
-			})
-
-			ts := httptest.NewServer(r)
-			defer ts.Close()
-
 			logger := log.NewNopLogger()
 			metrics := metrics.New("test")
 			client := &http.Client{}
 			gh := &github{
-				logger:     logger,
-				metrics:    metrics,
-				client:     client,
-				apiAddr:    ts.URL,
-				uploadAddr: ts.URL,
-				token:      tc.token,
-				repo:       tc.repo,
+				logger:  logger,
+				metrics: metrics,
+				client:  client,
+				token:   tc.token,
+				repo:    tc.repo,
+			}
+
+			if tc.mockAPI {
+				r := mux.NewRouter()
+				r.Methods("GET").Path("/repos/{owner}/{repo}/releases/tags/{tag}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(tc.mockGetReleaseStatusCode)
+					w.Write([]byte(tc.mockGetReleaseBody))
+				})
+
+				ts := httptest.NewServer(r)
+				defer ts.Close()
+
+				gh.apiAddr = ts.URL
+			}
+
+			if tc.mockUploadAPI {
+				r := mux.NewRouter()
+				r.Methods("POST").Path("/repos/{owner}/{repo}/releases/{id}/assets").Queries("name", "{name}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(tc.mockUploadAssetStatusCode)
+					w.Write([]byte(tc.mockUploadAssetBody))
+				})
+
+				ts := httptest.NewServer(r)
+				defer ts.Close()
+
+				gh.uploadAddr = ts.URL
 			}
 
 			err := gh.UploadAssets(tc.ctx, tc.version, tc.assets)
