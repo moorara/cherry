@@ -26,17 +26,18 @@ func NewRelease(ui cli.Ui) *Release {
 }
 
 // Synopsis returns the short one-line synopsis of the command.
-func (b *Release) Synopsis() string {
+func (c *Release) Synopsis() string {
 	return releaseSynopsis
 }
 
 // Help returns the long help text including usage, description, and list of flags for the command
-func (b *Release) Help() string {
+func (c *Release) Help() string {
 	return releaseHelp
 }
 
 // Run runs the actual command with the given CLI instance and command-line arguments
-func (b *Release) Run(args []string) int {
-	b.ui.Output("release command run")
+func (c *Release) Run(args []string) int {
+	c.ui.Output("release command run")
+
 	return 0
 }

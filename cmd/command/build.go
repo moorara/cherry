@@ -26,17 +26,18 @@ func NewBuild(ui cli.Ui) *Build {
 }
 
 // Synopsis returns the short one-line synopsis of the command.
-func (b *Build) Synopsis() string {
+func (c *Build) Synopsis() string {
 	return buildSynopsis
 }
 
 // Help returns the long help text including usage, description, and list of flags for the command
-func (b *Build) Help() string {
+func (c *Build) Help() string {
 	return buildHelp
 }
 
 // Run runs the actual command with the given CLI instance and command-line arguments
-func (b *Build) Run(args []string) int {
-	b.ui.Output("build command run")
+func (c *Build) Run(args []string) int {
+	c.ui.Output("build command run")
+
 	return 0
 }
