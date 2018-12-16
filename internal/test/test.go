@@ -2,12 +2,12 @@ package test
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/moorara/cherry/internal/exec"
 )
 
 const (
@@ -22,34 +22,28 @@ const (
 type (
 	// Tester is the interface for test runner
 	Tester interface {
-		Coverage(context.Context) error
+		Cover(ctx context.Context) error
 	}
 
 	tester struct {
-		path string
+		workDir string
 	}
 )
 
 // NewTester creates a new instance of test Tester
-func NewTester(path string) Tester {
+func NewTester(workDir string) Tester {
 	return &tester{
-		path: path,
+		workDir: workDir,
 	}
 }
 
 func (t *tester) getPackages(ctx context.Context) ([]string, error) {
-	cmd := exec.CommandContext(ctx, "go", "list", "./...")
-	cmd.Dir = t.path
-	out, err := cmd.Output()
+	out, err := exec.Command(ctx, t.workDir, "go", "list", "./...")
 	if err != nil {
-		if e, ok := err.(*exec.ExitError); ok {
-			return nil, fmt.Errorf("%s. %s", e.Error(), string(e.Stderr))
-		}
 		return nil, err
 	}
 
-	pkgs := strings.Split(string(out), "\n")
-	pkgs = pkgs[:len(pkgs)-1]
+	pkgs := strings.Split(out, "\n")
 
 	return pkgs, nil
 }
@@ -69,49 +63,41 @@ func (t *tester) testPackage(ctx context.Context, pkg, coverfile string) error {
 	}
 	defer os.Remove(tf.Name())
 
-	// Run go test in cover mode
-	cmd := exec.CommandContext(ctx, "go", "test", "-covermode", atomicMode, "-coverprofile", tf.Name(), pkg)
-	cmd.Dir = t.path
-	_, err = cmd.Output()
+	// Run go test with cover mode
+	_, err = exec.Command(ctx, t.workDir, "go", "test", "-covermode", atomicMode, "-coverprofile", tf.Name(), pkg)
 	if err != nil {
-		if e, ok := err.(*exec.ExitError); ok {
-			return fmt.Errorf("%s. %s", e.Error(), string(e.Stderr))
-		}
 		return err
 	}
 
 	// Get the coverage data
-	cmd = exec.CommandContext(ctx, "tail", "-n", "+2", tf.Name())
-	cmd.Dir = t.path
-	out, err := cmd.Output()
+	out, err := exec.Command(ctx, t.workDir, "tail", "-n", "+2", tf.Name())
 	if err != nil {
-		if e, ok := err.(*exec.ExitError); ok {
-			return fmt.Errorf("%s. %s", e.Error(), string(e.Stderr))
-		}
 		return err
 	}
 
 	// Append the coverage data to the singleton coverage file
-	_, err = cf.WriteString(string(out))
-	if err != nil {
-		return err
+	if out != "" {
+		_, err = cf.WriteString(out + "\n")
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (t *tester) Coverage(ctx context.Context) error {
-	coverpath := filepath.Join(t.path, reportPath)
-	coverfile := filepath.Join(coverpath, coverFile)
-	reportfile := filepath.Join(coverpath, reportFile)
+func (t *tester) Cover(ctx context.Context) error {
+	reportpath := filepath.Join(t.workDir, reportPath)
+	coverfile := filepath.Join(reportpath, coverFile)
+	reportfile := filepath.Join(reportpath, reportFile)
 
 	// Remove any prior coverage report
-	err := os.RemoveAll(coverpath)
+	err := os.RemoveAll(reportpath)
 	if err != nil {
 		return err
 	}
 
-	err = os.Mkdir(coverpath, os.ModePerm)
+	err = os.Mkdir(reportpath, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -134,11 +120,9 @@ func (t *tester) Coverage(ctx context.Context) error {
 	}
 
 	// Generate the singleton html coverage report for all packages
-	cmd := exec.CommandContext(ctx, "go", "tool", "cover", "-html", coverfile, "-o", reportfile)
-	cmd.Dir = t.path
-	_, err = cmd.Output()
-	if e, ok := err.(*exec.ExitError); ok {
-		return fmt.Errorf("%s. %s", e.Error(), string(e.Stderr))
+	_, err = exec.Command(ctx, t.workDir, "go", "tool", "cover", "-html", coverfile, "-o", reportfile)
+	if err != nil {
+		return err
 	}
 
 	return nil

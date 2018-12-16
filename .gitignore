@@ -3,6 +3,10 @@ main
 cherry
 cherry-*
 
+# Build directories
+/bin
+/build
+
 # Test files
 *.log
 *.out

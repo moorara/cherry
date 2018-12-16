@@ -32,17 +32,17 @@ func main() {
 		ui = command.NewUI().Colored().Concurrent()
 	}
 
-	app := cli.NewCLI(config.Config.Name, version.Get())
+	app := cli.NewCLI(config.Config.Name, version.String())
 	app.Args = os.Args[1:]
 	app.Commands = map[string]cli.CommandFactory{
 		"build": func() (cmd cli.Command, err error) {
-			return command.NewBuild(ui), nil
+			return command.NewBuild(ui)
 		},
 		"release": func() (cmd cli.Command, err error) {
-			return command.NewRelease(ui), nil
+			return command.NewRelease(ui)
 		},
 		"test": func() (cmd cli.Command, err error) {
-			return command.NewTest(ui), nil
+			return command.NewTest(ui)
 		},
 	}
 
