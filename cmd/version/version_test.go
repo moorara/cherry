@@ -6,6 +6,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGet(t *testing.T) {
-	assert.Equal(t, "    ", Get())
+func TestString(t *testing.T) {
+	tests := []struct {
+		expectedString string
+	}{
+		{
+			expectedString: "version:   revision:   branch:   goVersion:   buildTool:   buildTime: ",
+		},
+	}
+
+	for _, tc := range tests {
+		assert.Equal(t, tc.expectedString, String())
+	}
 }

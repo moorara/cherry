@@ -24,7 +24,7 @@ var (
 	BuildTime string
 )
 
-// Get returns a string describing the version in details
-func Get() string {
-	return fmt.Sprintf("%s %s %s %s %s", Version, Revision, Branch, GoVersion, BuildTime)
+// String returns a string describing the version information in details
+func String() string {
+	return fmt.Sprintf("version: %s  revision: %s  branch: %s  goVersion: %s  buildTool: %s  buildTime: %s", Version, Revision, Branch, GoVersion, BuildTool, BuildTime)
 }
