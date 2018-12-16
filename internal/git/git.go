@@ -10,8 +10,10 @@ import (
 type (
 	// Git is the interface for a git client
 	Git interface {
-		IsRepoClean() (bool, error)
-		GetRepoName() (string, error)
+		IsClean() (bool, error)
+		GetRepoName() (string, string, error)
+		GetBranchName() (string, error)
+		GetCommitSHA(short bool) (string, error)
 	}
 
 	git struct {
@@ -26,11 +28,10 @@ func New(workDir string) Git {
 	}
 }
 
-// IsRepoClean determines if the Git repo has any uncommitted changes
-func (g *git) IsRepoClean() (bool, error) {
+// IsClean determines if the Git repo has any uncommitted changes
+func (g *git) IsClean() (bool, error) {
 	cmd := exec.Command("git", "status", "--porcelain")
 	cmd.Dir = g.workDir
-
 	out, err := cmd.Output()
 	if err != nil {
 		return false, err
@@ -39,38 +40,74 @@ func (g *git) IsRepoClean() (bool, error) {
 	return len(out) == 0, nil
 }
 
-// GetRepoName returns the name of Git repo
-func (g *git) GetRepoName() (string, error) {
+// GetRepoName returns the owner and name of Git repo
+func (g *git) GetRepoName() (string, string, error) {
 	cmd := exec.Command("git", "remote", "-v")
 	cmd.Dir = g.workDir
-
 	out, err := cmd.Output()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// origin  git@github.com:USERNAME/REPOSITORY.git (push)     --> git@github.com:USERNAME/REPOSITORY.git
 	// origin  https://github.com/USERNAME/REPOSITORY.git (push) --> https://github.com/USERNAME/REPOSITORY.git
 	re := regexp.MustCompile(`origin[[:blank:]]+(.*)[[:blank:]]\(push\)`)
-	subm := re.FindStringSubmatch(string(out))
-	if len(subm) != 2 {
-		return "", errors.New("failed to get git repository url")
+	subs := re.FindStringSubmatch(string(out))
+	if len(subs) != 2 {
+		return "", "", errors.New("failed to get git repository url")
 	}
 
-	gitURL := subm[1]
+	gitURL := subs[1]
 
 	// git@github.com:USERNAME/REPOSITORY.git     --> USERNAME/REPOSITORY.git
 	// https://github.com/USERNAME/REPOSITORY.git --> USERNAME/REPOSITORY.git
 	re = regexp.MustCompile(`(git@[^/]+:|https://[^/]+/)([^/]+/[^/]+)`)
-	subm = re.FindStringSubmatch(gitURL)
-	if len(subm) != 3 {
-		return "", errors.New("failed to get git repository name")
+	subs = re.FindStringSubmatch(gitURL)
+	if len(subs) != 3 {
+		return "", "", errors.New("failed to get git repository name")
 	}
 
-	repoName := subm[2]
-
 	// USERNAME/REPOSITORY.git --> USERNAME/REPOSITORY
-	repoName = strings.TrimSuffix(repoName, ".git")
+	repo := subs[2]
+	repo = strings.TrimSuffix(repo, ".git")
 
-	return repoName, nil
+	// Split repo owner and name
+	subs = strings.Split(repo, "/")
+	owner := subs[0]
+	name := subs[1]
+
+	return owner, name, nil
+}
+
+func (g *git) GetBranchName() (string, error) {
+	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd.Dir = g.workDir
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	branch := strings.Trim(string(out), "\n")
+
+	return branch, nil
+}
+
+func (g *git) GetCommitSHA(short bool) (string, error) {
+	var cmd *exec.Cmd
+
+	if short {
+		cmd = exec.Command("git", "rev-parse", "--short", "HEAD")
+	} else {
+		cmd = exec.Command("git", "rev-parse", "HEAD")
+	}
+
+	cmd.Dir = g.workDir
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	sha := strings.Trim(string(out), "\n")
+
+	return sha, nil
 }
