@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/moorara/cherry/pkg/log"
-	"github.com/moorara/cherry/pkg/metrics"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,23 +19,18 @@ func TestNew(t *testing.T) {
 		name    string
 		timeout time.Duration
 		token   string
-		repo    string
 	}{
 		{
 			"OK",
 			2 * time.Second,
 			"github_token",
-			"username/repo",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.NewNopLogger()
-			metrics := metrics.New("test")
-			gh := New(logger, metrics, tc.timeout, tc.token, tc.repo)
-
-			assert.NotNil(t, gh)
+			github := New(tc.timeout, tc.token)
+			assert.NotNil(t, github)
 		})
 	}
 }
@@ -51,7 +44,6 @@ func TestMakeRequest(t *testing.T) {
 		mockStatusCode     int
 		mockBody           string
 		token              string
-		repo               string
 		ctx                context.Context
 		method             string
 		endpoint           string
@@ -64,7 +56,6 @@ func TestMakeRequest(t *testing.T) {
 		{
 			name:          "InvalidRequest",
 			token:         "github-token",
-			repo:          "username/repo",
 			ctx:           context.Background(),
 			method:        "GET",
 			endpoint:      " ",
@@ -75,7 +66,6 @@ func TestMakeRequest(t *testing.T) {
 		{
 			name:          "DoError",
 			token:         "github-token",
-			repo:          "username/repo",
 			ctx:           context.Background(),
 			method:        "GET",
 			endpoint:      "no_slash",
@@ -86,7 +76,6 @@ func TestMakeRequest(t *testing.T) {
 		{
 			name:          "ContextTimeout",
 			token:         "github-token",
-			repo:          "username/repo",
 			ctx:           contextWithTimeout,
 			method:        "GET",
 			endpoint:      "/users/moorara",
@@ -99,7 +88,6 @@ func TestMakeRequest(t *testing.T) {
 			mockStatusCode:     200,
 			mockBody:           `{ "login": "moorara" }`,
 			token:              "github-token",
-			repo:               "username/repo",
 			ctx:                context.Background(),
 			method:             "GET",
 			endpoint:           "/users/moorara",
@@ -113,7 +101,6 @@ func TestMakeRequest(t *testing.T) {
 			mockStatusCode:     201,
 			mockBody:           `{ "id": 1, "name": "1.0.0", "tag_name": "v1.0.0" }`,
 			token:              "github-token",
-			repo:               "username/repo",
 			ctx:                context.Background(),
 			method:             "POST",
 			endpoint:           "/repos/moorara/cherry/releases",
@@ -141,15 +128,10 @@ func TestMakeRequest(t *testing.T) {
 			}))
 			defer ts.Close()
 
-			logger := log.NewNopLogger()
-			metrics := metrics.New("test")
 			client := &http.Client{}
 			gh := &github{
-				logger:  logger,
-				metrics: metrics,
-				client:  client,
-				token:   tc.token,
-				repo:    tc.repo,
+				client: client,
+				token:  tc.token,
 			}
 
 			var body io.Reader
@@ -185,8 +167,8 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 		mockStatusCode int
 		mockBody       string
 		token          string
-		repo           string
 		ctx            context.Context
+		repo           string
 		branch         string
 		enabled        bool
 		expectedError  string
@@ -195,8 +177,8 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 			name:          "RequestError",
 			mockAPI:       false,
 			token:         "github-token",
-			repo:          "username/repo",
 			ctx:           context.Background(),
+			repo:          "username/repo",
 			branch:        "master",
 			enabled:       true,
 			expectedError: "unsupported protocol scheme",
@@ -207,8 +189,8 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 			mockStatusCode: 400,
 			mockBody:       `{ "enabled": true }`,
 			token:          "github-token",
-			repo:           "username/repo",
 			ctx:            context.Background(),
+			repo:           "username/repo",
 			branch:         "master",
 			enabled:        true,
 			expectedError:  "unexpected status code 400",
@@ -219,8 +201,8 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 			mockStatusCode: 200,
 			mockBody:       `{ "enabled": true }`,
 			token:          "github-token",
-			repo:           "username/repo",
 			ctx:            context.Background(),
+			repo:           "username/repo",
 			branch:         "master",
 			enabled:        true,
 			expectedError:  "",
@@ -231,8 +213,8 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 			mockStatusCode: 204,
 			mockBody:       `{ "enabled": false }`,
 			token:          "github-token",
-			repo:           "username/repo",
 			ctx:            context.Background(),
+			repo:           "username/repo",
 			branch:         "master",
 			enabled:        false,
 			expectedError:  "",
@@ -241,15 +223,10 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.NewNopLogger()
-			metrics := metrics.New("test")
 			client := &http.Client{}
 			gh := &github{
-				logger:  logger,
-				metrics: metrics,
-				client:  client,
-				token:   tc.token,
-				repo:    tc.repo,
+				client: client,
+				token:  tc.token,
 			}
 
 			if tc.mockAPI {
@@ -265,7 +242,7 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 				gh.apiAddr = ts.URL
 			}
 
-			err := gh.BranchProtectionForAdmin(tc.ctx, tc.branch, tc.enabled)
+			err := gh.BranchProtectionForAdmin(tc.ctx, tc.repo, tc.branch, tc.enabled)
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)
@@ -283,8 +260,8 @@ func TestCreateRelease(t *testing.T) {
 		mockStatusCode  int
 		mockBody        string
 		token           string
-		repo            string
 		ctx             context.Context
+		repo            string
 		branch          string
 		version         string
 		changelog       string
@@ -297,8 +274,8 @@ func TestCreateRelease(t *testing.T) {
 			name:          "RequestError",
 			mockAPI:       false,
 			token:         "github-token",
-			repo:          "username/repo",
 			ctx:           context.Background(),
+			repo:          "username/repo",
 			branch:        "master",
 			version:       "0.1.0",
 			changelog:     "change log description",
@@ -312,8 +289,8 @@ func TestCreateRelease(t *testing.T) {
 			mockStatusCode: 400,
 			mockBody:       "",
 			token:          "github-token",
-			repo:           "username/repo",
 			ctx:            context.Background(),
+			repo:           "username/repo",
 			branch:         "master",
 			version:        "0.1.0",
 			changelog:      "change log description",
@@ -327,8 +304,8 @@ func TestCreateRelease(t *testing.T) {
 			mockStatusCode: 201,
 			mockBody:       `{ invalid }`,
 			token:          "github-token",
-			repo:           "username/repo",
 			ctx:            context.Background(),
+			repo:           "username/repo",
 			branch:         "master",
 			version:        "0.1.0",
 			changelog:      "change log description",
@@ -342,8 +319,8 @@ func TestCreateRelease(t *testing.T) {
 			mockStatusCode: 201,
 			mockBody:       `{ "id": 1, "name": "0.1.0", "tag_name": "v0.1.0" }`,
 			token:          "github-token",
-			repo:           "username/repo",
 			ctx:            context.Background(),
+			repo:           "username/repo",
 			branch:         "master",
 			version:        "0.1.0",
 			changelog:      "change log description",
@@ -360,15 +337,10 @@ func TestCreateRelease(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.NewNopLogger()
-			metrics := metrics.New("test")
 			client := &http.Client{}
 			gh := &github{
-				logger:  logger,
-				metrics: metrics,
-				client:  client,
-				token:   tc.token,
-				repo:    tc.repo,
+				client: client,
+				token:  tc.token,
 			}
 
 			if tc.mockAPI {
@@ -384,7 +356,7 @@ func TestCreateRelease(t *testing.T) {
 				gh.apiAddr = ts.URL
 			}
 
-			release, err := gh.CreateRelease(tc.ctx, tc.branch, tc.version, tc.changelog, tc.draf, tc.prerelease)
+			release, err := gh.CreateRelease(tc.ctx, tc.repo, tc.branch, tc.version, tc.changelog, tc.draf, tc.prerelease)
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)
@@ -407,8 +379,8 @@ func TestUploadAssets(t *testing.T) {
 		mockUploadAssetStatusCode int
 		mockUploadAssetBody       string
 		token                     string
-		repo                      string
 		ctx                       context.Context
+		repo                      string
 		version                   string
 		assets                    []string
 		expectedError             string
@@ -417,8 +389,8 @@ func TestUploadAssets(t *testing.T) {
 			name:          "GetReleaseRequestError",
 			mockAPI:       false,
 			token:         "github-token",
-			repo:          "username/repo",
 			ctx:           context.Background(),
+			repo:          "username/repo",
 			version:       "0.1.0",
 			assets:        []string{},
 			expectedError: "unsupported protocol scheme",
@@ -429,8 +401,8 @@ func TestUploadAssets(t *testing.T) {
 			mockGetReleaseStatusCode: 400,
 			mockGetReleaseBody:       "",
 			token:                    "github-token",
-			repo:                     "username/repo",
 			ctx:                      context.Background(),
+			repo:                     "username/repo",
 			version:                  "0.1.0",
 			assets:                   []string{},
 			expectedError:            "unexpected status code 400",
@@ -441,8 +413,8 @@ func TestUploadAssets(t *testing.T) {
 			mockGetReleaseStatusCode: 200,
 			mockGetReleaseBody:       `{ invalid }`,
 			token:                    "github-token",
-			repo:                     "username/repo",
 			ctx:                      context.Background(),
+			repo:                     "username/repo",
 			version:                  "0.1.0",
 			assets:                   []string{},
 			expectedError:            "invalid character 'i' looking for beginning of object key string",
@@ -453,8 +425,8 @@ func TestUploadAssets(t *testing.T) {
 			mockGetReleaseStatusCode: 200,
 			mockGetReleaseBody:       `{ "id": 1 }`,
 			token:                    "github-token",
-			repo:                     "username/repo",
 			ctx:                      context.Background(),
+			repo:                     "username/repo",
 			version:                  "0.1.0",
 			assets:                   []string{"./test/nil"},
 			expectedError:            "open test/nil: no such file or directory",
@@ -465,8 +437,8 @@ func TestUploadAssets(t *testing.T) {
 			mockGetReleaseStatusCode: 200,
 			mockGetReleaseBody:       `{ "id": 1 }`,
 			token:                    "github-token",
-			repo:                     "username/repo",
 			ctx:                      context.Background(),
+			repo:                     "username/repo",
 			version:                  "0.1.0",
 			assets:                   []string{"./test/empty"},
 			expectedError:            "EOF",
@@ -478,8 +450,8 @@ func TestUploadAssets(t *testing.T) {
 			mockGetReleaseBody:       `{ "id": 1 }`,
 			mockUploadAPI:            false,
 			token:                    "github-token",
-			repo:                     "username/repo",
 			ctx:                      context.Background(),
+			repo:                     "username/repo",
 			version:                  "0.1.0",
 			assets:                   []string{"./test/asset"},
 			expectedError:            "unsupported protocol scheme",
@@ -493,8 +465,8 @@ func TestUploadAssets(t *testing.T) {
 			mockUploadAssetStatusCode: 500,
 			mockUploadAssetBody:       "",
 			token:                     "github-token",
-			repo:                      "username/repo",
 			ctx:                       context.Background(),
+			repo:                      "username/repo",
 			version:                   "0.1.0",
 			assets:                    []string{"./test/asset"},
 			expectedError:             "unexpected status code 500",
@@ -508,8 +480,8 @@ func TestUploadAssets(t *testing.T) {
 			mockUploadAssetStatusCode: 201,
 			mockUploadAssetBody:       `{}`,
 			token:                     "github-token",
-			repo:                      "username/repo",
 			ctx:                       context.Background(),
+			repo:                      "username/repo",
 			version:                   "0.1.0",
 			assets:                    []string{"./test/asset"},
 			expectedError:             "",
@@ -518,15 +490,10 @@ func TestUploadAssets(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.NewNopLogger()
-			metrics := metrics.New("test")
 			client := &http.Client{}
 			gh := &github{
-				logger:  logger,
-				metrics: metrics,
-				client:  client,
-				token:   tc.token,
-				repo:    tc.repo,
+				client: client,
+				token:  tc.token,
 			}
 
 			if tc.mockAPI {
@@ -555,7 +522,7 @@ func TestUploadAssets(t *testing.T) {
 				gh.uploadAddr = ts.URL
 			}
 
-			err := gh.UploadAssets(tc.ctx, tc.version, tc.assets)
+			err := gh.UploadAssets(tc.ctx, tc.repo, tc.version, tc.assets)
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)

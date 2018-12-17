@@ -14,8 +14,6 @@ import (
 	netURL "net/url"
 
 	"github.com/moorara/cherry/internal/util"
-	"github.com/moorara/cherry/pkg/log"
-	"github.com/moorara/cherry/pkg/metrics"
 )
 
 const (
@@ -27,19 +25,16 @@ const (
 type (
 	// Github is the interface for API calls to GitHub
 	Github interface {
-		BranchProtectionForAdmin(ctx context.Context, branch string, enabled bool) error
-		CreateRelease(ctx context.Context, branch, version, changelog string, draf, prerelease bool) (*Release, error)
-		UploadAssets(ctx context.Context, version string, assets []string) error
+		BranchProtectionForAdmin(ctx context.Context, repo, branch string, enabled bool) error
+		CreateRelease(ctx context.Context, repo, branch, version, changelog string, draf, prerelease bool) (*Release, error)
+		UploadAssets(ctx context.Context, repo, version string, assets []string) error
 	}
 
 	github struct {
-		logger     *log.Logger
-		metrics    *metrics.Metrics
 		client     *http.Client
 		apiAddr    string
 		uploadAddr string
 		token      string
-		repo       string
 	}
 
 	releaseReq struct {
@@ -67,7 +62,7 @@ type (
 )
 
 // New creates a new Github instance
-func New(logger *log.Logger, metrics *metrics.Metrics, timeout time.Duration, token, repo string) Github {
+func New(timeout time.Duration, token string) Github {
 	transport := &http.Transport{}
 	client := &http.Client{
 		Timeout:   timeout,
@@ -75,20 +70,16 @@ func New(logger *log.Logger, metrics *metrics.Metrics, timeout time.Duration, to
 	}
 
 	return &github{
-		logger:     logger,
-		metrics:    metrics,
 		client:     client,
 		apiAddr:    apiAddr,
 		uploadAddr: uploadAddr,
 		token:      token,
-		repo:       repo,
 	}
 }
 
 func (gh *github) makeRequest(ctx context.Context, method, url, contentType string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		gh.logger.Error("message", "Error on creating request.", "error", err, "method", method, "url", url, "contentType", contentType)
 		return nil, err
 	}
 
@@ -104,10 +95,6 @@ func (gh *github) makeRequest(ctx context.Context, method, url, contentType stri
 
 	go func() {
 		res, err := gh.client.Do(req)
-		if err != nil {
-			gh.logger.Error("message", "Error on making request.", "error", err, "method", method, "url", url, "contentType", contentType)
-		}
-
 		done <- util.HTTPResult{
 			Res: res,
 			Err: err,
@@ -122,7 +109,7 @@ func (gh *github) makeRequest(ctx context.Context, method, url, contentType stri
 	}
 }
 
-func (gh *github) BranchProtectionForAdmin(ctx context.Context, branch string, enabled bool) error {
+func (gh *github) BranchProtectionForAdmin(ctx context.Context, repo, branch string, enabled bool) error {
 	var method string
 	var statusCode int
 
@@ -134,7 +121,7 @@ func (gh *github) BranchProtectionForAdmin(ctx context.Context, branch string, e
 		statusCode = 204
 	}
 
-	url := fmt.Sprintf("%s/repos/%s/branches/%s/protection/enforce_admins", gh.apiAddr, gh.repo, branch)
+	url := fmt.Sprintf("%s/repos/%s/branches/%s/protection/enforce_admins", gh.apiAddr, repo, branch)
 	res, err := gh.makeRequest(ctx, method, url, "", nil)
 	if err != nil {
 		return err
@@ -143,16 +130,15 @@ func (gh *github) BranchProtectionForAdmin(ctx context.Context, branch string, e
 
 	if res.StatusCode != statusCode {
 		err := util.NewHTTPError(res)
-		gh.logger.Error("message", "Error on changing branch protection for admins.", "error", err, "method", method, "url", url, "resBody", err.Body)
 		return err
 	}
 
 	return nil
 }
 
-func (gh *github) CreateRelease(ctx context.Context, branch, version, changelog string, draf, prerelease bool) (*Release, error) {
+func (gh *github) CreateRelease(ctx context.Context, repo, branch, version, changelog string, draf, prerelease bool) (*Release, error) {
 	method := "POST"
-	url := fmt.Sprintf("%s/repos/%s/releases", gh.apiAddr, gh.repo)
+	url := fmt.Sprintf("%s/repos/%s/releases", gh.apiAddr, repo)
 	reqBody := releaseReq{
 		Name:       version,
 		TagName:    "v" + version,
@@ -173,23 +159,21 @@ func (gh *github) CreateRelease(ctx context.Context, branch, version, changelog 
 
 	if res.StatusCode != 201 {
 		err := util.NewHTTPError(res)
-		gh.logger.Error("message", "Error on creating release.", "error", err, "method", method, "url", url, "reqBody", reqBody, "resBody", err.Body)
 		return nil, err
 	}
 
 	release := new(Release)
 	err = json.NewDecoder(res.Body).Decode(release)
 	if err != nil {
-		gh.logger.Error("message", "Error on response body.", "error", err, "method", method, "url", url)
 		return nil, err
 	}
 
 	return release, nil
 }
 
-func (gh *github) UploadAssets(ctx context.Context, version string, assets []string) error {
+func (gh *github) UploadAssets(ctx context.Context, repo, version string, assets []string) error {
 	method := "GET"
-	url := fmt.Sprintf("%s/repos/%s/releases/tags/v%s", gh.apiAddr, gh.repo, version)
+	url := fmt.Sprintf("%s/repos/%s/releases/tags/v%s", gh.apiAddr, repo, version)
 
 	res, err := gh.makeRequest(ctx, method, url, "application/json", nil)
 	if err != nil {
@@ -199,14 +183,12 @@ func (gh *github) UploadAssets(ctx context.Context, version string, assets []str
 
 	if res.StatusCode != 200 {
 		err := util.NewHTTPError(res)
-		gh.logger.Error("message", "Error on getting release.", "error", err, "method", method, "url", url, "resBody", err.Body)
 		return err
 	}
 
 	release := new(Release)
 	err = json.NewDecoder(res.Body).Decode(release)
 	if err != nil {
-		gh.logger.Error("message", "Error on response body.", "error", err, "method", method, "url", url)
 		return err
 	}
 
@@ -216,7 +198,6 @@ func (gh *github) UploadAssets(ctx context.Context, version string, assets []str
 
 		file, err := os.Open(assetFilePath)
 		if err != nil {
-			gh.logger.Error("message", "Error on opening asset file.", "error", err)
 			return err
 		}
 
@@ -224,7 +205,6 @@ func (gh *github) UploadAssets(ctx context.Context, version string, assets []str
 		buff := make([]byte, 512)
 		_, err = file.Read(buff)
 		if err != nil {
-			gh.logger.Error("message", "Error on reading asset file.", "error", err)
 			return err
 		}
 
@@ -237,7 +217,7 @@ func (gh *github) UploadAssets(ctx context.Context, version string, assets []str
 		file.Seek(0, os.SEEK_SET)
 
 		method := "POST"
-		url := fmt.Sprintf("%s/repos/%s/releases/%d/assets?name=%s", gh.uploadAddr, gh.repo, release.ID, netURL.QueryEscape(assetFileName))
+		url := fmt.Sprintf("%s/repos/%s/releases/%d/assets?name=%s", gh.uploadAddr, repo, release.ID, netURL.QueryEscape(assetFileName))
 		res, err := gh.makeRequest(ctx, method, url, contentType, file)
 		if err != nil {
 			return err
@@ -245,7 +225,6 @@ func (gh *github) UploadAssets(ctx context.Context, version string, assets []str
 
 		if res.StatusCode != 201 {
 			err := util.NewHTTPError(res)
-			gh.logger.Error("message", "Error on uploading release asset.", "error", err, "method", method, "url", url, "resBody", err.Body)
 			return err
 		}
 

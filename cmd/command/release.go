@@ -8,6 +8,7 @@ import (
 
 	"github.com/mitchellh/cli"
 	"github.com/moorara/cherry/internal/git"
+	"github.com/moorara/cherry/internal/github"
 )
 
 const (
@@ -25,18 +26,23 @@ type (
 	Release struct {
 		ui          cli.Ui
 		workDir     string
-		githubToken string
 		git         git.Git
+		github      github.Github
+		githubToken string
 	}
 )
 
 // NewRelease create a new release command
 func NewRelease(ui cli.Ui, workDir, githubToken string) (*Release, error) {
+	git := git.New(workDir)
+	github := github.New(releaseTimeout, githubToken)
+
 	cmd := &Release{
 		ui:          ui,
 		workDir:     workDir,
+		git:         git,
+		github:      github,
 		githubToken: githubToken,
-		git:         git.New(workDir),
 	}
 
 	return cmd, nil
@@ -48,9 +54,24 @@ func (c *Release) release(ctx context.Context) error {
 		return err
 	}
 
+	// This is to ensure that we do not commit any unwanted change while releasing
 	if !clean {
-		return errors.New("git repo is not clean and has uncommitted changes")
+		return errors.New("working directory is not clean and has uncommitted changes")
 	}
+
+	owner, name, err := c.git.GetRepoName()
+	if err != nil {
+		return err
+	}
+
+	repo := owner + "/" + name
+	branch := "master"
+
+	// Temporarily enabling push to master branch
+	c.github.BranchProtectionForAdmin(ctx, repo, branch, true)
+	defer c.github.BranchProtectionForAdmin(ctx, repo, branch, false)
+
+	// TODO:
 
 	return nil
 }
