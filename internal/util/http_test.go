@@ -3,6 +3,7 @@ package util
 import (
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -11,19 +12,35 @@ import (
 
 func TestHTTPError(t *testing.T) {
 	tests := []struct {
-		name       string
-		statusCode int
-		body       string
+		name          string
+		request       *http.Request
+		statusCode    int
+		body          string
+		expectedError string
 	}{
 		{
 			"400",
+			&http.Request{
+				Method: "GET",
+				URL: &url.URL{
+					Path: "/",
+				},
+			},
 			http.StatusBadRequest,
 			"Invalid request",
+			"GET / 400: Invalid request",
 		},
 		{
 			"500",
+			&http.Request{
+				Method: "POST",
+				URL: &url.URL{
+					Path: "/",
+				},
+			},
 			http.StatusInternalServerError,
 			"Internal error",
+			"POST / 500: Internal error",
 		},
 	}
 
@@ -33,17 +50,18 @@ func TestHTTPError(t *testing.T) {
 			rc := ioutil.NopCloser(br)
 
 			res := &http.Response{
+				Request:    tc.request,
 				StatusCode: tc.statusCode,
 				Body:       rc,
 			}
 
 			err := NewHTTPError(res)
-
-			var e error = err
-			assert.NotEmpty(t, e.Error())
-
+			assert.Equal(t, tc.request, err.Request)
 			assert.Equal(t, tc.statusCode, err.StatusCode)
 			assert.Equal(t, tc.body, err.Body)
+
+			var e error = err
+			assert.Equal(t, tc.expectedError, e.Error())
 		})
 	}
 }

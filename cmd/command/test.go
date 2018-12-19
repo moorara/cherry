@@ -13,6 +13,14 @@ import (
 	"github.com/moorara/cherry/internal/exec"
 )
 
+type (
+	// Test is the test CLI command
+	Test struct {
+		ui      cli.Ui
+		workDir string
+	}
+)
+
 const (
 	atomicMode   = "atomic"
 	atomicHeader = "mode: atomic\n"
@@ -27,14 +35,6 @@ const (
 	testHelp      = `
 	Use this command for running unit tests and generating coverage report.
 	`
-)
-
-type (
-	// Test is the test CLI command
-	Test struct {
-		ui      cli.Ui
-		workDir string
-	}
 )
 
 // NewTest create a new test command

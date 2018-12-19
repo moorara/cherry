@@ -9,6 +9,7 @@ import (
 type (
 	// HTTPError is an error for http requests
 	HTTPError struct {
+		Request    *http.Request
 		StatusCode int
 		Body       string
 	}
@@ -23,6 +24,7 @@ type (
 // NewHTTPError creates a new instance of HTTPError
 func NewHTTPError(res *http.Response) *HTTPError {
 	err := &HTTPError{
+		Request:    res.Request,
 		StatusCode: res.StatusCode,
 	}
 
@@ -36,5 +38,5 @@ func NewHTTPError(res *http.Response) *HTTPError {
 }
 
 func (e *HTTPError) Error() string {
-	return fmt.Sprintf("unexpected status code %d", e.StatusCode)
+	return fmt.Sprintf("%s %s %d: %s", e.Request.Method, e.Request.URL.Path, e.StatusCode, e.Body)
 }

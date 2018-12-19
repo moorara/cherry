@@ -143,3 +143,70 @@ func TestGetCommitSHA(t *testing.T) {
 		})
 	}
 }
+
+func TestCommit(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		message       string
+		files         []string
+		expectedError bool
+	}{}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			git := New(tc.workDir)
+			err := git.Commit(tc.message, tc.files...)
+
+			if tc.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestTag(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		tag           string
+		expectedError bool
+	}{}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			git := New(tc.workDir)
+			err := git.Tag(tc.tag)
+
+			if tc.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestPush(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		includeTags   bool
+		expectedError bool
+	}{}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			git := New(tc.workDir)
+			err := git.Push(tc.includeTags)
+
+			if tc.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

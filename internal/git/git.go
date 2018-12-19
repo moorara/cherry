@@ -14,6 +14,9 @@ type (
 		GetRepoName() (string, string, error)
 		GetBranchName() (string, error)
 		GetCommitSHA(short bool) (string, error)
+		Commit(message string, files ...string) error
+		Tag(tag string) error
+		Push(includeTags bool) error
 	}
 
 	git struct {
@@ -110,4 +113,54 @@ func (g *git) GetCommitSHA(short bool) (string, error) {
 	sha := strings.Trim(string(out), "\n")
 
 	return sha, nil
+}
+
+func (g *git) Commit(message string, files ...string) error {
+	// git add ...
+	args := append([]string{"add"}, files...)
+	cmd := exec.Command("git", args...)
+	cmd.Dir = g.workDir
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	// git commit -m ...
+	cmd = exec.Command("git", "commit", "-m", message)
+	cmd.Dir = g.workDir
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (g *git) Tag(tag string) error {
+	// git tag ...
+	cmd := exec.Command("git", "tag", tag)
+	cmd.Dir = g.workDir
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (g *git) Push(includeTags bool) error {
+	// git push
+	cmd := exec.Command("git", "push")
+	cmd.Dir = g.workDir
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	if includeTags {
+		// git push --tags
+		cmd := exec.Command("git", "push", "--tags")
+		cmd.Dir = g.workDir
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

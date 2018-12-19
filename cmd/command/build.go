@@ -1,11 +1,10 @@
 package command
 
 import (
-	"bufio"
 	"context"
 	"flag"
 	"fmt"
-	"os"
+	"io/ioutil"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -14,29 +13,6 @@ import (
 	"github.com/mitchellh/cli"
 	"github.com/moorara/cherry/internal/exec"
 	"github.com/moorara/cherry/internal/git"
-)
-
-const (
-	buildTool      = "Cherry"
-	versionFile    = "VERSION"
-	versionPackage = "./cmd/version"
-
-	buildError     = 20
-	buildFlagError = 21
-	buildTimeout   = 1 * time.Minute
-	buildSynopsis  = `Build artifacts`
-	buildHelp      = `
-	Use this command for building artifacts.
-
-	Flags:
-		-main: path to main.go file                (default: main.go)
-		-out:  path for binary files               (default: bin/app)
-		-all:  build the binary for all platforms  (default: false)
-	`
-)
-
-var (
-	platforms = []string{"linux-386", "linux-amd64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"}
 )
 
 type (
@@ -57,6 +33,27 @@ type (
 	}
 )
 
+const (
+	buildTool = "Cherry"
+
+	buildError     = 20
+	buildFlagError = 21
+	buildTimeout   = 1 * time.Minute
+	buildSynopsis  = `Build artifacts`
+	buildHelp      = `
+	Use this command for building artifacts.
+
+	Flags:
+		-main: path to main.go file                (default: main.go)
+		-out:  path for binary files               (default: bin/app)
+		-all:  build the binary for all platforms  (default: false)
+	`
+)
+
+var (
+	platforms = []string{"linux-386", "linux-amd64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"}
+)
+
 // NewBuild create a new build command
 func NewBuild(ui cli.Ui, workDir string) (*Build, error) {
 	cmd := &Build{
@@ -71,20 +68,12 @@ func NewBuild(ui cli.Ui, workDir string) (*Build, error) {
 func (c *Build) getBuildInfo(ctx context.Context) (*buildInfo, error) {
 	info := new(buildInfo)
 
-	vf, err := os.Open(filepath.Join(c.workDir, versionFile))
+	version, err := ioutil.ReadFile(filepath.Join(c.workDir, versionFile))
 	if err != nil {
 		return nil, err
 	}
-	defer vf.Close()
 
-	sc := bufio.NewScanner(vf)
-	for sc.Scan() {
-		info.Version = sc.Text()
-	}
-
-	if err := sc.Err(); err != nil {
-		return nil, err
-	}
+	info.Version = strings.Trim(string(version), "\n")
 
 	info.Revision, err = c.git.GetCommitSHA(true)
 	if err != nil {

@@ -6,6 +6,45 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type mockUI struct {
+	OutputInMessage    string
+	InfoInMessage      string
+	WarnInMessage      string
+	ErrorInMessage     string
+	AskInQuery         string
+	AskOutString       string
+	AskOutError        error
+	AskSecretInQuery   string
+	AskSecretOutString string
+	AskSecretOutError  error
+}
+
+func (m *mockUI) Output(message string) {
+	m.OutputInMessage = message
+}
+
+func (m *mockUI) Info(message string) {
+	m.InfoInMessage = message
+}
+
+func (m *mockUI) Warn(message string) {
+	m.WarnInMessage = message
+}
+
+func (m *mockUI) Error(message string) {
+	m.ErrorInMessage = message
+}
+
+func (m *mockUI) Ask(query string) (string, error) {
+	m.AskInQuery = query
+	return m.AskOutString, m.AskOutError
+}
+
+func (m *mockUI) AskSecret(query string) (string, error) {
+	m.AskSecretInQuery = query
+	return m.AskSecretOutString, m.AskSecretOutError
+}
+
 type mockLogger struct {
 	DebugInKV     []interface{}
 	DebugOutError error
