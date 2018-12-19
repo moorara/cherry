@@ -129,8 +129,7 @@ func (gh *github) BranchProtectionForAdmin(ctx context.Context, repo, branch str
 	defer res.Body.Close()
 
 	if res.StatusCode != statusCode {
-		err := util.NewHTTPError(res)
-		return err
+		return util.NewHTTPError(res)
 	}
 
 	return nil
@@ -158,8 +157,7 @@ func (gh *github) CreateRelease(ctx context.Context, repo, branch, version, chan
 	defer res.Body.Close()
 
 	if res.StatusCode != 201 {
-		err := util.NewHTTPError(res)
-		return nil, err
+		return nil, util.NewHTTPError(res)
 	}
 
 	release := new(Release)
@@ -182,8 +180,7 @@ func (gh *github) UploadAssets(ctx context.Context, repo, version string, assets
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		err := util.NewHTTPError(res)
-		return err
+		return util.NewHTTPError(res)
 	}
 
 	release := new(Release)
@@ -224,8 +221,7 @@ func (gh *github) UploadAssets(ctx context.Context, repo, version string, assets
 		}
 
 		if res.StatusCode != 201 {
-			err := util.NewHTTPError(res)
-			return err
+			return util.NewHTTPError(res)
 		}
 
 		file.Close()

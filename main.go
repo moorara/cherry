@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/mitchellh/cli"
@@ -62,7 +61,7 @@ func main() {
 
 	status, err := app.Run()
 	if err != nil {
-		ui.Error(fmt.Sprintf("An error occurred: %s", err))
+		ui.Error(err.Error())
 	}
 
 	os.Exit(status)

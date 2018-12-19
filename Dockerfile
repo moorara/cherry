@@ -3,7 +3,7 @@ FROM golang:1.11-alpine as builder
 RUN apk add --no-cache git
 WORKDIR /workspace
 COPY . .
-RUN ./scripts/build.sh --main main.go --binary cherry
+RUN CGO_ENABLED=0 ./scripts/build.sh --main main.go --binary cherry
 
 # FINAL STAGE
 FROM alpine:3.8

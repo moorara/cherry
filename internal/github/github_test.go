@@ -193,7 +193,7 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 			repo:           "username/repo",
 			branch:         "master",
 			enabled:        true,
-			expectedError:  "unexpected status code 400",
+			expectedError:  "POST /repos/username/repo/branches/master/protection/enforce_admins 400",
 		},
 		{
 			name:           "Enable",
@@ -296,7 +296,7 @@ func TestCreateRelease(t *testing.T) {
 			changelog:      "change log description",
 			draf:           false,
 			prerelease:     false,
-			expectedError:  "unexpected status code 400",
+			expectedError:  "POST /repos/username/repo/releases 400",
 		},
 		{
 			name:           "InvalidResponse",
@@ -405,7 +405,7 @@ func TestUploadAssets(t *testing.T) {
 			repo:                     "username/repo",
 			version:                  "0.1.0",
 			assets:                   []string{},
-			expectedError:            "unexpected status code 400",
+			expectedError:            "GET /repos/username/repo/releases/tags/v0.1.0 400",
 		},
 		{
 			name:                     "GetReleaseInvalidResponse",
@@ -469,7 +469,7 @@ func TestUploadAssets(t *testing.T) {
 			repo:                      "username/repo",
 			version:                   "0.1.0",
 			assets:                    []string{"./test/asset"},
-			expectedError:             "unexpected status code 500",
+			expectedError:             "POST /repos/username/repo/releases/1/assets 500",
 		},
 		{
 			name:                      "Successful",
