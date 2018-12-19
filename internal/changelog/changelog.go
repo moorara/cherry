@@ -1,9 +1,15 @@
 package changelog
 
 import (
+	"bufio"
+	"bytes"
 	"context"
-
-	"github.com/moorara/cherry/internal/exec"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"regexp"
+	"strings"
 )
 
 const (
@@ -34,14 +40,63 @@ func (c *changelog) Filename() string {
 }
 
 func (c *changelog) Generate(ctx context.Context, version string) (string, error) {
-	_, err := exec.Command(ctx, c.workDir,
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	cmd := exec.CommandContext(ctx,
 		"github_changelog_generator",
 		"--no-filter-by-milestone",
 		"--exclude-labels", "question,duplicate,invalid,wontfix",
 		"--future-release", version,
 	)
+	cmd.Dir = c.workDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("%s: %s", err.Error(), stderr.String())
+	}
 
-	// TODO: get difference!
+	file, err := os.Open(filepath.Join(c.workDir, changelogFilename))
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
 
-	return "", err
+	// Regex for the start of current release
+	startRE, err := regexp.Compile(fmt.Sprintf(`^## \[%s\]`, version))
+	if err != nil {
+		return "", err
+	}
+
+	// Regex for the end of current release
+	endRE, err := regexp.Compile(`^(##|\\\*)`)
+	if err != nil {
+		return "", err
+	}
+
+	var saveText bool
+	var changelog string
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if startRE.MatchString(line) {
+			saveText = true
+			continue
+		} else if endRE.MatchString(line) {
+			break
+		}
+
+		if saveText {
+			changelog += line + "\n"
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+
+	changelog = strings.Trim(changelog, "\n")
+
+	return changelog, nil
 }

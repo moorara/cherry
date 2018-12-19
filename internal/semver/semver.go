@@ -52,6 +52,11 @@ func (v SemVer) Version() string {
 	return fmt.Sprintf("%d.%d.%d", v.Major, v.Minor, v.Patch)
 }
 
+// GitTag returns a string representation of semantic version to be used as a git tag
+func (v SemVer) GitTag() string {
+	return fmt.Sprintf("v%d.%d.%d", v.Major, v.Minor, v.Patch)
+}
+
 // ReleasePatch returns the current and next semantic versions for a patch release
 func (v SemVer) ReleasePatch() (current SemVer, next SemVer) {
 	current = SemVer{

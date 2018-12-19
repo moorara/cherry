@@ -112,7 +112,16 @@ func (c *Release) getVersions(rt releaseType) (current semver.SemVer, next semve
 	return
 }
 
-func (c *Release) release(ctx context.Context, rt releaseType, comment string) error {
+func (c *Release) release(ctx context.Context, rt releaseType, comment string, build bool) error {
+	branch, err := c.git.GetBranchName()
+	if err != nil {
+		return err
+	}
+
+	if branch != "master" {
+		return errors.New("release has to be run on master branch")
+	}
+
 	clean, err := c.git.IsClean()
 	if err != nil {
 		return err
@@ -129,34 +138,34 @@ func (c *Release) release(ctx context.Context, rt releaseType, comment string) e
 	}
 
 	repo := owner + "/" + name
-	branch := "master"
 
 	// Temporarily disable master branch protection
-	c.ui.Info("Temporarily enabling push to master branch ...")
-	err = c.github.BranchProtectionForAdmin(ctx, repo, branch, true)
+	c.ui.Warn("Temporarily enabling push to master branch ...")
+	err = c.github.BranchProtectionForAdmin(ctx, repo, branch, false)
 	if err != nil {
 		return err
 	}
 
 	// Make sure we re-enable master branch protection
 	defer func() {
-		c.ui.Info("Re-disabling push to master branch ...")
-		err = c.github.BranchProtectionForAdmin(ctx, repo, branch, false)
+		c.ui.Warn("Re-disabling push to master branch ...")
+		err = c.github.BranchProtectionForAdmin(context.Background(), repo, branch, true)
 		if err != nil {
 			c.ui.Error(err.Error())
 		}
 	}()
 
 	// Release the current version and prepare the next version
-	current, _, err := c.getVersions(rt)
+	current, next, err := c.getVersions(rt)
 	if err != nil {
 		return err
 	}
 
-	currentVersion := "v" + current.Version()
+	currentVersion := fmt.Sprintf("v%s", current.Version())
+	nextVersion := fmt.Sprintf("v%s-0", next.Version())
 
 	// Create or update the change log
-	_, err = c.changelog.Generate(ctx, currentVersion)
+	changelogText, err := c.changelog.Generate(ctx, currentVersion)
 	if err != nil {
 		return err
 	}
@@ -172,10 +181,39 @@ func (c *Release) release(ctx context.Context, rt releaseType, comment string) e
 		return err
 	}
 
-	/* err = c.git.Push(true)
+	err = c.git.Push(true)
 	if err != nil {
 		return err
-	} */
+	}
+
+	description := fmt.Sprintf("%s\n\n%s", comment, changelogText)
+	_, err = c.github.CreateRelease(ctx, repo, branch, current, description, false, false)
+	if err != nil {
+		return err
+	}
+
+	// assets
+
+	// upload assets
+
+	c.ui.Info(fmt.Sprintf("Preparing next version %s ...", nextVersion))
+	versionFilePath := filepath.Join(c.workDir, c.versionFile)
+	data := []byte(next.Version() + "\n")
+	err = ioutil.WriteFile(versionFilePath, data, 0644)
+	if err != nil {
+		return err
+	}
+
+	commitMessage = fmt.Sprintf("Beginning %s", nextVersion)
+	err = c.git.Commit(commitMessage, c.versionFile)
+	if err != nil {
+		return err
+	}
+
+	err = c.git.Push(false)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -194,6 +232,7 @@ func (c *Release) Help() string {
 func (c *Release) Run(args []string) int {
 	var patch, minor, major bool
 	var comment string
+	var build bool
 
 	// Parse command flags
 	flags := flag.NewFlagSet("release", flag.ContinueOnError)
@@ -201,6 +240,7 @@ func (c *Release) Run(args []string) int {
 	flags.BoolVar(&minor, "minor", false, "")
 	flags.BoolVar(&major, "major", false, "")
 	flags.StringVar(&comment, "comment", "", "")
+	flags.BoolVar(&build, "build", false, "")
 	flags.Usage = func() { c.ui.Output(c.Help()) }
 	if err := flags.Parse(args); err != nil {
 		return releaseFlagError
@@ -218,7 +258,7 @@ func (c *Release) Run(args []string) int {
 	ctx, cancel := context.WithTimeout(context.Background(), buildTimeout)
 	defer cancel()
 
-	err := c.release(ctx, rt, comment)
+	err := c.release(ctx, rt, comment, build)
 	if err != nil {
 		c.ui.Error(err.Error())
 		return buildError

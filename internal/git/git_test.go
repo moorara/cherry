@@ -151,7 +151,15 @@ func TestCommit(t *testing.T) {
 		message       string
 		files         []string
 		expectedError bool
-	}{}
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			message:       "test commit",
+			files:         []string{"."},
+			expectedError: true,
+		},
+	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -173,7 +181,14 @@ func TestTag(t *testing.T) {
 		workDir       string
 		tag           string
 		expectedError bool
-	}{}
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			tag:           "test-tag",
+			expectedError: true,
+		},
+	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -195,7 +210,14 @@ func TestPush(t *testing.T) {
 		workDir       string
 		includeTags   bool
 		expectedError bool
-	}{}
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			includeTags:   true,
+			expectedError: true,
+		},
+	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
