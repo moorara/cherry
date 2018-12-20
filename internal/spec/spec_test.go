@@ -1,4 +1,4 @@
-package model
+package spec
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestReadSpec(t *testing.T) {
+func TestRead(t *testing.T) {
 	tests := []struct {
 		name          string
 		path          string
@@ -51,7 +51,7 @@ func TestReadSpec(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			spec, err := ReadSpec(tc.path)
+			spec, err := Read(tc.path)
 
 			if tc.expectedError == "" {
 				assert.NoError(t, err)

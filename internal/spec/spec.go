@@ -1,4 +1,4 @@
-package model
+package spec
 
 import (
 	"os"
@@ -15,8 +15,8 @@ type (
 	}
 )
 
-// ReadSpec reads and returns a Spec from a YAML file
-func ReadSpec(path string) (*Spec, error) {
+// Read reads and returns a Spec from a YAML file
+func Read(path string) (*Spec, error) {
 	spec := new(Spec)
 	path = filepath.Clean(path)
 

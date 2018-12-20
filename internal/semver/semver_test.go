@@ -129,6 +129,31 @@ func TestGitTag(t *testing.T) {
 	}
 }
 
+func TestPreRelease(t *testing.T) {
+	tests := []struct {
+		semver             SemVer
+		expectedPreRelease string
+	}{
+		{
+			SemVer{},
+			"0.0.0-0",
+		},
+		{
+			SemVer{0, 1, 0},
+			"0.1.0-0",
+		},
+		{
+			SemVer{1, 2, 0},
+			"1.2.0-0",
+		},
+	}
+
+	for _, tc := range tests {
+		preRelease := tc.semver.PreRelease()
+		assert.Equal(t, tc.expectedPreRelease, preRelease)
+	}
+}
+
 func TestReleasePatch(t *testing.T) {
 	tests := []struct {
 		semver          SemVer

@@ -20,18 +20,20 @@ type (
 	// Changelog is the interface for change log generation
 	Changelog interface {
 		Filename() string
-		Generate(ctx context.Context, version string) (string, error)
+		Generate(ctx context.Context, gitTag string) (string, error)
 	}
 
 	changelog struct {
-		workDir string
+		workDir     string
+		githubToken string
 	}
 )
 
 // New creates a new instance of Changelog
-func New(workDir string) Changelog {
+func New(workDir, githubToken string) Changelog {
 	return &changelog{
-		workDir: workDir,
+		workDir:     workDir,
+		githubToken: githubToken,
 	}
 }
 
@@ -39,21 +41,23 @@ func (c *changelog) Filename() string {
 	return changelogFilename
 }
 
-func (c *changelog) Generate(ctx context.Context, version string) (string, error) {
+func (c *changelog) Generate(ctx context.Context, gitTag string) (string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
 	cmd := exec.CommandContext(ctx,
 		"github_changelog_generator",
+		"--token", c.githubToken,
 		"--no-filter-by-milestone",
 		"--exclude-labels", "question,duplicate,invalid,wontfix",
-		"--future-release", version,
+		"--future-release", gitTag,
 	)
+
 	cmd.Dir = c.workDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return "", fmt.Errorf("%s: %s %s", err.Error(), stdout.String(), stderr.String())
 	}
 
 	file, err := os.Open(filepath.Join(c.workDir, changelogFilename))
@@ -63,7 +67,7 @@ func (c *changelog) Generate(ctx context.Context, version string) (string, error
 	defer file.Close()
 
 	// Regex for the start of current release
-	startRE, err := regexp.Compile(fmt.Sprintf(`^## \[%s\]`, version))
+	startRE, err := regexp.Compile(fmt.Sprintf(`^## \[%s\]`, gitTag))
 	if err != nil {
 		return "", err
 	}
