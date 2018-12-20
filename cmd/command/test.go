@@ -18,17 +18,17 @@ import (
 type (
 	// Test is the test CLI command
 	Test struct {
-		ui      cli.Ui
-		workDir string
+		cli.Ui
+		WorkDir string
 	}
 )
 
 const (
-	atomicMode   = "atomic"
-	atomicHeader = "mode: atomic\n"
-	reportPath   = "coverage"
-	coverFile    = "cover.out"
-	reportFile   = "index.html"
+	atomicMode    = "atomic"
+	atomicHeader  = "mode: atomic\n"
+	coverFile     = "cover.out"
+	reportFile    = "index.html"
+	defaultReport = "coverage"
 
 	testError     = 40
 	testFlagError = 41
@@ -36,14 +36,24 @@ const (
 	testSynopsis  = `Run tests`
 	testHelp      = `
 	Use this command for running unit tests and generating coverage report.
+	Currently, this command can only test Go applications.
+
+	Flags:
+	
+		-report: the path for coverage report  (default: coverage)
+	
+	Examples:
+
+		cherry test
+		cherry test -report report
 	`
 )
 
 // NewTest create a new test command
 func NewTest(ui cli.Ui, workDir string) (*Test, error) {
 	cmd := &Test{
-		ui:      ui,
-		workDir: workDir,
+		Ui:      ui,
+		WorkDir: workDir,
 	}
 
 	return cmd, nil
@@ -54,7 +64,7 @@ func (c *Test) getPackages(ctx context.Context) ([]string, error) {
 	var stderr bytes.Buffer
 
 	cmd := exec.CommandContext(ctx, "go", "list", "./...")
-	cmd.Dir = c.workDir
+	cmd.Dir = c.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -86,22 +96,25 @@ func (c *Test) testPackage(ctx context.Context, pkg, coverfile string) error {
 
 	// Run go test with cover mode
 	cmd := exec.CommandContext(ctx, "go", "test", "-covermode", atomicMode, "-coverprofile", tf.Name(), pkg)
-	cmd.Dir = c.workDir
+	cmd.Dir = c.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
+	err = cmd.Run()
+	testOutput := strings.Trim(stdout.String(), "\n")
+
+	if err != nil {
+		c.Ui.Error(fmt.Sprintf("\n%s\n", testOutput))
 		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
-	testOutput := strings.Trim(stdout.String(), "\n")
-	c.ui.Output(testOutput)
+	c.Ui.Info(fmt.Sprintf("✅ %s", testOutput))
 
 	stdout.Reset()
 	stderr.Reset()
 
 	// Get the coverage data
 	cmd = exec.CommandContext(ctx, "tail", "-n", "+2", tf.Name())
-	cmd.Dir = c.workDir
+	cmd.Dir = c.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -119,11 +132,11 @@ func (c *Test) testPackage(ctx context.Context, pkg, coverfile string) error {
 	return nil
 }
 
-func (c *Test) cover(ctx context.Context) error {
+func (c *Test) cover(ctx context.Context, report string) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	reportpath := filepath.Join(c.workDir, reportPath)
+	reportpath := filepath.Join(c.WorkDir, report)
 	coverfile := filepath.Join(reportpath, coverFile)
 	reportfile := filepath.Join(reportpath, reportFile)
 
@@ -157,7 +170,7 @@ func (c *Test) cover(ctx context.Context) error {
 
 	// Generate the singleton html coverage report for all packages
 	cmd := exec.CommandContext(ctx, "go", "tool", "cover", "-html", coverfile, "-o", reportfile)
-	cmd.Dir = c.workDir
+	cmd.Dir = c.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -179,9 +192,12 @@ func (c *Test) Help() string {
 
 // Run runs the actual command with the given CLI instance and command-line arguments
 func (c *Test) Run(args []string) int {
+	var report string
+
 	// Parse command flags
 	flags := flag.NewFlagSet("test", flag.ContinueOnError)
-	flags.Usage = func() { c.ui.Output(c.Help()) }
+	flags.StringVar(&report, "report", defaultReport, "")
+	flags.Usage = func() { c.Ui.Output(c.Help()) }
 	if err := flags.Parse(args); err != nil {
 		return testFlagError
 	}
@@ -189,9 +205,9 @@ func (c *Test) Run(args []string) int {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 
-	err := c.cover(ctx)
+	err := c.cover(ctx, report)
 	if err != nil {
-		c.ui.Error(err.Error())
+		c.Ui.Error(err.Error())
 		return testError
 	}
 
