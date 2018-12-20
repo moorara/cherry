@@ -1,18 +1,20 @@
 package command
 
 import (
+	"bytes"
 	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 
 	"github.com/mitchellh/cli"
-	"github.com/moorara/cherry/internal/exec"
 	"github.com/moorara/cherry/internal/git"
+	"github.com/moorara/cherry/internal/util"
 )
 
 type (
@@ -93,10 +95,18 @@ func (c *Build) getBuildInfo(ctx context.Context) (*buildInfo, error) {
 }
 
 func (c *Build) getLDFlags(ctx context.Context, info *buildInfo) (string, error) {
-	vPkg, err := exec.Command(ctx, c.workDir, "go", "list", versionPackage)
-	if err != nil {
-		return "", err
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	cmd := exec.CommandContext(ctx, "go", "list", versionPackage)
+	cmd.Dir = c.workDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
+
+	vPkg := strings.Trim(stdout.String(), "\n")
 
 	versionFlag := fmt.Sprintf("-X %s.Version=%s", vPkg, info.Version)
 	revisionFlag := fmt.Sprintf("-X %s.Revision=%s", vPkg, info.Revision)
@@ -107,10 +117,13 @@ func (c *Build) getLDFlags(ctx context.Context, info *buildInfo) (string, error)
 
 	ldflags := fmt.Sprintf("%s %s %s %s %s %s", versionFlag, revisionFlag, branchFlag, goVersionFlag, buildToolFlag, buildTimeFlag)
 
-	return ldflags, err
+	return ldflags, nil
 }
 
 func (c *Build) build(ctx context.Context, main, out string) error {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
 	info, err := c.getBuildInfo(ctx)
 	if err != nil {
 		return err
@@ -121,10 +134,15 @@ func (c *Build) build(ctx context.Context, main, out string) error {
 		return err
 	}
 
-	_, err = exec.Command(ctx, c.workDir, "go", "build", "-ldflags", ldflags, "-o", out, main)
-	if err != nil {
-		return err
+	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", ldflags, "-o", out, main)
+	cmd.Dir = c.workDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
+
+	c.ui.Info(out)
 
 	return nil
 }
@@ -141,20 +159,31 @@ func (c *Build) buildAll(ctx context.Context, main, outPrefix string) error {
 	}
 
 	for _, platform := range platforms {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+
 		env := strings.Split(platform, "-")
-		reset, err := exec.SetEnvVars("GOOS", env[0], "GOARCH", env[1])
+		reset, err := util.SetEnvVars("GOOS", env[0], "GOARCH", env[1])
 		if err != nil {
 			return err
 		}
 
+		stdout.Reset()
+		stderr.Reset()
+
 		out := fmt.Sprintf("%s-%s", outPrefix, platform)
-		_, err = exec.Command(ctx, c.workDir, "go", "build", "-ldflags", ldflags, "-o", out, main)
-		if err != nil {
-			return err
+		cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", ldflags, "-o", out, main)
+		cmd.Dir = c.workDir
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 		}
 
 		// Restore environment variables
 		reset()
+
+		c.ui.Info(out)
 	}
 
 	return nil

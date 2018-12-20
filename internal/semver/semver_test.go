@@ -104,6 +104,31 @@ func TestVersion(t *testing.T) {
 	}
 }
 
+func TestGitTag(t *testing.T) {
+	tests := []struct {
+		semver         SemVer
+		expectedGitTag string
+	}{
+		{
+			SemVer{},
+			"v0.0.0",
+		},
+		{
+			SemVer{0, 1, 0},
+			"v0.1.0",
+		},
+		{
+			SemVer{1, 2, 0},
+			"v1.2.0",
+		},
+	}
+
+	for _, tc := range tests {
+		gitTag := tc.semver.GitTag()
+		assert.Equal(t, tc.expectedGitTag, gitTag)
+	}
+}
+
 func TestReleasePatch(t *testing.T) {
 	tests := []struct {
 		semver          SemVer
