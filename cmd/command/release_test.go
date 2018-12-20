@@ -22,7 +22,7 @@ func TestNewRelease(t *testing.T) {
 	}
 }
 
-func TestGetVersions(t *testing.T) {
+func TestProcessVersions(t *testing.T) {
 	tests := []struct {
 		name               string
 		workDir            string
@@ -96,12 +96,12 @@ func TestGetVersions(t *testing.T) {
 			}
 
 			cmd := &Release{
-				ui:          &mockUI{},
-				workDir:     tc.workDir,
-				versionFile: tc.versionFileName,
+				Ui:          &mockUI{},
+				WorkDir:     tc.workDir,
+				VersionFile: tc.versionFileName,
 			}
 
-			current, next, err := cmd.getVersions(tc.releaseType)
+			current, next, err := cmd.processVersions(tc.releaseType)
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)

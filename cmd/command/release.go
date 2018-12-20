@@ -22,13 +22,13 @@ type (
 
 	// Release is the release CLI command
 	Release struct {
-		ui          cli.Ui
-		workDir     string
-		versionFile string
-		git         git.Git
-		github      github.Github
-		githubToken string
-		changelog   changelog.Changelog
+		cli.Ui
+		git.Git
+		github.Github
+		changelog.Changelog
+		WorkDir      string
+		VersionFile  string
+		Repo, Branch string
 	}
 )
 
@@ -47,10 +47,22 @@ const (
 	Use this command for creating a new release.
 
 	Flags:
-		- major:   create a major version release  (default: false)
-		- minor:   create a minor version release  (default: false)
-		- patch:   create a patch version release  (default: true)
-		- comment: add a comment for the release
+
+		-patch:   create a patch version release                       (default: true)
+		-minor:   create a minor version release                       (default: false)
+		-major:   create a major version release                       (default: false)
+		-comment: add a comment for the release
+		-build:   build the artifacts and include them in the release  (default: false)
+	
+	Examples:
+
+		cherry release
+		cherry release -build
+		cherry release -minor
+		cherry release -minor -build
+		cherry release -major
+		cherry release -major -build
+		cherry release -comment "release comment"
 	`
 )
 
@@ -62,26 +74,36 @@ func NewRelease(ui cli.Ui, workDir, githubToken string) (*Release, error) {
 
 	git := git.New(workDir)
 	github := github.New(releaseTimeout, githubToken)
-	changelog := changelog.New(workDir)
+	changelog := changelog.New(workDir, githubToken)
+
+	owner, name, err := git.GetRepoName()
+	if err != nil {
+		return nil, err
+	}
+	repo := owner + "/" + name
+
+	branch, err := git.GetBranchName()
+	if err != nil {
+		return nil, err
+	}
 
 	cmd := &Release{
-		ui:          ui,
-		workDir:     workDir,
-		versionFile: versionFile,
-		git:         git,
-		github:      github,
-		githubToken: githubToken,
-		changelog:   changelog,
+		Ui:          ui,
+		Git:         git,
+		Github:      github,
+		Changelog:   changelog,
+		WorkDir:     workDir,
+		VersionFile: versionFile,
+		Repo:        repo,
+		Branch:      branch,
 	}
 
 	return cmd, nil
 }
 
-func (c *Release) getVersions(rt releaseType) (current semver.SemVer, next semver.SemVer, err error) {
-	c.ui.Info("Releasing current version ...")
-
+func (c *Release) processVersions(rt releaseType) (current, next semver.SemVer, err error) {
 	var data []byte
-	versionFilePath := filepath.Join(c.workDir, c.versionFile)
+	versionFilePath := filepath.Join(c.WorkDir, c.VersionFile)
 
 	data, err = ioutil.ReadFile(versionFilePath)
 	if err != nil {
@@ -113,16 +135,11 @@ func (c *Release) getVersions(rt releaseType) (current semver.SemVer, next semve
 }
 
 func (c *Release) release(ctx context.Context, rt releaseType, comment string, build bool) error {
-	branch, err := c.git.GetBranchName()
-	if err != nil {
-		return err
-	}
-
-	if branch != "master" {
+	if c.Branch != "master" {
 		return errors.New("release has to be run on master branch")
 	}
 
-	clean, err := c.git.IsClean()
+	clean, err := c.Git.IsClean()
 	if err != nil {
 		return err
 	}
@@ -132,85 +149,80 @@ func (c *Release) release(ctx context.Context, rt releaseType, comment string, b
 		return errors.New("working directory is not clean and has uncommitted changes")
 	}
 
-	owner, name, err := c.git.GetRepoName()
-	if err != nil {
-		return err
-	}
-
-	repo := owner + "/" + name
-
 	// Temporarily disable master branch protection
-	c.ui.Warn("Temporarily enabling push to master branch ...")
-	err = c.github.BranchProtectionForAdmin(ctx, repo, branch, false)
+	c.Ui.Warn("🔓 Temporarily enabling push to master branch ...")
+	err = c.Github.BranchProtectionForAdmin(ctx, c.Repo, c.Branch, false)
 	if err != nil {
 		return err
 	}
 
 	// Make sure we re-enable master branch protection
 	defer func() {
-		c.ui.Warn("Re-disabling push to master branch ...")
-		err = c.github.BranchProtectionForAdmin(context.Background(), repo, branch, true)
+		c.Ui.Warn("🔒 Re-disabling push to master branch ...")
+		err = c.Github.BranchProtectionForAdmin(context.Background(), c.Repo, c.Branch, true)
 		if err != nil {
-			c.ui.Error(err.Error())
+			c.Ui.Error(err.Error())
 		}
 	}()
 
 	// Release the current version and prepare the next version
-	current, next, err := c.getVersions(rt)
+	c.Ui.Info("🚀 Releasing current version ...")
+	current, next, err := c.processVersions(rt)
 	if err != nil {
 		return err
 	}
-
-	currentVersion := fmt.Sprintf("v%s", current.Version())
-	nextVersion := fmt.Sprintf("v%s-0", next.Version())
 
 	// Create or update the change log
-	changelogText, err := c.changelog.Generate(ctx, currentVersion)
+	changelogText, err := c.Changelog.Generate(ctx, current.GitTag())
 	if err != nil {
 		return err
 	}
 
-	commitMessage := fmt.Sprintf("Releasing %s", currentVersion)
-	err = c.git.Commit(commitMessage, c.versionFile, c.changelog.Filename())
+	commitMessage := fmt.Sprintf("Releasing %s", current.Version())
+	err = c.Git.Commit(commitMessage, c.VersionFile, c.Changelog.Filename())
 	if err != nil {
 		return err
 	}
 
-	err = c.git.Tag(currentVersion)
+	err = c.Git.Tag(current.GitTag())
 	if err != nil {
 		return err
 	}
 
-	err = c.git.Push(true)
+	err = c.Git.Push(true)
 	if err != nil {
 		return err
 	}
 
 	description := fmt.Sprintf("%s\n\n%s", comment, changelogText)
-	_, err = c.github.CreateRelease(ctx, repo, branch, current, description, false, false)
+	release, err := c.Github.CreateRelease(ctx, c.Repo, c.Branch, current, description, false, false)
 	if err != nil {
 		return err
 	}
 
-	// assets
+	// Building and uploading artifacts
+	if build {
+		c.Ui.Info(fmt.Sprintf("🛠️ Building artifacts for release %s ...", release.Name))
 
-	// upload assets
+		c.Ui.Info(fmt.Sprintf("📦 Uploading artifacts for release %s ...", release.Name))
+	}
 
-	c.ui.Info(fmt.Sprintf("Preparing next version %s ...", nextVersion))
-	versionFilePath := filepath.Join(c.workDir, c.versionFile)
-	data := []byte(next.Version() + "\n")
+	// Prepare the version file for next version
+	c.Ui.Info(fmt.Sprintf("✏️ Preparing next version %s ...", next.PreRelease()))
+	versionFilePath := filepath.Join(c.WorkDir, c.VersionFile)
+	data := []byte(next.PreRelease() + "\n")
 	err = ioutil.WriteFile(versionFilePath, data, 0644)
 	if err != nil {
 		return err
 	}
 
-	commitMessage = fmt.Sprintf("Beginning %s", nextVersion)
-	err = c.git.Commit(commitMessage, c.versionFile)
+	commitMessage = fmt.Sprintf("Beginning %s", next.PreRelease())
+	err = c.Git.Commit(commitMessage, c.VersionFile)
 	if err != nil {
 		return err
 	}
 
-	err = c.git.Push(false)
+	err = c.Git.Push(false)
 	if err != nil {
 		return err
 	}
@@ -241,7 +253,7 @@ func (c *Release) Run(args []string) int {
 	flags.BoolVar(&major, "major", false, "")
 	flags.StringVar(&comment, "comment", "", "")
 	flags.BoolVar(&build, "build", false, "")
-	flags.Usage = func() { c.ui.Output(c.Help()) }
+	flags.Usage = func() { c.Ui.Output(c.Help()) }
 	if err := flags.Parse(args); err != nil {
 		return releaseFlagError
 	}
@@ -260,7 +272,7 @@ func (c *Release) Run(args []string) int {
 
 	err := c.release(ctx, rt, comment, build)
 	if err != nil {
-		c.ui.Error(err.Error())
+		c.Ui.Error(err.Error())
 		return buildError
 	}
 
