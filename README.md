@@ -3,7 +3,7 @@
 
 # Cherry
 
-This is a **work-in-progress** opinionated tool for buidling, releasing, and deploying applications.
+This is a *work-in-progress* **opinionated** tool for testing, buidling, releasing, and deploying applications.
 
 ## Commands
 

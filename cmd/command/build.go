@@ -10,9 +10,11 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/mitchellh/cli"
+	"github.com/moorara/cherry/cmd/version"
 	"github.com/moorara/cherry/internal/git"
 	"github.com/moorara/cherry/internal/util"
 )
@@ -29,14 +31,15 @@ type (
 
 	// Build is the build CLI command
 	Build struct {
-		ui      cli.Ui
-		workDir string
-		git     git.Git
+		cli.Ui
+		git.Git
+		WorkDir  string
+		RepoName string
 	}
 )
 
 const (
-	buildTool = "Cherry"
+	buildTool = "cherry"
 
 	buildError     = 20
 	buildFlagError = 21
@@ -44,11 +47,19 @@ const (
 	buildSynopsis  = `Build artifacts`
 	buildHelp      = `
 	Use this command for building artifacts.
+	Currently, this command can only build Go applications.
 
 	Flags:
-		-main: path to main.go file                (default: main.go)
-		-out:  path for binary files               (default: bin/app)
+
 		-all:  build the binary for all platforms  (default: false)
+		-main: path to main.go file                (default: main.go)
+		-out:  path for binary files               (default: bin/{{.RepoName}})
+
+	Examples:
+
+		cherry build
+		cherry build -all
+		cherry -main cmd/main.go -out build/app
 	`
 )
 
@@ -58,10 +69,19 @@ var (
 
 // NewBuild create a new build command
 func NewBuild(ui cli.Ui, workDir string) (*Build, error) {
+	git := git.New(workDir)
+
+	_, repoName, err := git.GetRepoName()
+	if err != nil {
+		ui.Error(err.Error())
+		return nil, err
+	}
+
 	cmd := &Build{
-		ui:      ui,
-		workDir: workDir,
-		git:     git.New(workDir),
+		Ui:       ui,
+		Git:      git,
+		WorkDir:  workDir,
+		RepoName: repoName,
 	}
 
 	return cmd, nil
@@ -70,25 +90,25 @@ func NewBuild(ui cli.Ui, workDir string) (*Build, error) {
 func (c *Build) getBuildInfo(ctx context.Context) (*buildInfo, error) {
 	info := new(buildInfo)
 
-	version, err := ioutil.ReadFile(filepath.Join(c.workDir, versionFile))
+	data, err := ioutil.ReadFile(filepath.Join(c.WorkDir, versionFile))
 	if err != nil {
 		return nil, err
 	}
 
-	info.Version = strings.Trim(string(version), "\n")
+	info.Version = strings.Trim(string(data), "\n")
 
-	info.Revision, err = c.git.GetCommitSHA(true)
+	info.Revision, err = c.Git.GetCommitSHA(true)
 	if err != nil {
 		return nil, err
 	}
 
-	info.Branch, err = c.git.GetBranchName()
+	info.Branch, err = c.Git.GetBranchName()
 	if err != nil {
 		return nil, err
 	}
 
 	info.GoVersion = runtime.Version()
-	info.BuildTool = buildTool
+	info.BuildTool = fmt.Sprintf("%s-%s", buildTool, version.Version)
 	info.BuildTime = time.Now().UTC()
 
 	return info, nil
@@ -99,7 +119,7 @@ func (c *Build) getLDFlags(ctx context.Context, info *buildInfo) (string, error)
 	var stderr bytes.Buffer
 
 	cmd := exec.CommandContext(ctx, "go", "list", versionPackage)
-	cmd.Dir = c.workDir
+	cmd.Dir = c.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -135,14 +155,14 @@ func (c *Build) build(ctx context.Context, main, out string) error {
 	}
 
 	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", ldflags, "-o", out, main)
-	cmd.Dir = c.workDir
+	cmd.Dir = c.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
-	c.ui.Info(out)
+	c.Ui.Info(fmt.Sprintf("✅ %s", out))
 
 	return nil
 }
@@ -173,7 +193,7 @@ func (c *Build) buildAll(ctx context.Context, main, outPrefix string) error {
 
 		out := fmt.Sprintf("%s-%s", outPrefix, platform)
 		cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", ldflags, "-o", out, main)
-		cmd.Dir = c.workDir
+		cmd.Dir = c.WorkDir
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
@@ -183,7 +203,7 @@ func (c *Build) buildAll(ctx context.Context, main, outPrefix string) error {
 		// Restore environment variables
 		reset()
 
-		c.ui.Info(out)
+		c.Ui.Info(fmt.Sprintf("✅ %s", out))
 	}
 
 	return nil
@@ -196,46 +216,43 @@ func (c *Build) Synopsis() string {
 
 // Help returns the long help text including usage, description, and list of flags for the command
 func (c *Build) Help() string {
-	return buildHelp
+	var buf bytes.Buffer
+	t := template.Must(template.New("help").Parse(buildHelp))
+	t.Execute(&buf, c)
+
+	return buf.String()
 }
 
 // Run runs the actual command with the given CLI instance and command-line arguments
 func (c *Build) Run(args []string) int {
-	var main, out string
 	var all bool
-
-	_, repoName, err := c.git.GetRepoName()
-	if err != nil {
-		c.ui.Error(err.Error())
-		return buildError
-	}
+	var main, out string
+	defaultOut := "bin/" + c.RepoName
 
 	// Parse command flags
 	flags := flag.NewFlagSet("build", flag.ContinueOnError)
-	flags.StringVar(&main, "main", "main.go", "")
-	flags.StringVar(&out, "out", "bin/"+repoName, "")
 	flags.BoolVar(&all, "all", false, "")
-	flags.Usage = func() { c.ui.Output(c.Help()) }
+	flags.StringVar(&main, "main", "main.go", "")
+	flags.StringVar(&out, "out", defaultOut, "")
+	flags.Usage = func() { c.Ui.Output(c.Help()) }
 	if err := flags.Parse(args); err != nil {
 		return buildFlagError
 	}
 
+	var err error
+
 	ctx, cancel := context.WithTimeout(context.Background(), buildTimeout)
 	defer cancel()
 
-	err = c.build(ctx, main, out)
+	if all {
+		err = c.buildAll(ctx, main, out)
+	} else {
+		err = c.build(ctx, main, out)
+	}
+
 	if err != nil {
-		c.ui.Error(err.Error())
+		c.Ui.Error(err.Error())
 		return buildError
 	}
-
-	if all == true {
-		err = c.buildAll(ctx, main, out)
-		if err != nil {
-			c.ui.Error(err.Error())
-			return buildError
-		}
-	}
-
 	return 0
 }
