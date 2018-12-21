@@ -3,7 +3,6 @@ package command
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"path/filepath"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/moorara/cherry/internal/git"
 	"github.com/moorara/cherry/internal/github"
 	"github.com/moorara/cherry/internal/semver"
+	"github.com/moorara/cherry/internal/spec"
 )
 
 type (
@@ -25,8 +25,8 @@ type (
 		github.Github
 		changelog.Changelog
 		semver.Manager
+		Spec         spec.Spec
 		WorkDir      string
-		VersionFile  string
 		Repo, Branch string
 	}
 )
@@ -47,11 +47,11 @@ const (
 
 	Flags:
 
-		-patch:   create a patch version release                       (default: true)
-		-minor:   create a minor version release                       (default: false)
-		-major:   create a major version release                       (default: false)
-		-comment: add a comment for the release
-		-build:   build the artifacts and include them in the release  (default: false)
+		-patch:    create a patch version release                       (default: true)
+		-minor:    create a minor version release                       (default: false)
+		-major:    create a major version release                       (default: false)
+		-comment:  add a comment for the release
+		-build:    build the artifacts and include them in the release  (default: false)
 	
 	Examples:
 
@@ -66,7 +66,7 @@ const (
 )
 
 // NewRelease create a new release command
-func NewRelease(ui cli.Ui, workDir, githubToken string) (*Release, error) {
+func NewRelease(ui cli.Ui, spec spec.Spec, workDir, githubToken string) (*Release, error) {
 	if githubToken == "" {
 		return nil, errors.New("github token is not set")
 	}
@@ -75,7 +75,7 @@ func NewRelease(ui cli.Ui, workDir, githubToken string) (*Release, error) {
 	github := github.New(releaseTimeout, githubToken)
 	changelog := changelog.New(workDir, githubToken)
 
-	manager, err := semver.NewManager(filepath.Join(workDir, versionFile))
+	manager, err := semver.NewManager(filepath.Join(workDir, spec.VersionFile))
 	if err != nil {
 		return nil, err
 	}
@@ -92,15 +92,15 @@ func NewRelease(ui cli.Ui, workDir, githubToken string) (*Release, error) {
 	}
 
 	cmd := &Release{
-		Ui:          ui,
-		Git:         git,
-		Github:      github,
-		Changelog:   changelog,
-		Manager:     manager,
-		WorkDir:     workDir,
-		VersionFile: versionFile,
-		Repo:        repo,
-		Branch:      branch,
+		Ui:        ui,
+		Git:       git,
+		Github:    github,
+		Changelog: changelog,
+		Manager:   manager,
+		Spec:      spec,
+		WorkDir:   workDir,
+		Repo:      repo,
+		Branch:    branch,
 	}
 
 	return cmd, nil
@@ -176,7 +176,7 @@ func (c *Release) release(ctx context.Context, rt releaseType, comment string, b
 	}
 
 	commitMessage := fmt.Sprintf("Releasing %s", current.Version())
-	err = c.Git.Commit(commitMessage, c.VersionFile, c.Changelog.Filename())
+	err = c.Git.Commit(commitMessage, c.Spec.VersionFile, c.Changelog.Filename())
 	if err != nil {
 		return err
 	}
@@ -212,7 +212,7 @@ func (c *Release) release(ctx context.Context, rt releaseType, comment string, b
 	}
 
 	commitMessage = fmt.Sprintf("Beginning %s", next.PreRelease())
-	err = c.Git.Commit(commitMessage, c.VersionFile)
+	err = c.Git.Commit(commitMessage, c.Spec.VersionFile)
 	if err != nil {
 		return err
 	}
@@ -239,17 +239,15 @@ func (c *Release) Help() string {
 func (c *Release) Run(args []string) int {
 	var patch, minor, major bool
 	var comment string
-	var build bool
 
 	// Parse command flags
-	flags := flag.NewFlagSet("release", flag.ContinueOnError)
-	flags.BoolVar(&patch, "patch", true, "")
-	flags.BoolVar(&minor, "minor", false, "")
-	flags.BoolVar(&major, "major", false, "")
-	flags.StringVar(&comment, "comment", "", "")
-	flags.BoolVar(&build, "build", false, "")
-	flags.Usage = func() { c.Ui.Output(c.Help()) }
-	if err := flags.Parse(args); err != nil {
+	fs := c.Spec.Release.FlagSet()
+	fs.BoolVar(&patch, "patch", true, "")
+	fs.BoolVar(&minor, "minor", false, "")
+	fs.BoolVar(&major, "major", false, "")
+	fs.StringVar(&comment, "comment", "", "")
+	fs.Usage = func() { c.Ui.Output(c.Help()) }
+	if err := fs.Parse(args); err != nil {
 		return releaseFlagError
 	}
 
@@ -265,7 +263,7 @@ func (c *Release) Run(args []string) int {
 	ctx, cancel := context.WithTimeout(context.Background(), buildTimeout)
 	defer cancel()
 
-	err := c.release(ctx, rt, comment, build)
+	err := c.release(ctx, rt, comment, c.Spec.Release.Build)
 	if err != nil {
 		c.Ui.Error(err.Error())
 		return buildError

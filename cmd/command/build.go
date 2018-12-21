@@ -3,7 +3,6 @@ package command
 import (
 	"bytes"
 	"context"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"os/exec"
@@ -16,6 +15,7 @@ import (
 	"github.com/mitchellh/cli"
 	"github.com/moorara/cherry/cmd/version"
 	"github.com/moorara/cherry/internal/git"
+	"github.com/moorara/cherry/internal/spec"
 	"github.com/moorara/cherry/internal/util"
 )
 
@@ -33,6 +33,7 @@ type (
 	Build struct {
 		cli.Ui
 		git.Git
+		Spec     spec.Spec
 		WorkDir  string
 		RepoName string
 	}
@@ -51,24 +52,20 @@ const (
 
 	Flags:
 
-		-all:  build the binary for all platforms  (default: false)
-		-main: path to main.go file                (default: main.go)
-		-out:  path for binary files               (default: bin/{{.RepoName}})
+		-main-file:      path to main.go file                (default: main.go)
+		-binary-file:    path for binary files               (default: {{.Spec.Build.BinaryFile}})
+		-cross-compile:  build the binary for all platforms  (default: false)
 
 	Examples:
 
 		cherry build
-		cherry build -all
-		cherry -main cmd/main.go -out build/app
+		cherry build -cross-compile
+		cherry -main-file cmd/main.go -binary-file build/app
 	`
 )
 
-var (
-	platforms = []string{"linux-386", "linux-amd64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"}
-)
-
 // NewBuild create a new build command
-func NewBuild(ui cli.Ui, workDir string) (*Build, error) {
+func NewBuild(ui cli.Ui, spec spec.Spec, workDir string) (*Build, error) {
 	git := git.New(workDir)
 
 	_, repoName, err := git.GetRepoName()
@@ -77,9 +74,12 @@ func NewBuild(ui cli.Ui, workDir string) (*Build, error) {
 		return nil, err
 	}
 
+	spec.Build.BinaryFile = "bin/" + repoName
+
 	cmd := &Build{
 		Ui:       ui,
 		Git:      git,
+		Spec:     spec,
 		WorkDir:  workDir,
 		RepoName: repoName,
 	}
@@ -90,7 +90,7 @@ func NewBuild(ui cli.Ui, workDir string) (*Build, error) {
 func (c *Build) getBuildInfo(ctx context.Context) (*buildInfo, error) {
 	info := new(buildInfo)
 
-	data, err := ioutil.ReadFile(filepath.Join(c.WorkDir, versionFile))
+	data, err := ioutil.ReadFile(filepath.Join(c.WorkDir, c.Spec.VersionFile))
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +178,7 @@ func (c *Build) buildAll(ctx context.Context, main, outPrefix string) error {
 		return err
 	}
 
-	for _, platform := range platforms {
+	for _, platform := range c.Spec.Build.Platforms {
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
 
@@ -225,17 +225,10 @@ func (c *Build) Help() string {
 
 // Run runs the actual command with the given CLI instance and command-line arguments
 func (c *Build) Run(args []string) int {
-	var all bool
-	var main, out string
-	defaultOut := "bin/" + c.RepoName
-
 	// Parse command flags
-	flags := flag.NewFlagSet("build", flag.ContinueOnError)
-	flags.BoolVar(&all, "all", false, "")
-	flags.StringVar(&main, "main", "main.go", "")
-	flags.StringVar(&out, "out", defaultOut, "")
-	flags.Usage = func() { c.Ui.Output(c.Help()) }
-	if err := flags.Parse(args); err != nil {
+	fs := c.Spec.Build.FlagSet()
+	fs.Usage = func() { c.Ui.Output(c.Help()) }
+	if err := fs.Parse(args); err != nil {
 		return buildFlagError
 	}
 
@@ -244,10 +237,10 @@ func (c *Build) Run(args []string) int {
 	ctx, cancel := context.WithTimeout(context.Background(), buildTimeout)
 	defer cancel()
 
-	if all {
-		err = c.buildAll(ctx, main, out)
+	if c.Spec.Build.CrossCompile {
+		err = c.buildAll(ctx, c.Spec.Build.MainFile, c.Spec.Build.BinaryFile)
 	} else {
-		err = c.build(ctx, main, out)
+		err = c.build(ctx, c.Spec.Build.MainFile, c.Spec.Build.BinaryFile)
 	}
 
 	if err != nil {

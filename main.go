@@ -7,6 +7,7 @@ import (
 	"github.com/moorara/cherry/cmd/command"
 	"github.com/moorara/cherry/cmd/config"
 	"github.com/moorara/cherry/cmd/version"
+	"github.com/moorara/cherry/internal/spec"
 	"github.com/moorara/cherry/pkg/log"
 )
 
@@ -44,18 +45,22 @@ func main() {
 		os.Exit(workDirError)
 	}
 
+	// Read spec file if any
+	spec, _ := spec.Read(spec.SpecFile)
+	spec.SetDefaults()
+
 	// Create cli app
 	app := cli.NewCLI(config.Config.Name, version.String())
 	app.Args = os.Args[1:]
 	app.Commands = map[string]cli.CommandFactory{
 		"test": func() (cmd cli.Command, err error) {
-			return command.NewTest(ui, wd)
+			return command.NewTest(ui, spec, wd)
 		},
 		"build": func() (cmd cli.Command, err error) {
-			return command.NewBuild(ui, wd)
+			return command.NewBuild(ui, spec, wd)
 		},
 		"release": func() (cmd cli.Command, err error) {
-			return command.NewRelease(ui, wd, config.Config.GithubToken)
+			return command.NewRelease(ui, spec, wd, config.Config.GithubToken)
 		},
 	}
 

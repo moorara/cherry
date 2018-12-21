@@ -3,7 +3,6 @@ package command
 import (
 	"bytes"
 	"context"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,12 +12,14 @@ import (
 	"time"
 
 	"github.com/mitchellh/cli"
+	"github.com/moorara/cherry/internal/spec"
 )
 
 type (
 	// Test is the test CLI command
 	Test struct {
 		cli.Ui
+		Spec    spec.Spec
 		WorkDir string
 	}
 )
@@ -40,19 +41,20 @@ const (
 
 	Flags:
 	
-		-report: the path for coverage report  (default: coverage)
+		-report-path:  the path for coverage report  (default: coverage)
 	
 	Examples:
 
 		cherry test
-		cherry test -report report
+		cherry test -report-path report
 	`
 )
 
 // NewTest create a new test command
-func NewTest(ui cli.Ui, workDir string) (*Test, error) {
+func NewTest(ui cli.Ui, spec spec.Spec, workDir string) (*Test, error) {
 	cmd := &Test{
 		Ui:      ui,
+		Spec:    spec,
 		WorkDir: workDir,
 	}
 
@@ -132,11 +134,11 @@ func (c *Test) testPackage(ctx context.Context, pkg, coverfile string) error {
 	return nil
 }
 
-func (c *Test) cover(ctx context.Context, report string) error {
+func (c *Test) cover(ctx context.Context, reportPath string) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	reportpath := filepath.Join(c.WorkDir, report)
+	reportpath := filepath.Join(c.WorkDir, reportPath)
 	coverfile := filepath.Join(reportpath, coverFile)
 	reportfile := filepath.Join(reportpath, reportFile)
 
@@ -192,20 +194,17 @@ func (c *Test) Help() string {
 
 // Run runs the actual command with the given CLI instance and command-line arguments
 func (c *Test) Run(args []string) int {
-	var report string
-
 	// Parse command flags
-	flags := flag.NewFlagSet("test", flag.ContinueOnError)
-	flags.StringVar(&report, "report", defaultReport, "")
-	flags.Usage = func() { c.Ui.Output(c.Help()) }
-	if err := flags.Parse(args); err != nil {
+	fs := c.Spec.Test.FlagSet()
+	fs.Usage = func() { c.Ui.Output(c.Help()) }
+	if err := fs.Parse(args); err != nil {
 		return testFlagError
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 
-	err := c.cover(ctx, report)
+	err := c.cover(ctx, c.Spec.Test.ReportPath)
 	if err != nil {
 		c.Ui.Error(err.Error())
 		return testError
