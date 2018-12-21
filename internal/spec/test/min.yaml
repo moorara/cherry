@@ -1,0 +1,6 @@
+version: "1"
+
+language: go
+
+release:
+  build: true

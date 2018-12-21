@@ -1,54 +1,60 @@
 package spec
 
 import (
-	"runtime"
-	"strings"
+	"flag"
+)
+
+const (
+	defaultMainFile     = "main.go"
+	defaultBinaryFile   = "bin/app"
+	defaultCrossCompile = false
+)
+
+var (
+	defaultGoVersions = []string{"1.11"}
+	defaultPlatforms  = []string{"linux-386", "linux-amd64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"}
 )
 
 type (
-	// Build is the build specs
+	// Build represents a build artifact
 	Build struct {
-		Language string   `json:"language" yaml:"language"`
-		Version  []string `json:"version" yaml:"version"`
-		OS       []string `json:"os" yaml:"os"`
-		Arch     []string `json:"arch" yaml:"arch"`
+		MainFile     string   `json:"mainFile" yaml:"main_file"`
+		BinaryFile   string   `json:"binaryFile" yaml:"binary_file"`
+		CrossCompile bool     `json:"crossCompile" yaml:"cross_compile"`
+		GoVersions   []string `json:"goVersions" yaml:"go_versions"`
+		Platforms    []string `json:"platforms" yaml:"platforms"`
 	}
 )
 
-// Defaults returns a new build with default values
-func (b Build) Defaults() Build {
-	var defaultVersion, defaultOS, defaultArch string
-
-	switch strings.ToLower(b.Language) {
-	case "go":
-		defaultVersion = "1.11.2"
-		defaultOS = runtime.GOOS
-		defaultArch = runtime.GOARCH
+// SetDefaults set default values for empty fields
+func (b *Build) SetDefaults() {
+	if b.MainFile == "" {
+		b.MainFile = defaultMainFile
 	}
 
-	if b.Version == nil || len(b.Version) == 0 {
-		if defaultVersion == "" {
-			b.Version = []string{}
-		} else {
-			b.Version = []string{defaultVersion}
-		}
+	if b.BinaryFile == "" {
+		b.BinaryFile = defaultBinaryFile
 	}
 
-	if b.OS == nil || len(b.OS) == 0 {
-		if defaultOS == "" {
-			b.OS = []string{}
-		} else {
-			b.OS = []string{defaultOS}
-		}
+	if b.CrossCompile == false {
+		b.CrossCompile = defaultCrossCompile
 	}
 
-	if b.Arch == nil || len(b.Arch) == 0 {
-		if defaultArch == "" {
-			b.Arch = []string{}
-		} else {
-			b.Arch = []string{defaultArch}
-		}
+	if b.GoVersions == nil || len(b.GoVersions) == 0 {
+		b.GoVersions = defaultGoVersions
 	}
 
-	return b
+	if b.Platforms == nil || len(b.Platforms) == 0 {
+		b.Platforms = defaultPlatforms
+	}
+}
+
+// FlagSet returns a flag set for parsing input arguments
+func (b *Build) FlagSet() *flag.FlagSet {
+	fs := flag.NewFlagSet("build", flag.ContinueOnError)
+	fs.StringVar(&b.MainFile, "main-file", b.MainFile, "")
+	fs.StringVar(&b.BinaryFile, "binary-file", b.BinaryFile, "")
+	fs.BoolVar(&b.CrossCompile, "cross-compile", b.CrossCompile, "")
+
+	return fs
 }

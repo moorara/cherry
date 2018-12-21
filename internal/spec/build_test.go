@@ -1,60 +1,73 @@
 package spec
 
 import (
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBuildDefaults(t *testing.T) {
+func TestBuildSetDefaults(t *testing.T) {
 	tests := []struct {
-		name          string
 		build         Build
 		expectedBuild Build
 	}{
 		{
-			"Empty",
 			Build{},
 			Build{
-				Language: "",
-				Version:  []string{},
-				OS:       []string{},
-				Arch:     []string{},
+				MainFile:     defaultMainFile,
+				BinaryFile:   defaultBinaryFile,
+				CrossCompile: defaultCrossCompile,
+				GoVersions:   defaultGoVersions,
+				Platforms:    defaultPlatforms,
 			},
 		},
 		{
-			"DefaultsRequired",
 			Build{
-				Language: "go",
+				MainFile:     "cmd/main.go",
+				BinaryFile:   "build/app",
+				CrossCompile: true,
+				GoVersions:   []string{"1.10", "1.11"},
+				Platforms:    []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
 			},
 			Build{
-				Language: "go",
-				Version:  []string{"1.11.2"},
-				OS:       []string{runtime.GOOS},
-				Arch:     []string{runtime.GOARCH},
-			},
-		},
-		{
-			"DefaultsNotRequired",
-			Build{
-				Language: "go",
-				Version:  []string{"1.10", "1.11.2"},
-				OS:       []string{"linux", "darwin", "windows"},
-				Arch:     []string{"386", "amd64"},
-			},
-			Build{
-				Language: "go",
-				Version:  []string{"1.10", "1.11.2"},
-				OS:       []string{"linux", "darwin", "windows"},
-				Arch:     []string{"386", "amd64"},
+				MainFile:     "cmd/main.go",
+				BinaryFile:   "build/app",
+				CrossCompile: true,
+				GoVersions:   []string{"1.10", "1.11"},
+				Platforms:    []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
 			},
 		},
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedBuild, tc.build.Defaults())
-		})
+		tc.build.SetDefaults()
+		assert.NotNil(t, tc.expectedBuild, tc.build)
+	}
+}
+
+func TestBuildFlagSet(t *testing.T) {
+	tests := []struct {
+		build        Build
+		expectedName string
+	}{
+		{
+			build:        Build{},
+			expectedName: "build",
+		},
+		{
+			build: Build{
+				MainFile:     "main.go",
+				BinaryFile:   "bin/app",
+				CrossCompile: true,
+				GoVersions:   []string{"1.10", "1.11"},
+				Platforms:    []string{"linux-386", "linux-amd64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"},
+			},
+			expectedName: "build",
+		},
+	}
+
+	for _, tc := range tests {
+		fs := tc.build.FlagSet()
+		assert.Equal(t, tc.expectedName, fs.Name())
 	}
 }
