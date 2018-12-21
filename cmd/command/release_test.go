@@ -1,9 +1,7 @@
 package command
 
 import (
-	"io/ioutil"
-	"os"
-	"path/filepath"
+	"errors"
 	"testing"
 
 	"github.com/moorara/cherry/internal/semver"
@@ -24,81 +22,62 @@ func TestNewRelease(t *testing.T) {
 
 func TestProcessVersions(t *testing.T) {
 	tests := []struct {
-		name               string
-		workDir            string
-		versionFileName    string
-		versionFileContent string
-		releaseType        releaseType
-		expectedError      string
-		expectedCurrent    semver.SemVer
-		expectedNext       semver.SemVer
+		name            string
+		manager         *mockManager
+		releaseType     releaseType
+		expectedError   string
+		expectedCurrent semver.SemVer
+		expectedNext    semver.SemVer
 	}{
 		{
-			name:               "NoVersionFile",
-			workDir:            "",
-			versionFileName:    "",
-			versionFileContent: "",
-			releaseType:        patchRelease,
-			expectedError:      "no such file or directory",
+			name: "ManagerReadError",
+			manager: &mockManager{
+				ReadOutError: errors.New("invalid version file"),
+			},
+			releaseType:   patchRelease,
+			expectedError: "invalid version file",
 		},
 		{
-			name:               "EmptyVersionFile",
-			workDir:            os.TempDir(),
-			versionFileName:    "VERSION_EMPTY",
-			versionFileContent: "",
-			releaseType:        patchRelease,
-			expectedError:      "invalid semantic version",
+			name: "ManagerUpdateError",
+			manager: &mockManager{
+				UpdateOutError: errors.New("version file error"),
+			},
+			releaseType:   patchRelease,
+			expectedError: "version file error",
 		},
 		{
-			name:               "InvalidVersionFile",
-			workDir:            os.TempDir(),
-			versionFileName:    "VERSION_INVALID",
-			versionFileContent: "1.0",
-			releaseType:        patchRelease,
-			expectedError:      "invalid semantic version",
+			name: "PatchRelease",
+			manager: &mockManager{
+				ReadOutSemVer: semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			},
+			releaseType:     patchRelease,
+			expectedCurrent: semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			expectedNext:    semver.SemVer{Major: 0, Minor: 1, Patch: 1},
 		},
 		{
-			name:               "PatchRelease",
-			workDir:            os.TempDir(),
-			versionFileName:    "VERSION_PATCH",
-			versionFileContent: "0.1.0-0",
-			releaseType:        patchRelease,
-			expectedCurrent:    semver.SemVer{Major: 0, Minor: 1, Patch: 0},
-			expectedNext:       semver.SemVer{Major: 0, Minor: 1, Patch: 1},
+			name: "MinorRelease",
+			manager: &mockManager{
+				ReadOutSemVer: semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			},
+			releaseType:     minorRelease,
+			expectedCurrent: semver.SemVer{Major: 0, Minor: 2, Patch: 0},
+			expectedNext:    semver.SemVer{Major: 0, Minor: 2, Patch: 1},
 		},
 		{
-			name:               "MinorRelease",
-			workDir:            os.TempDir(),
-			versionFileName:    "VERSION_MINOR",
-			versionFileContent: "0.1.0-0",
-			releaseType:        minorRelease,
-			expectedCurrent:    semver.SemVer{Major: 0, Minor: 2, Patch: 0},
-			expectedNext:       semver.SemVer{Major: 0, Minor: 2, Patch: 1},
-		},
-		{
-			name:               "MajorRelease",
-			workDir:            os.TempDir(),
-			versionFileName:    "VERSION_MAJOR",
-			versionFileContent: "0.1.0-0",
-			releaseType:        majorRelease,
-			expectedCurrent:    semver.SemVer{Major: 1, Minor: 0, Patch: 0},
-			expectedNext:       semver.SemVer{Major: 1, Minor: 0, Patch: 1},
+			name: "MajorRelease",
+			manager: &mockManager{
+				ReadOutSemVer: semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			},
+			releaseType:     majorRelease,
+			expectedCurrent: semver.SemVer{Major: 1, Minor: 0, Patch: 0},
+			expectedNext:    semver.SemVer{Major: 1, Minor: 0, Patch: 1},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.workDir != "" && tc.versionFileName != "" {
-				versionFilePath := filepath.Join(tc.workDir, tc.versionFileName)
-				err := ioutil.WriteFile(versionFilePath, []byte(tc.versionFileContent), 0644)
-				assert.NoError(t, err)
-				defer os.Remove(versionFilePath)
-			}
-
 			cmd := &Release{
-				Ui:          &mockUI{},
-				WorkDir:     tc.workDir,
-				VersionFile: tc.versionFileName,
+				Manager: tc.manager,
 			}
 
 			current, next, err := cmd.processVersions(tc.releaseType)

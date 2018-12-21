@@ -48,14 +48,14 @@ func main() {
 	app := cli.NewCLI(config.Config.Name, version.String())
 	app.Args = os.Args[1:]
 	app.Commands = map[string]cli.CommandFactory{
+		"test": func() (cmd cli.Command, err error) {
+			return command.NewTest(ui, wd)
+		},
 		"build": func() (cmd cli.Command, err error) {
 			return command.NewBuild(ui, wd)
 		},
 		"release": func() (cmd cli.Command, err error) {
 			return command.NewRelease(ui, wd, config.Config.GithubToken)
-		},
-		"test": func() (cmd cli.Command, err error) {
-			return command.NewTest(ui, wd)
 		},
 	}
 

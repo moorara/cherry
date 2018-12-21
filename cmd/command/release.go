@@ -5,9 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/mitchellh/cli"
@@ -26,6 +24,7 @@ type (
 		git.Git
 		github.Github
 		changelog.Changelog
+		semver.Manager
 		WorkDir      string
 		VersionFile  string
 		Repo, Branch string
@@ -76,6 +75,11 @@ func NewRelease(ui cli.Ui, workDir, githubToken string) (*Release, error) {
 	github := github.New(releaseTimeout, githubToken)
 	changelog := changelog.New(workDir, githubToken)
 
+	manager, err := semver.NewManager(filepath.Join(workDir, versionFile))
+	if err != nil {
+		return nil, err
+	}
+
 	owner, name, err := git.GetRepoName()
 	if err != nil {
 		return nil, err
@@ -92,6 +96,7 @@ func NewRelease(ui cli.Ui, workDir, githubToken string) (*Release, error) {
 		Git:         git,
 		Github:      github,
 		Changelog:   changelog,
+		Manager:     manager,
 		WorkDir:     workDir,
 		VersionFile: versionFile,
 		Repo:        repo,
@@ -101,19 +106,12 @@ func NewRelease(ui cli.Ui, workDir, githubToken string) (*Release, error) {
 	return cmd, nil
 }
 
-func (c *Release) processVersions(rt releaseType) (current, next semver.SemVer, err error) {
-	var data []byte
-	versionFilePath := filepath.Join(c.WorkDir, c.VersionFile)
+func (c *Release) processVersions(rt releaseType) (semver.SemVer, semver.SemVer, error) {
+	var empty, current, next semver.SemVer
 
-	data, err = ioutil.ReadFile(versionFilePath)
+	sv, err := c.Manager.Read()
 	if err != nil {
-		return
-	}
-
-	version := strings.Trim(string(data), "\n")
-	sv, err := semver.Parse(version)
-	if err != nil {
-		return
+		return empty, empty, err
 	}
 
 	switch rt {
@@ -125,13 +123,12 @@ func (c *Release) processVersions(rt releaseType) (current, next semver.SemVer, 
 		current, next = sv.ReleaseMajor()
 	}
 
-	data = []byte(current.Version() + "\n")
-	err = ioutil.WriteFile(versionFilePath, data, 0644)
+	err = c.Manager.Update(current.Version())
 	if err != nil {
-		return
+		return empty, empty, err
 	}
 
-	return
+	return current, next, nil
 }
 
 func (c *Release) release(ctx context.Context, rt releaseType, comment string, build bool) error {
@@ -209,9 +206,7 @@ func (c *Release) release(ctx context.Context, rt releaseType, comment string, b
 
 	// Prepare the version file for next version
 	c.Ui.Info(fmt.Sprintf("✏️ Preparing next version %s ...", next.PreRelease()))
-	versionFilePath := filepath.Join(c.WorkDir, c.VersionFile)
-	data := []byte(next.PreRelease() + "\n")
-	err = ioutil.WriteFile(versionFilePath, data, 0644)
+	err = c.Manager.Update(next.PreRelease())
 	if err != nil {
 		return err
 	}
