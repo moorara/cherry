@@ -1,30 +1,34 @@
-package command
+package formula
 
 import (
 	"errors"
 	"testing"
 
-	"github.com/moorara/cherry/internal/semver"
+	"github.com/moorara/cherry/internal/service/semver"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewRelease(t *testing.T) {
-	tests := []struct {
-		name string
-	}{}
+type mockManager struct {
+	ReadOutError    error
+	ReadOutSemVer   semver.SemVer
+	UpdateInVersion string
+	UpdateOutError  error
+}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NotNil(t, tc)
-		})
-	}
+func (m *mockManager) Read() (semver.SemVer, error) {
+	return m.ReadOutSemVer, m.ReadOutError
+}
+
+func (m *mockManager) Update(version string) error {
+	m.UpdateInVersion = version
+	return m.UpdateOutError
 }
 
 func TestProcessVersions(t *testing.T) {
 	tests := []struct {
 		name            string
 		manager         *mockManager
-		releaseType     releaseType
+		level           ReleaseLevel
 		expectedError   string
 		expectedCurrent semver.SemVer
 		expectedNext    semver.SemVer
@@ -34,7 +38,7 @@ func TestProcessVersions(t *testing.T) {
 			manager: &mockManager{
 				ReadOutError: errors.New("invalid version file"),
 			},
-			releaseType:   patchRelease,
+			level:         PatchRelease,
 			expectedError: "invalid version file",
 		},
 		{
@@ -42,7 +46,7 @@ func TestProcessVersions(t *testing.T) {
 			manager: &mockManager{
 				UpdateOutError: errors.New("version file error"),
 			},
-			releaseType:   patchRelease,
+			level:         PatchRelease,
 			expectedError: "version file error",
 		},
 		{
@@ -50,7 +54,7 @@ func TestProcessVersions(t *testing.T) {
 			manager: &mockManager{
 				ReadOutSemVer: semver.SemVer{Major: 0, Minor: 1, Patch: 0},
 			},
-			releaseType:     patchRelease,
+			level:           PatchRelease,
 			expectedCurrent: semver.SemVer{Major: 0, Minor: 1, Patch: 0},
 			expectedNext:    semver.SemVer{Major: 0, Minor: 1, Patch: 1},
 		},
@@ -59,7 +63,7 @@ func TestProcessVersions(t *testing.T) {
 			manager: &mockManager{
 				ReadOutSemVer: semver.SemVer{Major: 0, Minor: 1, Patch: 0},
 			},
-			releaseType:     minorRelease,
+			level:           MinorRelease,
 			expectedCurrent: semver.SemVer{Major: 0, Minor: 2, Patch: 0},
 			expectedNext:    semver.SemVer{Major: 0, Minor: 2, Patch: 1},
 		},
@@ -68,7 +72,7 @@ func TestProcessVersions(t *testing.T) {
 			manager: &mockManager{
 				ReadOutSemVer: semver.SemVer{Major: 0, Minor: 1, Patch: 0},
 			},
-			releaseType:     majorRelease,
+			level:           MajorRelease,
 			expectedCurrent: semver.SemVer{Major: 1, Minor: 0, Patch: 0},
 			expectedNext:    semver.SemVer{Major: 1, Minor: 0, Patch: 1},
 		},
@@ -76,11 +80,11 @@ func TestProcessVersions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cmd := &Release{
+			r := &release{
 				Manager: tc.manager,
 			}
 
-			current, next, err := cmd.processVersions(tc.releaseType)
+			current, next, err := r.processVersions(tc.level)
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)
@@ -91,42 +95,6 @@ func TestProcessVersions(t *testing.T) {
 				assert.Equal(t, tc.expectedCurrent, current)
 				assert.Equal(t, tc.expectedNext, next)
 			}
-		})
-	}
-}
-
-func TestRelease(t *testing.T) {
-	tests := []struct {
-		name string
-	}{}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NotNil(t, tc)
-		})
-	}
-}
-
-func TestReleaseSynopsis(t *testing.T) {
-	cmd := &Release{}
-	synopsis := cmd.Synopsis()
-	assert.Equal(t, releaseSynopsis, synopsis)
-}
-
-func TestReleaseHelp(t *testing.T) {
-	cmd := &Release{}
-	help := cmd.Help()
-	assert.Equal(t, releaseHelp, help)
-}
-
-func TestReleaseRun(t *testing.T) {
-	tests := []struct {
-		name string
-	}{}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NotNil(t, tc)
 		})
 	}
 }

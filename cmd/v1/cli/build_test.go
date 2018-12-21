@@ -1,10 +1,11 @@
-package command
+package cli
 
 import (
 	"bytes"
 	"testing"
 	"text/template"
 
+	"github.com/moorara/cherry/internal/v1/spec"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,16 +30,23 @@ func TestBuildSynopsis(t *testing.T) {
 
 func TestBuildHelp(t *testing.T) {
 	tests := []struct {
-		repoName string
+		spec spec.Spec
 	}{
 		{
-			repoName: "cherry",
+			spec: spec.Spec{
+				Build: spec.Build{
+					CrossCompile:   true,
+					MainFile:       "main.go",
+					BinaryFile:     "bin/cherry",
+					VersionPackage: "cmd/version",
+				},
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		cmd := &Build{
-			RepoName: tc.repoName,
+			Spec: tc.spec,
 		}
 
 		var buf bytes.Buffer

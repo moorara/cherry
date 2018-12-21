@@ -1,4 +1,4 @@
-package command
+package cli
 
 import (
 	"errors"
@@ -8,14 +8,6 @@ import (
 )
 
 type (
-	// Logger is the interface for the logger struct
-	Logger interface {
-		Debug(...interface{}) error
-		Info(...interface{}) error
-		Warn(...interface{}) error
-		Error(...interface{}) error
-	}
-
 	// UI is a CLI UI
 	UI struct {
 		cli.Ui
@@ -24,6 +16,14 @@ type (
 	// LoggerUI is a CLI UI for logging outputs
 	LoggerUI struct {
 		logger Logger
+	}
+
+	// Logger is the interface for the logger struct
+	Logger interface {
+		Debug(...interface{}) error
+		Info(...interface{}) error
+		Warn(...interface{}) error
+		Error(...interface{}) error
 	}
 )
 
@@ -89,10 +89,10 @@ func (u *LoggerUI) Error(message string) {
 
 // Ask implements cli.Ui Ask method
 func (u *LoggerUI) Ask(query string) (string, error) {
-	return "", errors.New("logger ui does not support input")
+	return "", errors.New("not supported")
 }
 
 // AskSecret implements cli.Ui AskSecret method
 func (u *LoggerUI) AskSecret(query string) (string, error) {
-	return "", errors.New("logger ui does not support input")
+	return "", errors.New("not supported")
 }
