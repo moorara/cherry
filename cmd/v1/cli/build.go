@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/mitchellh/cli"
-	"github.com/moorara/cherry/cmd/version"
 	"github.com/moorara/cherry/internal/v1/formula"
 	"github.com/moorara/cherry/internal/v1/spec"
 )
@@ -82,7 +81,7 @@ func (c *Build) Run(args []string) int {
 	ctx, cancel := context.WithTimeout(context.Background(), buildTimeout)
 	defer cancel()
 
-	build := formula.NewBuild(c.Ui, c.Spec, c.WorkDir, version.Version)
+	build := formula.NewBuild(c.Ui, c.Spec, c.WorkDir)
 
 	var err error
 	if c.Spec.Build.CrossCompile {

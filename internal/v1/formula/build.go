@@ -28,8 +28,7 @@ type (
 		cli.Ui
 		git.Git
 		spec.Spec
-		WorkDir          string
-		BuildToolVersion string
+		WorkDir string
 	}
 
 	buildInfo struct {
@@ -43,15 +42,14 @@ type (
 )
 
 // NewBuild creates a new instance of build formula
-func NewBuild(ui cli.Ui, spec spec.Spec, workDir, buildToolVersion string) Build {
+func NewBuild(ui cli.Ui, spec spec.Spec, workDir string) Build {
 	git := git.New(workDir)
 
 	return &build{
-		Ui:               ui,
-		Git:              git,
-		Spec:             spec,
-		WorkDir:          workDir,
-		BuildToolVersion: buildToolVersion,
+		Ui:      ui,
+		Git:     git,
+		Spec:    spec,
+		WorkDir: workDir,
 	}
 }
 
@@ -76,7 +74,7 @@ func (b *build) getBuildInfo(ctx context.Context) (*buildInfo, error) {
 	}
 
 	info.GoVersion = runtime.Version()
-	info.BuildTool = fmt.Sprintf("cherry:%s", b.BuildToolVersion)
+	info.BuildTool = fmt.Sprintf("%s:%s", b.Spec.ToolName, b.Spec.ToolVersion)
 	info.BuildTime = time.Now().UTC()
 
 	return info, nil
