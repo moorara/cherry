@@ -11,7 +11,7 @@ const (
 	// SpecFile is the default name of specification/configuration file
 	SpecFile = "cherry.yaml"
 
-	defaultVersion     = "1"
+	defaultVersion     = "1.0"
 	defaultLanguage    = "go"
 	defaultVersionFile = "VERSION"
 )

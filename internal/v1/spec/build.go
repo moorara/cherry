@@ -5,9 +5,10 @@ import (
 )
 
 const (
-	defaultMainFile     = "main.go"
-	defaultBinaryFile   = "bin/app"
-	defaultCrossCompile = false
+	defaultCrossCompile   = false
+	defaultMainFile       = "main.go"
+	defaultBinaryFile     = "bin/app"
+	defaultVersionPackage = "./cmd/version"
 )
 
 var (
@@ -18,16 +19,21 @@ var (
 type (
 	// Build represents a build artifact
 	Build struct {
-		MainFile     string   `json:"mainFile" yaml:"main_file"`
-		BinaryFile   string   `json:"binaryFile" yaml:"binary_file"`
-		CrossCompile bool     `json:"crossCompile" yaml:"cross_compile"`
-		GoVersions   []string `json:"goVersions" yaml:"go_versions"`
-		Platforms    []string `json:"platforms" yaml:"platforms"`
+		CrossCompile   bool     `json:"crossCompile" yaml:"cross_compile"`
+		MainFile       string   `json:"mainFile" yaml:"main_file"`
+		BinaryFile     string   `json:"binaryFile" yaml:"binary_file"`
+		VersionPackage string   `json:"versionPackage" yaml:"version_package"`
+		GoVersions     []string `json:"goVersions" yaml:"go_versions"`
+		Platforms      []string `json:"platforms" yaml:"platforms"`
 	}
 )
 
 // SetDefaults set default values for empty fields
 func (b *Build) SetDefaults() {
+	if b.CrossCompile == false {
+		b.CrossCompile = defaultCrossCompile
+	}
+
 	if b.MainFile == "" {
 		b.MainFile = defaultMainFile
 	}
@@ -36,8 +42,8 @@ func (b *Build) SetDefaults() {
 		b.BinaryFile = defaultBinaryFile
 	}
 
-	if b.CrossCompile == false {
-		b.CrossCompile = defaultCrossCompile
+	if b.VersionPackage == "" {
+		b.VersionPackage = defaultVersionPackage
 	}
 
 	if b.GoVersions == nil || len(b.GoVersions) == 0 {
@@ -52,9 +58,10 @@ func (b *Build) SetDefaults() {
 // FlagSet returns a flag set for parsing input arguments
 func (b *Build) FlagSet() *flag.FlagSet {
 	fs := flag.NewFlagSet("build", flag.ContinueOnError)
+	fs.BoolVar(&b.CrossCompile, "cross-compile", b.CrossCompile, "")
 	fs.StringVar(&b.MainFile, "main-file", b.MainFile, "")
 	fs.StringVar(&b.BinaryFile, "binary-file", b.BinaryFile, "")
-	fs.BoolVar(&b.CrossCompile, "cross-compile", b.CrossCompile, "")
+	fs.StringVar(&b.VersionPackage, "version-package", b.VersionPackage, "")
 
 	return fs
 }

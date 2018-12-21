@@ -32,7 +32,7 @@ func TestRead(t *testing.T) {
 			name: "Minimum",
 			path: "test/min.yaml",
 			expectedSpec: Spec{
-				Version:  "1",
+				Version:  "1.0",
 				Language: "go",
 				Test:     Test{},
 				Build:    Build{},
@@ -45,18 +45,19 @@ func TestRead(t *testing.T) {
 			name: "Maximum",
 			path: "test/max.yaml",
 			expectedSpec: Spec{
-				Version:     "1",
+				Version:     "1.0",
 				Language:    "go",
 				VersionFile: "VERSION",
 				Test: Test{
 					ReportPath: "coverage",
 				},
 				Build: Build{
-					MainFile:     "main.go",
-					BinaryFile:   "bin/cherry",
-					CrossCompile: true,
-					GoVersions:   []string{"1.10", "1.11.4"},
-					Platforms:    []string{"linux-386", "linux-amd64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"},
+					CrossCompile:   true,
+					MainFile:       "main.go",
+					BinaryFile:     "bin/cherry",
+					VersionPackage: "./cmd/version",
+					GoVersions:     []string{"1.10", "1.11.4"},
+					Platforms:      []string{"linux-386", "linux-amd64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"},
 				},
 				Release: Release{
 					Build: true,
@@ -95,11 +96,12 @@ func TestSpecSetDefaults(t *testing.T) {
 					ReportPath: defaultReportPath,
 				},
 				Build: Build{
-					MainFile:     defaultMainFile,
-					BinaryFile:   defaultBinaryFile,
-					CrossCompile: defaultCrossCompile,
-					GoVersions:   defaultGoVersions,
-					Platforms:    defaultPlatforms,
+					CrossCompile:   defaultCrossCompile,
+					MainFile:       defaultMainFile,
+					BinaryFile:     defaultBinaryFile,
+					VersionPackage: defaultVersionPackage,
+					GoVersions:     defaultGoVersions,
+					Platforms:      defaultPlatforms,
 				},
 				Release: Release{
 					Build: defaultBuild,
@@ -108,36 +110,38 @@ func TestSpecSetDefaults(t *testing.T) {
 		},
 		{
 			Spec{
-				Version:     "2",
+				Version:     "2.0",
 				Language:    "go",
 				VersionFile: "version.yaml",
 				Test: Test{
 					ReportPath: "report",
 				},
 				Build: Build{
-					MainFile:     "cmd/main.go",
-					BinaryFile:   "build/app",
-					CrossCompile: true,
-					GoVersions:   []string{"1.10", "1.11"},
-					Platforms:    []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
+					CrossCompile:   true,
+					MainFile:       "cmd/main.go",
+					BinaryFile:     "build/app",
+					VersionPackage: "./cmd/version",
+					GoVersions:     []string{"1.10", "1.11"},
+					Platforms:      []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
 				},
 				Release: Release{
 					Build: true,
 				},
 			},
 			Spec{
-				Version:     "2",
+				Version:     "2.0",
 				Language:    "go",
 				VersionFile: "version.yaml",
 				Test: Test{
 					ReportPath: "report",
 				},
 				Build: Build{
-					MainFile:     "cmd/main.go",
-					BinaryFile:   "build/app",
-					CrossCompile: true,
-					GoVersions:   []string{"1.10", "1.11"},
-					Platforms:    []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
+					CrossCompile:   true,
+					MainFile:       "cmd/main.go",
+					BinaryFile:     "build/app",
+					VersionPackage: "./cmd/version",
+					GoVersions:     []string{"1.10", "1.11"},
+					Platforms:      []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
 				},
 				Release: Release{
 					Build: true,

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/moorara/cherry/internal/semver"
+	"github.com/moorara/cherry/internal/service/semver"
 	"github.com/stretchr/testify/assert"
 )
 

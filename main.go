@@ -4,15 +4,16 @@ import (
 	"os"
 
 	"github.com/mitchellh/cli"
-	"github.com/moorara/cherry/cmd/command"
 	"github.com/moorara/cherry/cmd/config"
 	"github.com/moorara/cherry/cmd/version"
-	"github.com/moorara/cherry/internal/spec"
 	"github.com/moorara/cherry/pkg/log"
+
+	app "github.com/moorara/cherry/cmd/v1/cli"
+	util "github.com/moorara/cherry/pkg/cli"
 )
 
 const (
-	workDirError = 10
+	initError = 10
 )
 
 func main() {
@@ -33,35 +34,15 @@ func main() {
 	// Create cli.Ui
 	var ui cli.Ui
 	if config.Config.LogJSON {
-		ui = command.NewLoggerUI(logger)
+		ui = util.NewLoggerUI(logger)
 	} else {
-		ui = command.NewUI().Colored().Concurrent()
+		ui = util.NewUI().Colored().Concurrent()
 	}
 
-	// Get working directory
-	wd, err := os.Getwd()
+	app, err := app.New(ui, config.Config.Name, version.String(), config.Config.GithubToken)
 	if err != nil {
 		ui.Error(err.Error())
-		os.Exit(workDirError)
-	}
-
-	// Read spec file if any
-	spec, _ := spec.Read(spec.SpecFile)
-	spec.SetDefaults()
-
-	// Create cli app
-	app := cli.NewCLI(config.Config.Name, version.String())
-	app.Args = os.Args[1:]
-	app.Commands = map[string]cli.CommandFactory{
-		"test": func() (cmd cli.Command, err error) {
-			return command.NewTest(ui, spec, wd)
-		},
-		"build": func() (cmd cli.Command, err error) {
-			return command.NewBuild(ui, spec, wd)
-		},
-		"release": func() (cmd cli.Command, err error) {
-			return command.NewRelease(ui, spec, wd, config.Config.GithubToken)
-		},
+		os.Exit(initError)
 	}
 
 	status, err := app.Run()

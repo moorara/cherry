@@ -1,4 +1,4 @@
-package command
+package formula
 
 import (
 	"bytes"
@@ -9,64 +9,46 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/mitchellh/cli"
-	"github.com/moorara/cherry/internal/spec"
+	"github.com/moorara/cherry/internal/v1/spec"
 )
 
 type (
-	// Test is the test CLI command
-	Test struct {
+	// Test is the interface for test formulas
+	Test interface {
+		Cover(ctx context.Context) error
+	}
+
+	test struct {
 		cli.Ui
-		Spec    spec.Spec
+		spec.Spec
 		WorkDir string
 	}
 )
 
 const (
-	atomicMode    = "atomic"
-	atomicHeader  = "mode: atomic\n"
-	coverFile     = "cover.out"
-	reportFile    = "index.html"
-	defaultReport = "coverage"
-
-	testError     = 40
-	testFlagError = 41
-	testTimeout   = 1 * time.Minute
-	testSynopsis  = `Run tests`
-	testHelp      = `
-	Use this command for running unit tests and generating coverage report.
-	Currently, this command can only test Go applications.
-
-	Flags:
-	
-		-report-path:  the path for coverage report  (default: coverage)
-	
-	Examples:
-
-		cherry test
-		cherry test -report-path report
-	`
+	atomicMode   = "atomic"
+	atomicHeader = "mode: atomic\n"
+	coverFile    = "cover.out"
+	reportFile   = "index.html"
 )
 
-// NewTest create a new test command
-func NewTest(ui cli.Ui, spec spec.Spec, workDir string) (*Test, error) {
-	cmd := &Test{
+// NewTest creates a new instance of test formula
+func NewTest(ui cli.Ui, spec spec.Spec, workDir string) Test {
+	return &test{
 		Ui:      ui,
 		Spec:    spec,
 		WorkDir: workDir,
 	}
-
-	return cmd, nil
 }
 
-func (c *Test) getPackages(ctx context.Context) ([]string, error) {
+func (t *test) getPackages(ctx context.Context) ([]string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
 	cmd := exec.CommandContext(ctx, "go", "list", "./...")
-	cmd.Dir = c.WorkDir
+	cmd.Dir = t.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -78,7 +60,7 @@ func (c *Test) getPackages(ctx context.Context) ([]string, error) {
 	return pkgs, nil
 }
 
-func (c *Test) testPackage(ctx context.Context, pkg, coverfile string) error {
+func (t *test) testPackage(ctx context.Context, pkg, coverfile string) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
@@ -98,25 +80,29 @@ func (c *Test) testPackage(ctx context.Context, pkg, coverfile string) error {
 
 	// Run go test with cover mode
 	cmd := exec.CommandContext(ctx, "go", "test", "-covermode", atomicMode, "-coverprofile", tf.Name(), pkg)
-	cmd.Dir = c.WorkDir
+	cmd.Dir = t.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err = cmd.Run()
 	testOutput := strings.Trim(stdout.String(), "\n")
 
 	if err != nil {
-		c.Ui.Error(fmt.Sprintf("\n%s\n", testOutput))
+		if t.Ui != nil {
+			t.Ui.Error(fmt.Sprintf("\n%s\n", testOutput))
+		}
 		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
-	c.Ui.Info(fmt.Sprintf("✅ %s", testOutput))
+	if t.Ui != nil {
+		t.Ui.Info(fmt.Sprintf("✅ %s", testOutput))
+	}
 
 	stdout.Reset()
 	stderr.Reset()
 
 	// Get the coverage data
 	cmd = exec.CommandContext(ctx, "tail", "-n", "+2", tf.Name())
-	cmd.Dir = c.WorkDir
+	cmd.Dir = t.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -134,11 +120,11 @@ func (c *Test) testPackage(ctx context.Context, pkg, coverfile string) error {
 	return nil
 }
 
-func (c *Test) cover(ctx context.Context, reportPath string) error {
+func (t *test) Cover(ctx context.Context) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	reportpath := filepath.Join(c.WorkDir, reportPath)
+	reportpath := filepath.Join(t.WorkDir, t.Spec.Test.ReportPath)
 	coverfile := filepath.Join(reportpath, coverFile)
 	reportfile := filepath.Join(reportpath, reportFile)
 
@@ -158,13 +144,13 @@ func (c *Test) cover(ctx context.Context, reportPath string) error {
 		return err
 	}
 
-	packages, err := c.getPackages(ctx)
+	packages, err := t.getPackages(ctx)
 	if err != nil {
 		return err
 	}
 
 	for _, pkg := range packages {
-		err = c.testPackage(ctx, pkg, coverfile)
+		err = t.testPackage(ctx, pkg, coverfile)
 		if err != nil {
 			return err
 		}
@@ -172,7 +158,7 @@ func (c *Test) cover(ctx context.Context, reportPath string) error {
 
 	// Generate the singleton html coverage report for all packages
 	cmd := exec.CommandContext(ctx, "go", "tool", "cover", "-html", coverfile, "-o", reportfile)
-	cmd.Dir = c.WorkDir
+	cmd.Dir = t.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -180,35 +166,4 @@ func (c *Test) cover(ctx context.Context, reportPath string) error {
 	}
 
 	return nil
-}
-
-// Synopsis returns the short one-line synopsis of the command.
-func (c *Test) Synopsis() string {
-	return testSynopsis
-}
-
-// Help returns the long help text including usage, description, and list of flags for the command
-func (c *Test) Help() string {
-	return testHelp
-}
-
-// Run runs the actual command with the given CLI instance and command-line arguments
-func (c *Test) Run(args []string) int {
-	// Parse command flags
-	fs := c.Spec.Test.FlagSet()
-	fs.Usage = func() { c.Ui.Output(c.Help()) }
-	if err := fs.Parse(args); err != nil {
-		return testFlagError
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
-	defer cancel()
-
-	err := c.cover(ctx, c.Spec.Test.ReportPath)
-	if err != nil {
-		c.Ui.Error(err.Error())
-		return testError
-	}
-
-	return 0
 }

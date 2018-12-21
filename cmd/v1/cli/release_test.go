@@ -1,4 +1,4 @@
-package command
+package cli
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewTest(t *testing.T) {
+func TestNewRelease(t *testing.T) {
 	tests := []struct {
 		name string
 	}{}
@@ -18,19 +18,19 @@ func TestNewTest(t *testing.T) {
 	}
 }
 
-func TestTestSynopsis(t *testing.T) {
-	cmd := &Test{}
+func TestReleaseSynopsis(t *testing.T) {
+	cmd := &Release{}
 	synopsis := cmd.Synopsis()
-	assert.Equal(t, testSynopsis, synopsis)
+	assert.Equal(t, releaseSynopsis, synopsis)
 }
 
-func TestTestHelp(t *testing.T) {
-	cmd := &Test{}
+func TestReleaseHelp(t *testing.T) {
+	cmd := &Release{}
 	help := cmd.Help()
-	assert.Equal(t, testHelp, help)
+	assert.Equal(t, releaseHelp, help)
 }
 
-func TestTestRun(t *testing.T) {
+func TestReleaseRun(t *testing.T) {
 	tests := []struct {
 		name string
 	}{}

@@ -1,4 +1,4 @@
-version: "1"
+version: "1.0"
 
 language: go
 version_file: VERSION
@@ -7,9 +7,10 @@ test:
   report_path: coverage
 
 build:
+  cross_compile: true
   main_file: main.go
   binary_file: bin/cherry
-  cross_compile: true
+  version_package: ./cmd/version
   go_versions:
     - 1.10
     - 1.11.4

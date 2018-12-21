@@ -13,8 +13,8 @@ import (
 
 	netURL "net/url"
 
-	"github.com/moorara/cherry/internal/semver"
-	"github.com/moorara/cherry/internal/util"
+	"github.com/moorara/cherry/internal/service/semver"
+	"github.com/moorara/cherry/internal/service/util"
 )
 
 const (

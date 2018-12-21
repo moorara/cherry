@@ -1,11 +1,11 @@
-package command
+package cli
 
 import (
 	"bytes"
 	"testing"
 	"text/template"
 
-	"github.com/moorara/cherry/internal/spec"
+	"github.com/moorara/cherry/internal/v1/spec"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,7 +35,10 @@ func TestBuildHelp(t *testing.T) {
 		{
 			spec: spec.Spec{
 				Build: spec.Build{
-					BinaryFile: "bin/cherry",
+					CrossCompile:   true,
+					MainFile:       "main.go",
+					BinaryFile:     "bin/cherry",
+					VersionPackage: "cmd/version",
 				},
 			},
 		},
