@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"time"
 
 	"github.com/mitchellh/cli"
 	"github.com/moorara/cherry/internal/v1/formula"
@@ -13,15 +14,15 @@ type (
 	Release struct {
 		cli.Ui
 		spec.Spec
-		WorkDir     string
-		GithubToken string
+		formula.Formula
 	}
 )
 
 const (
 	releaseError     = 40
 	releaseFlagError = 41
-	releaseSynopsis  = `Create release`
+	releaseTimeout   = 60 * time.Second
+	releaseSynopsis  = `create a new release`
 	releaseHelp      = `
 	Use this command for creating a new release.
 
@@ -46,12 +47,11 @@ const (
 )
 
 // NewRelease create a new release command
-func NewRelease(ui cli.Ui, spec spec.Spec, workDir, githubToken string) (*Release, error) {
+func NewRelease(ui cli.Ui, spec spec.Spec, formula formula.Formula) (*Release, error) {
 	cmd := &Release{
-		Ui:          ui,
-		Spec:        spec,
-		WorkDir:     workDir,
-		GithubToken: githubToken,
+		Ui:      ui,
+		Spec:    spec,
+		Formula: formula,
 	}
 
 	return cmd, nil
@@ -69,6 +69,7 @@ func (c *Release) Help() string {
 
 // Run runs the actual command with the given CLI instance and command-line arguments
 func (c *Release) Run(args []string) int {
+	var level formula.ReleaseLevel
 	var patch, minor, major bool
 	var comment string
 
@@ -83,25 +84,25 @@ func (c *Release) Run(args []string) int {
 		return releaseFlagError
 	}
 
-	release, err := formula.NewRelease(c.Ui, c.Spec, c.WorkDir, c.GithubToken)
-	if err != nil {
-		c.Ui.Error(err.Error())
-		return buildError
-	}
-
-	var level formula.ReleaseLevel
+	// Patch default is true
 	if patch {
 		level = formula.PatchRelease
-	} else if minor {
+	}
+
+	// Minor is preferred over patch
+	if minor {
 		level = formula.MinorRelease
-	} else if major {
+	}
+
+	// Major is preferred over minor and patch
+	if major {
 		level = formula.MajorRelease
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), buildTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), releaseTimeout)
 	defer cancel()
 
-	err = release.Release(ctx, level, comment)
+	err := c.Formula.Release(ctx, level, comment)
 	if err != nil {
 		c.Ui.Error(err.Error())
 		return buildError

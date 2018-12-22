@@ -4,36 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path/filepath"
 	"time"
 
-	"github.com/mitchellh/cli"
-	"github.com/moorara/cherry/internal/service/changelog"
-	"github.com/moorara/cherry/internal/service/git"
-	"github.com/moorara/cherry/internal/service/github"
 	"github.com/moorara/cherry/internal/service/semver"
-	"github.com/moorara/cherry/internal/v1/spec"
 )
 
-type (
-	// Level specifies the level of a release (patch, minor, or major)
-	ReleaseLevel int
-
-	// Release is the interface for release formulas
-	Release interface {
-		Release(ctx context.Context, level ReleaseLevel, comment string) error
-	}
-
-	release struct {
-		cli.Ui
-		git.Git
-		github.Github
-		changelog.Changelog
-		semver.Manager
-		spec.Spec
-		WorkDir string
-	}
-)
+// ReleaseLevel specifies the level of a release (patch, minor, or major)
+type ReleaseLevel int
 
 const (
 	// PatchRelease releases a the patch component of a semantic version
@@ -48,36 +25,10 @@ const (
 	githubTimeout = 30 * time.Second
 )
 
-// NewRelease creates a new instance of release formula
-func NewRelease(ui cli.Ui, spec spec.Spec, workDir, githubToken string) (Release, error) {
-	if githubToken == "" {
-		return nil, errors.New("github token is not set")
-	}
-
-	git := git.New(workDir)
-	github := github.New(githubTimeout, githubToken)
-	changelog := changelog.New(workDir, githubToken)
-
-	manager, err := semver.NewManager(filepath.Join(workDir, spec.VersionFile))
-	if err != nil {
-		return nil, err
-	}
-
-	return &release{
-		Ui:        ui,
-		Git:       git,
-		Github:    github,
-		Changelog: changelog,
-		Manager:   manager,
-		Spec:      spec,
-		WorkDir:   workDir,
-	}, nil
-}
-
-func (r *release) processVersions(level ReleaseLevel) (semver.SemVer, semver.SemVer, error) {
+func (f *formula) processVersions(level ReleaseLevel) (semver.SemVer, semver.SemVer, error) {
 	var empty, current, next semver.SemVer
 
-	sv, err := r.Manager.Read()
+	sv, err := f.Manager.Read()
 	if err != nil {
 		return empty, empty, err
 	}
@@ -91,7 +42,7 @@ func (r *release) processVersions(level ReleaseLevel) (semver.SemVer, semver.Sem
 		current, next = sv.ReleaseMajor()
 	}
 
-	err = r.Manager.Update(current.Version())
+	err = f.Manager.Update(current.Version())
 	if err != nil {
 		return empty, empty, err
 	}
@@ -99,15 +50,19 @@ func (r *release) processVersions(level ReleaseLevel) (semver.SemVer, semver.Sem
 	return current, next, nil
 }
 
-func (r *release) Release(ctx context.Context, level ReleaseLevel, comment string) error {
-	owner, name, err := r.Git.GetRepoName()
+func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment string) error {
+	if f.GithubToken == "" {
+		return errors.New("github token is not set")
+	}
+
+	owner, name, err := f.Git.GetRepoName()
 	if err != nil {
 		return err
 	}
 
 	repo := owner + "/" + name
 
-	branch, err := r.Git.GetBranchName()
+	branch, err := f.Git.GetBranchName()
 	if err != nil {
 		return err
 	}
@@ -116,7 +71,7 @@ func (r *release) Release(ctx context.Context, level ReleaseLevel, comment strin
 		return errors.New("release has to be run on master branch")
 	}
 
-	clean, err := r.Git.IsClean()
+	clean, err := f.Git.IsClean()
 	if err != nil {
 		return err
 	}
@@ -126,91 +81,91 @@ func (r *release) Release(ctx context.Context, level ReleaseLevel, comment strin
 		return errors.New("working directory is not clean and has uncommitted changes")
 	}
 
-	if r.Ui != nil {
-		r.Ui.Warn("🔓 Temporarily enabling push to master branch ...")
+	if f.Ui != nil {
+		f.Ui.Warn("🔓 Temporarily enabling push to master branch ...")
 	}
 
-	err = r.Github.BranchProtectionForAdmin(ctx, repo, branch, false)
+	err = f.Github.BranchProtectionForAdmin(ctx, repo, branch, false)
 	if err != nil {
 		return err
 	}
 
 	// Make sure we re-enable master branch protection
 	defer func() {
-		if r.Ui != nil {
-			r.Ui.Warn("🔒 Re-disabling push to master branch ...")
+		if f.Ui != nil {
+			f.Ui.Warn("🔒 Re-disabling push to master branch ...")
 		}
 
-		err = r.Github.BranchProtectionForAdmin(context.Background(), repo, branch, true)
-		if err != nil && r.Ui != nil {
-			r.Ui.Error(err.Error())
+		err = f.Github.BranchProtectionForAdmin(context.Background(), repo, branch, true)
+		if err != nil && f.Ui != nil {
+			f.Ui.Error(err.Error())
 		}
 	}()
 
-	if r.Ui != nil {
-		r.Ui.Info("🚀 Releasing current version ...")
+	if f.Ui != nil {
+		f.Ui.Info("🚀 Releasing current version ...")
 	}
 
-	current, next, err := r.processVersions(level)
+	current, next, err := f.processVersions(level)
 	if err != nil {
 		return err
 	}
 
 	// Create or update the change log
-	changelogText, err := r.Changelog.Generate(ctx, current.GitTag())
+	changelogText, err := f.Changelog.Generate(ctx, current.GitTag())
 	if err != nil {
 		return err
 	}
 
 	commitMessage := fmt.Sprintf("Releasing %s", current.Version())
-	err = r.Git.Commit(commitMessage, r.Spec.VersionFile, r.Changelog.Filename())
+	err = f.Git.Commit(commitMessage, f.Spec.VersionFile, f.Changelog.Filename())
 	if err != nil {
 		return err
 	}
 
-	err = r.Git.Tag(current.GitTag())
+	err = f.Git.Tag(current.GitTag())
 	if err != nil {
 		return err
 	}
 
-	err = r.Git.Push(true)
+	err = f.Git.Push(true)
 	if err != nil {
 		return err
 	}
 
 	description := fmt.Sprintf("%s\n\n%s", comment, changelogText)
-	release, err := r.Github.CreateRelease(ctx, repo, branch, current, description, false, false)
+	release, err := f.Github.CreateRelease(ctx, repo, branch, current, description, false, false)
 	if err != nil {
 		return err
 	}
 
 	// Building and uploading artifacts
-	if r.Spec.Release.Build {
-		if r.Ui != nil {
-			r.Ui.Info(fmt.Sprintf("🛠️ Building artifacts for release %s ...", release.Name))
+	if f.Spec.Release.Build {
+		if f.Ui != nil {
+			f.Ui.Info(fmt.Sprintf("🛠️ Building artifacts for release %s ...", release.Name))
 		}
 
-		if r.Ui != nil {
-			r.Ui.Info(fmt.Sprintf("📦 Uploading artifacts for release %s ...", release.Name))
+		if f.Ui != nil {
+			f.Ui.Info(fmt.Sprintf("📦 Uploading artifacts for release %s ...", release.Name))
 		}
 	}
 
-	if r.Ui != nil {
-		r.Ui.Info(fmt.Sprintf("✏️ Preparing next version %s ...", next.PreRelease()))
+	if f.Ui != nil {
+		f.Ui.Info(fmt.Sprintf("✏️ Preparing next version %s ...", next.PreRelease()))
 	}
 
-	err = r.Manager.Update(next.PreRelease())
+	err = f.Manager.Update(next.PreRelease())
 	if err != nil {
 		return err
 	}
 
 	commitMessage = fmt.Sprintf("Beginning %s", next.PreRelease())
-	err = r.Git.Commit(commitMessage, r.Spec.VersionFile)
+	err = f.Git.Commit(commitMessage, f.Spec.VersionFile)
 	if err != nil {
 		return err
 	}
 
-	err = r.Git.Push(false)
+	err = f.Git.Push(false)
 	if err != nil {
 		return err
 	}

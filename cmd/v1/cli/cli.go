@@ -6,6 +6,7 @@ import (
 
 	"github.com/mitchellh/cli"
 	"github.com/moorara/cherry/cmd/version"
+	"github.com/moorara/cherry/internal/v1/formula"
 	"github.com/moorara/cherry/internal/v1/spec"
 )
 
@@ -25,17 +26,22 @@ func New(ui cli.Ui, name, githubToken string) (*cli.CLI, error) {
 	spec.ToolVersion = version.Version
 	spec.Build.BinaryFile = "bin/" + name
 
+	formula, err := formula.New(ui, spec, wd, githubToken)
+	if err != nil {
+		return nil, err
+	}
+
 	app := cli.NewCLI(name, version.String())
 	app.Args = os.Args[1:]
 	app.Commands = map[string]cli.CommandFactory{
 		"test": func() (cmd cli.Command, err error) {
-			return NewTest(ui, spec, wd)
+			return NewTest(ui, spec, formula)
 		},
 		"build": func() (cmd cli.Command, err error) {
-			return NewBuild(ui, spec, wd)
+			return NewBuild(ui, spec, formula)
 		},
 		"release": func() (cmd cli.Command, err error) {
-			return NewRelease(ui, spec, wd, githubToken)
+			return NewRelease(ui, spec, formula)
 		},
 	}
 

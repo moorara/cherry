@@ -9,22 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-
-	"github.com/mitchellh/cli"
-	"github.com/moorara/cherry/internal/v1/spec"
-)
-
-type (
-	// Test is the interface for test formulas
-	Test interface {
-		Cover(ctx context.Context) error
-	}
-
-	test struct {
-		cli.Ui
-		spec.Spec
-		WorkDir string
-	}
 )
 
 const (
@@ -34,21 +18,12 @@ const (
 	reportFile   = "index.html"
 )
 
-// NewTest creates a new instance of test formula
-func NewTest(ui cli.Ui, spec spec.Spec, workDir string) Test {
-	return &test{
-		Ui:      ui,
-		Spec:    spec,
-		WorkDir: workDir,
-	}
-}
-
-func (t *test) getPackages(ctx context.Context) ([]string, error) {
+func (f *formula) getPackages(ctx context.Context) ([]string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
 	cmd := exec.CommandContext(ctx, "go", "list", "./...")
-	cmd.Dir = t.WorkDir
+	cmd.Dir = f.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -60,7 +35,7 @@ func (t *test) getPackages(ctx context.Context) ([]string, error) {
 	return pkgs, nil
 }
 
-func (t *test) testPackage(ctx context.Context, pkg, coverfile string) error {
+func (f *formula) testPackage(ctx context.Context, pkg, coverfile string) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
@@ -80,21 +55,21 @@ func (t *test) testPackage(ctx context.Context, pkg, coverfile string) error {
 
 	// Run go test with cover mode
 	cmd := exec.CommandContext(ctx, "go", "test", "-covermode", atomicMode, "-coverprofile", tf.Name(), pkg)
-	cmd.Dir = t.WorkDir
+	cmd.Dir = f.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err = cmd.Run()
 	testOutput := strings.Trim(stdout.String(), "\n")
 
 	if err != nil {
-		if t.Ui != nil {
-			t.Ui.Error(fmt.Sprintf("\n%s\n", testOutput))
+		if f.Ui != nil {
+			f.Ui.Error(fmt.Sprintf("\n%s\n", testOutput))
 		}
 		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
-	if t.Ui != nil {
-		t.Ui.Info(fmt.Sprintf("✅ %s", testOutput))
+	if f.Ui != nil {
+		f.Ui.Info(fmt.Sprintf("✅ %s", testOutput))
 	}
 
 	stdout.Reset()
@@ -102,7 +77,7 @@ func (t *test) testPackage(ctx context.Context, pkg, coverfile string) error {
 
 	// Get the coverage data
 	cmd = exec.CommandContext(ctx, "tail", "-n", "+2", tf.Name())
-	cmd.Dir = t.WorkDir
+	cmd.Dir = f.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -120,11 +95,11 @@ func (t *test) testPackage(ctx context.Context, pkg, coverfile string) error {
 	return nil
 }
 
-func (t *test) Cover(ctx context.Context) error {
+func (f *formula) Cover(ctx context.Context) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	reportpath := filepath.Join(t.WorkDir, t.Spec.Test.ReportPath)
+	reportpath := filepath.Join(f.WorkDir, f.Spec.Test.ReportPath)
 	coverfile := filepath.Join(reportpath, coverFile)
 	reportfile := filepath.Join(reportpath, reportFile)
 
@@ -144,13 +119,13 @@ func (t *test) Cover(ctx context.Context) error {
 		return err
 	}
 
-	packages, err := t.getPackages(ctx)
+	packages, err := f.getPackages(ctx)
 	if err != nil {
 		return err
 	}
 
 	for _, pkg := range packages {
-		err = t.testPackage(ctx, pkg, coverfile)
+		err = f.testPackage(ctx, pkg, coverfile)
 		if err != nil {
 			return err
 		}
@@ -158,7 +133,7 @@ func (t *test) Cover(ctx context.Context) error {
 
 	// Generate the singleton html coverage report for all packages
 	cmd := exec.CommandContext(ctx, "go", "tool", "cover", "-html", coverfile, "-o", reportfile)
-	cmd.Dir = t.WorkDir
+	cmd.Dir = f.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {

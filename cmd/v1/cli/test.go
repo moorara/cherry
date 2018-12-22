@@ -14,15 +14,15 @@ type (
 	Test struct {
 		cli.Ui
 		spec.Spec
-		WorkDir string
+		formula.Formula
 	}
 )
 
 const (
 	testError     = 40
 	testFlagError = 41
-	testTimeout   = 1 * time.Minute
-	testSynopsis  = `Run tests`
+	testTimeout   = 60 * time.Second
+	testSynopsis  = `run tests`
 	testHelp      = `
 	Use this command for running unit tests and generating coverage report.
 	Currently, this command can only test Go applications.
@@ -39,11 +39,11 @@ const (
 )
 
 // NewTest create a new test command
-func NewTest(ui cli.Ui, spec spec.Spec, workDir string) (*Test, error) {
+func NewTest(ui cli.Ui, spec spec.Spec, formula formula.Formula) (*Test, error) {
 	cmd := &Test{
 		Ui:      ui,
 		Spec:    spec,
-		WorkDir: workDir,
+		Formula: formula,
 	}
 
 	return cmd, nil
@@ -71,9 +71,7 @@ func (c *Test) Run(args []string) int {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 
-	test := formula.NewTest(c.Ui, c.Spec, c.WorkDir)
-
-	err := test.Cover(ctx)
+	err := c.Formula.Cover(ctx)
 	if err != nil {
 		c.Ui.Error(err.Error())
 		return testError

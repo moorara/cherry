@@ -11,26 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mitchellh/cli"
-	"github.com/moorara/cherry/internal/service/git"
 	"github.com/moorara/cherry/internal/service/util"
-	"github.com/moorara/cherry/internal/v1/spec"
 )
 
 type (
-	// Build is the interface for build formulas
-	Build interface {
-		Compile(ctx context.Context) error
-		CrossCompile(ctx context.Context) error
-	}
-
-	build struct {
-		cli.Ui
-		git.Git
-		spec.Spec
-		WorkDir string
-	}
-
 	buildInfo struct {
 		Version   string
 		Revision  string
@@ -41,51 +25,39 @@ type (
 	}
 )
 
-// NewBuild creates a new instance of build formula
-func NewBuild(ui cli.Ui, spec spec.Spec, workDir string) Build {
-	git := git.New(workDir)
-
-	return &build{
-		Ui:      ui,
-		Git:     git,
-		Spec:    spec,
-		WorkDir: workDir,
-	}
-}
-
-func (b *build) getBuildInfo(ctx context.Context) (*buildInfo, error) {
+func (f *formula) getBuildInfo(ctx context.Context) (*buildInfo, error) {
 	info := new(buildInfo)
 
-	data, err := ioutil.ReadFile(filepath.Join(b.WorkDir, b.Spec.VersionFile))
+	data, err := ioutil.ReadFile(filepath.Join(f.WorkDir, f.Spec.VersionFile))
 	if err != nil {
 		return nil, err
 	}
 
 	info.Version = strings.Trim(string(data), "\n")
 
-	info.Revision, err = b.Git.GetCommitSHA(true)
+	info.Revision, err = f.Git.GetCommitSHA(true)
 	if err != nil {
 		return nil, err
 	}
 
-	info.Branch, err = b.Git.GetBranchName()
+	info.Branch, err = f.Git.GetBranchName()
 	if err != nil {
 		return nil, err
 	}
 
 	info.GoVersion = runtime.Version()
-	info.BuildTool = fmt.Sprintf("%s:%s", b.Spec.ToolName, b.Spec.ToolVersion)
+	info.BuildTool = fmt.Sprintf("%s:%s", f.Spec.ToolName, f.Spec.ToolVersion)
 	info.BuildTime = time.Now().UTC()
 
 	return info, nil
 }
 
-func (b *build) getLDFlags(ctx context.Context, info *buildInfo) (string, error) {
+func (f *formula) getLDFlags(ctx context.Context, info *buildInfo) (string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	cmd := exec.CommandContext(ctx, "go", "list", b.Spec.Build.VersionPackage)
-	cmd.Dir = b.WorkDir
+	cmd := exec.CommandContext(ctx, "go", "list", f.Spec.Build.VersionPackage)
+	cmd.Dir = f.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -106,47 +78,47 @@ func (b *build) getLDFlags(ctx context.Context, info *buildInfo) (string, error)
 	return ldflags, nil
 }
 
-func (b *build) Compile(ctx context.Context) error {
+func (f *formula) Compile(ctx context.Context) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	info, err := b.getBuildInfo(ctx)
+	info, err := f.getBuildInfo(ctx)
 	if err != nil {
 		return err
 	}
 
-	ldflags, err := b.getLDFlags(ctx, info)
+	ldflags, err := f.getLDFlags(ctx, info)
 	if err != nil {
 		return err
 	}
 
-	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", ldflags, "-o", b.Spec.Build.BinaryFile, b.Spec.Build.MainFile)
-	cmd.Dir = b.WorkDir
+	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", ldflags, "-o", f.Spec.Build.BinaryFile, f.Spec.Build.MainFile)
+	cmd.Dir = f.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
-	if b.Ui != nil {
-		b.Ui.Info(fmt.Sprintf("✅ %s", b.Spec.Build.BinaryFile))
+	if f.Ui != nil {
+		f.Ui.Info(fmt.Sprintf("✅ %s", f.Spec.Build.BinaryFile))
 	}
 
 	return nil
 }
 
-func (b *build) CrossCompile(ctx context.Context) error {
-	info, err := b.getBuildInfo(ctx)
+func (f *formula) CrossCompile(ctx context.Context) error {
+	info, err := f.getBuildInfo(ctx)
 	if err != nil {
 		return err
 	}
 
-	ldflags, err := b.getLDFlags(ctx, info)
+	ldflags, err := f.getLDFlags(ctx, info)
 	if err != nil {
 		return err
 	}
 
-	for _, platform := range b.Spec.Build.Platforms {
+	for _, platform := range f.Spec.Build.Platforms {
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
 
@@ -159,9 +131,9 @@ func (b *build) CrossCompile(ctx context.Context) error {
 		stdout.Reset()
 		stderr.Reset()
 
-		bin := fmt.Sprintf("%s-%s", b.Spec.Build.BinaryFile, platform)
-		cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", ldflags, "-o", bin, b.Spec.Build.MainFile)
-		cmd.Dir = b.WorkDir
+		bin := fmt.Sprintf("%s-%s", f.Spec.Build.BinaryFile, platform)
+		cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", ldflags, "-o", bin, f.Spec.Build.MainFile)
+		cmd.Dir = f.WorkDir
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
@@ -171,8 +143,8 @@ func (b *build) CrossCompile(ctx context.Context) error {
 		// Restore environment variables
 		reset()
 
-		if b.Ui != nil {
-			b.Ui.Info(fmt.Sprintf("✅ %s", bin))
+		if f.Ui != nil {
+			f.Ui.Info(fmt.Sprintf("✅ %s", bin))
 		}
 	}
 
