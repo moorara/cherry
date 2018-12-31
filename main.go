@@ -39,7 +39,7 @@ func main() {
 		ui = util.NewUI().Colored().Concurrent()
 	}
 
-	app, err := app.New(ui, config.Config.Name, version.String(), config.Config.GithubToken)
+	app, err := app.New(ui, config.Config.Name, config.Config.GithubToken)
 	if err != nil {
 		ui.Error(err.Error())
 		os.Exit(initError)

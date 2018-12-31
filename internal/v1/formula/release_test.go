@@ -80,11 +80,11 @@ func TestProcessVersions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			r := &release{
+			f := &formula{
 				Manager: tc.manager,
 			}
 
-			current, next, err := r.processVersions(tc.level)
+			current, next, err := f.processVersions(tc.level)
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)

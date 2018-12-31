@@ -89,6 +89,8 @@ func TestSpecSetDefaults(t *testing.T) {
 		{
 			Spec{},
 			Spec{
+				ToolName:    defaultToolName,
+				ToolVersion: defaultToolVersion,
 				Version:     defaultVersion,
 				Language:    defaultLanguage,
 				VersionFile: defaultVersionFile,
@@ -129,6 +131,8 @@ func TestSpecSetDefaults(t *testing.T) {
 				},
 			},
 			Spec{
+				ToolName:    defaultToolName,
+				ToolVersion: defaultToolVersion,
 				Version:     "2.0",
 				Language:    "go",
 				VersionFile: "version.yaml",

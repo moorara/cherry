@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/mitchellh/cli"
-	"github.com/moorara/cherry/cmd/version"
 	"github.com/moorara/cherry/internal/v1/formula"
 	"github.com/moorara/cherry/internal/v1/spec"
 )
@@ -17,15 +16,15 @@ type (
 	Build struct {
 		cli.Ui
 		spec.Spec
-		WorkDir string
+		formula.Formula
 	}
 )
 
 const (
 	buildError     = 20
 	buildFlagError = 21
-	buildTimeout   = 1 * time.Minute
-	buildSynopsis  = `Build artifacts`
+	buildTimeout   = 60 * time.Second
+	buildSynopsis  = `build artifacts`
 	buildHelp      = `
 	Use this command for building artifacts.
 	Currently, this command can only build Go applications.
@@ -46,11 +45,11 @@ const (
 )
 
 // NewBuild create a new build command
-func NewBuild(ui cli.Ui, spec spec.Spec, workDir string) (*Build, error) {
+func NewBuild(ui cli.Ui, spec spec.Spec, formula formula.Formula) (*Build, error) {
 	cmd := &Build{
 		Ui:      ui,
 		Spec:    spec,
-		WorkDir: workDir,
+		Formula: formula,
 	}
 
 	return cmd, nil
@@ -82,13 +81,11 @@ func (c *Build) Run(args []string) int {
 	ctx, cancel := context.WithTimeout(context.Background(), buildTimeout)
 	defer cancel()
 
-	build := formula.NewBuild(c.Ui, c.Spec, c.WorkDir, version.Version)
-
 	var err error
 	if c.Spec.Build.CrossCompile {
-		err = build.CrossCompile(ctx)
+		err = c.Formula.CrossCompile(ctx)
 	} else {
-		err = build.Compile(ctx)
+		err = c.Formula.Compile(ctx)
 	}
 
 	if err != nil {
