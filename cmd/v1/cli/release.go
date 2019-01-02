@@ -13,7 +13,7 @@ type (
 	// Release is the release CLI command
 	Release struct {
 		cli.Ui
-		spec.Spec
+		*spec.Spec
 		formula.Formula
 	}
 )
@@ -47,7 +47,7 @@ const (
 )
 
 // NewRelease create a new release command
-func NewRelease(ui cli.Ui, spec spec.Spec, formula formula.Formula) (*Release, error) {
+func NewRelease(ui cli.Ui, spec *spec.Spec, formula formula.Formula) (*Release, error) {
 	cmd := &Release{
 		Ui:      ui,
 		Spec:    spec,

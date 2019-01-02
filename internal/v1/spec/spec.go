@@ -34,19 +34,19 @@ type (
 )
 
 // Read reads and returns a Spec from a YAML file
-func Read(path string) (Spec, error) {
-	var empty, spec Spec
+func Read(path string) (*Spec, error) {
+	spec := new(Spec)
 	path = filepath.Clean(path)
 
 	f, err := os.Open(path)
 	if err != nil {
-		return empty, err
+		return nil, err
 	}
 	defer f.Close()
 
-	err = yaml.NewDecoder(f).Decode(&spec)
+	err = yaml.NewDecoder(f).Decode(spec)
 	if err != nil {
-		return empty, err
+		return nil, err
 	}
 
 	return spec, nil

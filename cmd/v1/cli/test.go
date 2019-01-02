@@ -13,7 +13,7 @@ type (
 	// Test is the test CLI command
 	Test struct {
 		cli.Ui
-		spec.Spec
+		*spec.Spec
 		formula.Formula
 	}
 )
@@ -39,7 +39,7 @@ const (
 )
 
 // NewTest create a new test command
-func NewTest(ui cli.Ui, spec spec.Spec, formula formula.Formula) (*Test, error) {
+func NewTest(ui cli.Ui, spec *spec.Spec, formula formula.Formula) (*Test, error) {
 	cmd := &Test{
 		Ui:      ui,
 		Spec:    spec,

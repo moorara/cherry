@@ -27,14 +27,15 @@ type (
 		github.Github
 		changelog.Changelog
 		semver.Manager
-		spec.Spec
+		*spec.Spec
+
 		WorkDir     string
 		GithubToken string
 	}
 )
 
 // New creates a new instance of formula
-func New(ui cli.Ui, spec spec.Spec, workDir, githubToken string) (Formula, error) {
+func New(ui cli.Ui, spec *spec.Spec, workDir, githubToken string) (Formula, error) {
 	git := git.New(workDir)
 	github := github.New(githubTimeout, githubToken)
 	changelog := changelog.New(workDir, githubToken)

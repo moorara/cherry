@@ -46,7 +46,7 @@ func (f *formula) getBuildInfo(ctx context.Context) (*buildInfo, error) {
 	}
 
 	info.GoVersion = runtime.Version()
-	info.BuildTool = fmt.Sprintf("%s:%s", f.Spec.ToolName, f.Spec.ToolVersion)
+	info.BuildTool = fmt.Sprintf("%s@%s", f.Spec.ToolName, f.Spec.ToolVersion)
 	info.BuildTime = time.Now().UTC()
 
 	return info, nil

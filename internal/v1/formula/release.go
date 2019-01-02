@@ -9,8 +9,10 @@ import (
 	"github.com/moorara/cherry/internal/service/semver"
 )
 
-// ReleaseLevel specifies the level of a release (patch, minor, or major)
-type ReleaseLevel int
+type (
+	// ReleaseLevel specifies the level of a release (patch, minor, or major)
+	ReleaseLevel int
+)
 
 const (
 	// PatchRelease releases a the patch component of a semantic version
@@ -142,7 +144,7 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 	// Building and uploading artifacts
 	if f.Spec.Release.Build {
 		if f.Ui != nil {
-			f.Ui.Info(fmt.Sprintf("🛠️ Building artifacts for release %s ...", release.Name))
+			f.Ui.Info(fmt.Sprintf("🛠️  Building artifacts for release %s ...", release.Name))
 		}
 
 		if f.Ui != nil {
@@ -151,7 +153,7 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 	}
 
 	if f.Ui != nil {
-		f.Ui.Info(fmt.Sprintf("✏️ Preparing next version %s ...", next.PreRelease()))
+		f.Ui.Info(fmt.Sprintf("✏️  Preparing next version %s ...", next.PreRelease()))
 	}
 
 	err = f.Manager.Update(next.PreRelease())

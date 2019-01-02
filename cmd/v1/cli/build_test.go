@@ -30,10 +30,10 @@ func TestBuildSynopsis(t *testing.T) {
 
 func TestBuildHelp(t *testing.T) {
 	tests := []struct {
-		spec spec.Spec
+		spec *spec.Spec
 	}{
 		{
-			spec: spec.Spec{
+			spec: &spec.Spec{
 				Build: spec.Build{
 					CrossCompile:   true,
 					MainFile:       "main.go",
