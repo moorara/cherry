@@ -62,15 +62,11 @@ func (f *formula) testPackage(ctx context.Context, pkg, coverfile string) error 
 	testOutput := strings.Trim(stdout.String(), "\n")
 
 	if err != nil {
-		if f.Ui != nil {
-			f.Ui.Error(fmt.Sprintf("\n%s\n", testOutput))
-		}
+		f.Error(fmt.Sprintf("\n%s\n", testOutput))
 		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
-	if f.Ui != nil {
-		f.Ui.Info(fmt.Sprintf("✅ %s", testOutput))
-	}
+	f.Info(fmt.Sprintf("✅ %s", testOutput))
 
 	stdout.Reset()
 	stderr.Reset()

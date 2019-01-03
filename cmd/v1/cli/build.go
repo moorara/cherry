@@ -83,7 +83,7 @@ func (c *Build) Run(args []string) int {
 
 	var err error
 	if c.Spec.Build.CrossCompile {
-		err = c.Formula.CrossCompile(ctx)
+		_, err = c.Formula.CrossCompile(ctx)
 	} else {
 		err = c.Formula.Compile(ctx)
 	}

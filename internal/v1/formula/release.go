@@ -83,9 +83,7 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 		return errors.New("working directory is not clean and has uncommitted changes")
 	}
 
-	if f.Ui != nil {
-		f.Ui.Warn("🔓 Temporarily enabling push to master branch ...")
-	}
+	f.Warn("🔓 Temporarily enabling push to master branch ...")
 
 	err = f.Github.BranchProtectionForAdmin(ctx, repo, branch, false)
 	if err != nil {
@@ -94,24 +92,20 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 
 	// Make sure we re-enable master branch protection
 	defer func() {
-		if f.Ui != nil {
-			f.Ui.Warn("🔒 Re-disabling push to master branch ...")
-		}
+		f.Warn("🔒 Re-disabling push to master branch ...")
 
 		err = f.Github.BranchProtectionForAdmin(context.Background(), repo, branch, true)
-		if err != nil && f.Ui != nil {
-			f.Ui.Error(err.Error())
+		if err != nil {
+			f.Error(err.Error())
 		}
 	}()
-
-	if f.Ui != nil {
-		f.Ui.Info("🚀 Releasing current version ...")
-	}
 
 	current, next, err := f.processVersions(level)
 	if err != nil {
 		return err
 	}
+
+	f.Info(fmt.Sprintf("🚀 Releasing current version %s ...", current.Version()))
 
 	// Create or update the change log
 	changelogText, err := f.Changelog.Generate(ctx, current.GitTag())
@@ -143,18 +137,26 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 
 	// Building and uploading artifacts
 	if f.Spec.Release.Build {
-		if f.Ui != nil {
-			f.Ui.Info(fmt.Sprintf("🛠️  Building artifacts for release %s ...", release.Name))
+		f.Info(fmt.Sprintf("🛠️  Building artifacts for release %s ...", release.Name))
+
+		assets, err := f.CrossCompile(ctx)
+		if err != nil {
+			// We don't break the release process if we cannot build artifacts
+			f.Error(fmt.Sprintf("🔴 Error on building artifacts: %s", err))
 		}
 
-		if f.Ui != nil {
-			f.Ui.Info(fmt.Sprintf("📦 Uploading artifacts for release %s ...", release.Name))
+		f.Info(fmt.Sprintf("📦 Uploading artifacts for release %s ...", release.Name))
+
+		err = f.Github.UploadAssets(ctx, repo, current, assets)
+		if err != nil {
+			// We don't break the release process if we cannot upload artifacts
+			f.Error(fmt.Sprintf("🔴 Error on uploading artifacts: %s", err))
 		}
+
+		f.Cleanup(ctx)
 	}
 
-	if f.Ui != nil {
-		f.Ui.Info(fmt.Sprintf("✏️  Preparing next version %s ...", next.PreRelease()))
-	}
+	f.Info(fmt.Sprintf("✏️  Preparing next version %s ...", next.PreRelease()))
 
 	err = f.Manager.Update(next.PreRelease())
 	if err != nil {
