@@ -18,15 +18,17 @@ func New(ui cli.Ui, name, githubToken string) (*cli.CLI, error) {
 	}
 
 	// If any error, we use a spec with default values
-	spec, _ := spec.Read(spec.SpecFile)
-	spec.SetDefaults()
+	s, err := spec.Read(spec.SpecFile)
+	if err != nil {
+		s = new(spec.Spec)
+	}
 
 	// Update spec
-	name = filepath.Base(wd)
-	spec.ToolVersion = version.Version
-	spec.Build.BinaryFile = "bin/" + name
+	s.SetDefaults()
+	s.ToolVersion = version.Version
+	s.Build.BinaryFile = "bin/" + filepath.Base(wd)
 
-	formula, err := formula.New(ui, spec, wd, githubToken)
+	f, err := formula.New(ui, s, wd, githubToken)
 	if err != nil {
 		return nil, err
 	}
@@ -35,13 +37,13 @@ func New(ui cli.Ui, name, githubToken string) (*cli.CLI, error) {
 	app.Args = os.Args[1:]
 	app.Commands = map[string]cli.CommandFactory{
 		"test": func() (cmd cli.Command, err error) {
-			return NewTest(ui, spec, formula)
+			return NewTest(ui, s, f)
 		},
 		"build": func() (cmd cli.Command, err error) {
-			return NewBuild(ui, spec, formula)
+			return NewBuild(ui, s, f)
 		},
 		"release": func() (cmd cli.Command, err error) {
-			return NewRelease(ui, spec, formula)
+			return NewRelease(ui, s, f)
 		},
 	}
 

@@ -46,7 +46,7 @@ func (f *formula) getBuildInfo(ctx context.Context) (*buildInfo, error) {
 	}
 
 	info.GoVersion = runtime.Version()
-	info.BuildTool = fmt.Sprintf("%s:%s", f.Spec.ToolName, f.Spec.ToolVersion)
+	info.BuildTool = fmt.Sprintf("%s@%s", f.Spec.ToolName, f.Spec.ToolVersion)
 	info.BuildTime = time.Now().UTC()
 
 	return info, nil
@@ -100,32 +100,32 @@ func (f *formula) Compile(ctx context.Context) error {
 		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
-	if f.Ui != nil {
-		f.Ui.Info(fmt.Sprintf("✅ %s", f.Spec.Build.BinaryFile))
-	}
+	f.Info(fmt.Sprintf("✅ %s", f.Spec.Build.BinaryFile))
 
 	return nil
 }
 
-func (f *formula) CrossCompile(ctx context.Context) error {
+func (f *formula) CrossCompile(ctx context.Context) ([]string, error) {
 	info, err := f.getBuildInfo(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	ldflags, err := f.getLDFlags(ctx, info)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	for _, platform := range f.Spec.Build.Platforms {
+	artifacts := make([]string, len(f.Spec.Build.Platforms))
+
+	for i, platform := range f.Spec.Build.Platforms {
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
 
 		env := strings.Split(platform, "-")
 		reset, err := util.SetEnvVars("GOOS", env[0], "GOARCH", env[1])
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		stdout.Reset()
@@ -137,16 +137,15 @@ func (f *formula) CrossCompile(ctx context.Context) error {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+			return nil, fmt.Errorf("%s: %s", err.Error(), stderr.String())
 		}
+
+		artifacts[i] = bin
+		f.Info(fmt.Sprintf("✅ %s", bin))
 
 		// Restore environment variables
 		reset()
-
-		if f.Ui != nil {
-			f.Ui.Info(fmt.Sprintf("✅ %s", bin))
-		}
 	}
 
-	return nil
+	return artifacts, nil
 }

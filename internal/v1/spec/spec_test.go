@@ -11,7 +11,7 @@ func TestRead(t *testing.T) {
 		name          string
 		path          string
 		expectedError string
-		expectedSpec  Spec
+		expectedSpec  *Spec
 	}{
 		{
 			name:          "NoFile",
@@ -31,7 +31,7 @@ func TestRead(t *testing.T) {
 		{
 			name: "Minimum",
 			path: "test/min.yaml",
-			expectedSpec: Spec{
+			expectedSpec: &Spec{
 				Version:  "1.0",
 				Language: "go",
 				Test:     Test{},
@@ -44,7 +44,7 @@ func TestRead(t *testing.T) {
 		{
 			name: "Maximum",
 			path: "test/max.yaml",
-			expectedSpec: Spec{
+			expectedSpec: &Spec{
 				Version:     "1.0",
 				Language:    "go",
 				VersionFile: "VERSION",

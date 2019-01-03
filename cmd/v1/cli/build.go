@@ -15,7 +15,7 @@ type (
 	// Build is the build CLI command
 	Build struct {
 		cli.Ui
-		spec.Spec
+		*spec.Spec
 		formula.Formula
 	}
 )
@@ -45,7 +45,7 @@ const (
 )
 
 // NewBuild create a new build command
-func NewBuild(ui cli.Ui, spec spec.Spec, formula formula.Formula) (*Build, error) {
+func NewBuild(ui cli.Ui, spec *spec.Spec, formula formula.Formula) (*Build, error) {
 	cmd := &Build{
 		Ui:      ui,
 		Spec:    spec,
@@ -83,7 +83,7 @@ func (c *Build) Run(args []string) int {
 
 	var err error
 	if c.Spec.Build.CrossCompile {
-		err = c.Formula.CrossCompile(ctx)
+		_, err = c.Formula.CrossCompile(ctx)
 	} else {
 		err = c.Formula.Compile(ctx)
 	}
