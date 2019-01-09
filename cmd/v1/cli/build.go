@@ -81,16 +81,18 @@ func (c *Build) Run(args []string) int {
 	ctx, cancel := context.WithTimeout(context.Background(), buildTimeout)
 	defer cancel()
 
-	var err error
-	if c.Spec.Build.CrossCompile {
-		_, err = c.Formula.CrossCompile(ctx)
-	} else {
-		err = c.Formula.Compile(ctx)
-	}
-
+	err := c.Formula.Compile(ctx)
 	if err != nil {
 		c.Ui.Error(err.Error())
 		return buildError
+	}
+
+	if c.Spec.Build.CrossCompile {
+		_, err := c.Formula.CrossCompile(ctx)
+		if err != nil {
+			c.Ui.Error(err.Error())
+			return buildError
+		}
 	}
 
 	return 0

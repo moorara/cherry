@@ -2,7 +2,6 @@ package formula
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 
 	"github.com/mitchellh/cli"
@@ -20,7 +19,6 @@ type (
 		Warn(string)
 		Error(string)
 
-		Cleanup(context.Context) error
 		Cover(context.Context) error
 		Compile(context.Context) error
 		CrossCompile(context.Context) ([]string, error)
@@ -79,21 +77,4 @@ func (f *formula) Error(msg string) {
 	if f.Ui != nil {
 		f.Ui.Error(msg)
 	}
-}
-
-func (f *formula) Cleanup(context.Context) error {
-	// Remove test coverage path
-	err := os.RemoveAll(f.Spec.Test.ReportPath)
-	if err != nil {
-		return err
-	}
-
-	// Remove built binaries path
-	dir := filepath.Dir(f.Spec.Build.BinaryFile)
-	err = os.RemoveAll(dir)
-	if err != nil {
-		return err
-	}
-
-	return err
 }
