@@ -6,6 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestDefaultBinaryFile(t *testing.T) {
+	value := defaultBinaryFile()
+	assert.Equal(t, "bin/spec", value)
+}
+
 func TestBuildSetDefaults(t *testing.T) {
 	tests := []struct {
 		build         Build
