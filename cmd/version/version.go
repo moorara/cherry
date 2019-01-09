@@ -4,6 +4,16 @@ import (
 	"fmt"
 )
 
+const (
+	template = `
+	version:    %s
+	revision:   %s
+	branch:     %s
+	goVersion:  %s
+	buildTool:  %s
+	buildTime:  %s` + "\n"
+)
+
 var (
 	// Version is the semantic version
 	Version string
@@ -26,5 +36,5 @@ var (
 
 // String returns a string describing the version information in details
 func String() string {
-	return fmt.Sprintf("version: %s  revision: %s  branch: %s  goVersion: %s  buildTool: %s  buildTime: %s", Version, Revision, Branch, GoVersion, BuildTool, BuildTime)
+	return fmt.Sprintf(template, Version, Revision, Branch, GoVersion, BuildTool, BuildTime)
 }

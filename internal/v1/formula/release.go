@@ -138,22 +138,24 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 	// Building and uploading artifacts
 	if f.Spec.Release.Build {
 		f.Info(fmt.Sprintf("🛠️  Building artifacts for release %s ...", release.Name))
-
 		assets, err := f.CrossCompile(ctx)
 		if err != nil {
 			// We don't break the release process if we cannot build artifacts
 			f.Error(fmt.Sprintf("🔴 Error on building artifacts: %s", err))
+		} else {
+			f.Info(fmt.Sprintf("📦 Uploading artifacts for release %s ...", release.Name))
+			err = f.Github.UploadAssets(ctx, repo, current, assets)
+			if err != nil {
+				// We don't break the release process if we cannot upload artifacts
+				f.Error(fmt.Sprintf("🔴 Error on uploading artifacts: %s", err))
+			}
 		}
 
-		f.Info(fmt.Sprintf("📦 Uploading artifacts for release %s ...", release.Name))
-
-		err = f.Github.UploadAssets(ctx, repo, current, assets)
+		f.Info("🧹 Cleaning up artifacts ...")
+		err = f.Cleanup(ctx)
 		if err != nil {
-			// We don't break the release process if we cannot upload artifacts
-			f.Error(fmt.Sprintf("🔴 Error on uploading artifacts: %s", err))
+			f.Warn(fmt.Sprintf("🔴 Error on cleaning up artifacts: %s", err))
 		}
-
-		f.Cleanup(ctx)
 	}
 
 	f.Info(fmt.Sprintf("✏️  Preparing next version %s ...", next.PreRelease()))

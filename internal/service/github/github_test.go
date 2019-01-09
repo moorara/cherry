@@ -2,11 +2,8 @@ package github
 
 import (
 	"context"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -32,131 +29,6 @@ func TestNew(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			github := New(tc.timeout, tc.token)
 			assert.NotNil(t, github)
-		})
-	}
-}
-
-func TestMakeRequest(t *testing.T) {
-	contextWithTimeout, cancel := context.WithTimeout(context.Background(), time.Millisecond)
-	defer cancel()
-
-	tests := []struct {
-		name               string
-		mockStatusCode     int
-		mockBody           string
-		token              string
-		ctx                context.Context
-		method             string
-		endpoint           string
-		contentType        string
-		body               string
-		expectedError      string
-		expectedStatusCode int
-		expectedBody       string
-	}{
-		{
-			name:          "InvalidRequest",
-			token:         "github-token",
-			ctx:           context.Background(),
-			method:        "GET",
-			endpoint:      " ",
-			contentType:   "",
-			body:          "",
-			expectedError: `invalid character " " in host name`,
-		},
-		{
-			name:          "DoError",
-			token:         "github-token",
-			ctx:           context.Background(),
-			method:        "GET",
-			endpoint:      "no_slash",
-			contentType:   "",
-			body:          "",
-			expectedError: "invalid URL port",
-		},
-		{
-			name:          "ContextTimeout",
-			token:         "github-token",
-			ctx:           contextWithTimeout,
-			method:        "GET",
-			endpoint:      "/users/moorara",
-			contentType:   "",
-			body:          "",
-			expectedError: "context deadline exceeded",
-		},
-		{
-			name:               "Success200",
-			mockStatusCode:     200,
-			mockBody:           `{ "login": "moorara" }`,
-			token:              "github-token",
-			ctx:                context.Background(),
-			method:             "GET",
-			endpoint:           "/users/moorara",
-			contentType:        "",
-			body:               "",
-			expectedStatusCode: 200,
-			expectedBody:       `{ "login": "moorara" }`,
-		},
-		{
-			name:               "Success201",
-			mockStatusCode:     201,
-			mockBody:           `{ "id": 1, "name": "1.0.0", "tag_name": "v1.0.0" }`,
-			token:              "github-token",
-			ctx:                context.Background(),
-			method:             "POST",
-			endpoint:           "/repos/moorara/cherry/releases",
-			contentType:        "application/json",
-			body:               `{ "name": "1.0.0", "tag_name": "v1.0.0" }`,
-			expectedStatusCode: 201,
-			expectedBody:       `{ "id": 1, "name": "1.0.0", "tag_name": "v1.0.0" }`,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "token "+tc.token, r.Header.Get("Authorization"))
-				assert.Equal(t, "moorara/cherry", r.Header.Get("User-Agent"))
-				assert.Equal(t, "application/vnd.github.v3+json", r.Header.Get("Accept"))
-				assert.Equal(t, "deflate, gzip;q=1.0, *;q=0.5", r.Header.Get("Accept-Encoding"))
-				if tc.contentType != "" && tc.body != "" {
-					assert.Equal(t, tc.contentType, r.Header.Get("Content-Type"))
-				}
-
-				time.Sleep(2 * time.Millisecond)
-				w.WriteHeader(tc.mockStatusCode)
-				w.Write([]byte(tc.mockBody))
-			}))
-			defer ts.Close()
-
-			client := &http.Client{}
-			gh := &github{
-				client: client,
-				token:  tc.token,
-			}
-
-			var body io.Reader
-			if tc.body != "" {
-				body = strings.NewReader(tc.body)
-			}
-
-			url := ts.URL + tc.endpoint
-			res, err := gh.makeRequest(tc.ctx, tc.method, url, tc.contentType, body)
-
-			if tc.expectedError != "" {
-				assert.Contains(t, err.Error(), tc.expectedError)
-				assert.Nil(t, res)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, res)
-
-				data, err := ioutil.ReadAll(res.Body)
-				assert.NoError(t, err)
-				res.Body.Close()
-
-				assert.Equal(t, tc.expectedStatusCode, res.StatusCode)
-				assert.Equal(t, tc.expectedBody, string(data))
-			}
 		})
 	}
 }
@@ -226,8 +98,8 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			client := &http.Client{}
 			gh := &github{
-				client: client,
-				token:  tc.token,
+				client:     client,
+				authHeader: "token " + tc.token,
 			}
 
 			if tc.mockAPI {
@@ -340,8 +212,8 @@ func TestCreateRelease(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			client := &http.Client{}
 			gh := &github{
-				client: client,
-				token:  tc.token,
+				client:     client,
+				authHeader: "token " + tc.token,
 			}
 
 			if tc.mockAPI {
@@ -493,8 +365,8 @@ func TestUploadAssets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			client := &http.Client{}
 			gh := &github{
-				client: client,
-				token:  tc.token,
+				client:     client,
+				authHeader: "token " + tc.token,
 			}
 
 			if tc.mockAPI {

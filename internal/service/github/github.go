@@ -18,9 +18,11 @@ import (
 )
 
 const (
-	apiAddr         = "https://api.github.com"
-	uploadAddr      = "https://uploads.github.com"
-	jsonContentType = "application/json"
+	apiAddr    = "https://api.github.com"
+	uploadAddr = "https://uploads.github.com"
+
+	acceptType = "application/vnd.github.v3+json"
+	userAgent  = "moorara/cherry"
 )
 
 type (
@@ -35,7 +37,7 @@ type (
 		client     *http.Client
 		apiAddr    string
 		uploadAddr string
-		token      string
+		authHeader string
 	}
 
 	releaseReq struct {
@@ -60,6 +62,12 @@ type (
 		TarballURL string `json:"tarball_url"`
 		ZipballURL string `json:"zipball_url"`
 	}
+
+	uploadContent struct {
+		Body     io.ReadCloser
+		Length   int64
+		MIMEType string
+	}
 )
 
 // New creates a new Github instance
@@ -74,40 +82,44 @@ func New(timeout time.Duration, token string) Github {
 		client:     client,
 		apiAddr:    apiAddr,
 		uploadAddr: uploadAddr,
-		token:      token,
+		authHeader: "token " + token,
 	}
 }
 
-func (gh *github) makeRequest(ctx context.Context, method, url, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := http.NewRequest(method, url, body)
+func (gh *github) getUploadContent(filepath string) (*uploadContent, error) {
+	file, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("Authorization", "token "+gh.token)
-	req.Header.Set("User-Agent", "moorara/cherry") // ref: https://developer.github.com/v3/#user-agent-required
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
-	req.Header.Set("Accept-Encoding", "deflate, gzip;q=1.0, *;q=0.5")
-	if contentType != "" && body != nil {
-		req.Header.Set("Content-Type", contentType)
+	stat, err := file.Stat()
+	if err != nil {
+		return nil, err
 	}
 
-	done := make(chan util.HTTPResult, 1)
-
-	go func() {
-		res, err := gh.client.Do(req)
-		done <- util.HTTPResult{
-			Res: res,
-			Err: err,
-		}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case result := <-done:
-		return result.Res, result.Err
+	// Read the first 512 bytes of file to determine the mime type of asset
+	buff := make([]byte, 512)
+	_, err = file.Read(buff)
+	if err != nil {
+		return nil, err
 	}
+
+	// Determine mime type of asset
+	// http.DetectContentType will return "application/octet-stream" if it cannot determine a more specific one
+	mimeType := http.DetectContentType(buff)
+
+	// Reset the offset back to the beginning of the file
+	// SEEK_SET: seek relative to the origin of the file
+	_, err = file.Seek(0, os.SEEK_SET)
+	if err != nil {
+		return nil, err
+	}
+
+	return &uploadContent{
+		Body:     file,
+		Length:   stat.Size(),
+		MIMEType: mimeType,
+	}, nil
 }
 
 func (gh *github) BranchProtectionForAdmin(ctx context.Context, repo, branch string, enabled bool) error {
@@ -123,7 +135,19 @@ func (gh *github) BranchProtectionForAdmin(ctx context.Context, repo, branch str
 	}
 
 	url := fmt.Sprintf("%s/repos/%s/branches/%s/protection/enforce_admins", gh.apiAddr, repo, branch)
-	res, err := gh.makeRequest(ctx, method, url, "", nil)
+
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Authorization", gh.authHeader)
+	req.Header.Set("Accept", acceptType)
+	req.Header.Set("User-Agent", userAgent) // ref: https://developer.github.com/v3/#user-agent-required
+
+	req = req.WithContext(ctx)
+
+	res, err := gh.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -148,10 +172,22 @@ func (gh *github) CreateRelease(ctx context.Context, repo, branch string, versio
 		Body:       description,
 	}
 
-	buff := new(bytes.Buffer)
-	json.NewEncoder(buff).Encode(reqBody)
+	body := new(bytes.Buffer)
+	json.NewEncoder(body).Encode(reqBody)
 
-	res, err := gh.makeRequest(ctx, method, url, jsonContentType, buff)
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", gh.authHeader)
+	req.Header.Set("Accept", acceptType)
+	req.Header.Set("User-Agent", userAgent) // ref: https://developer.github.com/v3/#user-agent-required
+	req.Header.Set("Content-Type", "application/json")
+
+	req = req.WithContext(ctx)
+
+	res, err := gh.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -170,53 +206,72 @@ func (gh *github) CreateRelease(ctx context.Context, repo, branch string, versio
 	return release, nil
 }
 
-func (gh *github) UploadAssets(ctx context.Context, repo string, version semver.SemVer, assets []string) error {
+func (gh *github) GetRelease(ctx context.Context, repo string, version semver.SemVer) (*Release, error) {
 	method := "GET"
 	url := fmt.Sprintf("%s/repos/%s/releases/tags/%s", gh.apiAddr, repo, version.GitTag())
 
-	res, err := gh.makeRequest(ctx, method, url, "application/json", nil)
+	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", gh.authHeader)
+	req.Header.Set("Accept", acceptType)
+	req.Header.Set("User-Agent", userAgent) // ref: https://developer.github.com/v3/#user-agent-required
+
+	req = req.WithContext(ctx)
+
+	res, err := gh.client.Do(req)
+	if err != nil {
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return util.NewHTTPError(res)
+		return nil, util.NewHTTPError(res)
 	}
 
 	release := new(Release)
 	err = json.NewDecoder(res.Body).Decode(release)
 	if err != nil {
+		return nil, err
+	}
+
+	return release, nil
+}
+
+func (gh *github) UploadAssets(ctx context.Context, repo string, version semver.SemVer, assets []string) error {
+	release, err := gh.GetRelease(ctx, repo, version)
+	if err != nil {
 		return err
 	}
 
 	for _, asset := range assets {
-		assetFilePath := filepath.Clean(asset)
-		assetFileName := filepath.Base(assetFilePath)
-
-		file, err := os.Open(assetFilePath)
-		if err != nil {
-			return err
-		}
-
-		// Read the first 512 bytes of file to determine the mime type of asset
-		buff := make([]byte, 512)
-		_, err = file.Read(buff)
-		if err != nil {
-			return err
-		}
-
-		// Determine mime type of asset
-		// http.DetectContentType will return "application/octet-stream" if it cannot determine a more specific one
-		contentType := http.DetectContentType(buff)
-
-		// Reset the offset back to the beginning of the file
-		// SEEK_SET: seek relative to the origin of the file
-		file.Seek(0, os.SEEK_SET)
+		assetPath := filepath.Clean(asset)
+		assetName := filepath.Base(assetPath)
 
 		method := "POST"
-		url := fmt.Sprintf("%s/repos/%s/releases/%d/assets?name=%s", gh.uploadAddr, repo, release.ID, netURL.QueryEscape(assetFileName))
-		res, err := gh.makeRequest(ctx, method, url, contentType, file)
+		url := fmt.Sprintf("%s/repos/%s/releases/%d/assets?name=%s", gh.uploadAddr, repo, release.ID, netURL.QueryEscape(assetName))
+
+		content, err := gh.getUploadContent(assetPath)
+		if err != nil {
+			return err
+		}
+
+		req, err := http.NewRequest(method, url, content.Body)
+		if err != nil {
+			return err
+		}
+
+		req.Header.Set("Authorization", gh.authHeader)
+		req.Header.Set("Accept", acceptType)
+		req.Header.Set("User-Agent", userAgent) // ref: https://developer.github.com/v3/#user-agent-required
+		req.Header.Set("Content-Type", content.MIMEType)
+		req.ContentLength = content.Length
+
+		req = req.WithContext(ctx)
+
+		res, err := gh.client.Do(req)
 		if err != nil {
 			return err
 		}
@@ -225,7 +280,7 @@ func (gh *github) UploadAssets(ctx context.Context, repo string, version semver.
 			return util.NewHTTPError(res)
 		}
 
-		file.Close()
+		content.Body.Close()
 		res.Body.Close()
 	}
 

@@ -8,14 +8,17 @@ import (
 
 func TestString(t *testing.T) {
 	tests := []struct {
-		expectedString string
+		expectedValues []string
 	}{
 		{
-			expectedString: "version:   revision:   branch:   goVersion:   buildTool:   buildTime: ",
+			[]string{"version:", "revision:", "branch:", "goVersion:", "buildTool:", "buildTime:"},
 		},
 	}
 
 	for _, tc := range tests {
-		assert.Equal(t, tc.expectedString, String())
+		str := String()
+		for _, expected := range tc.expectedValues {
+			assert.Contains(t, str, expected)
+		}
 	}
 }
