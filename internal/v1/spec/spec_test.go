@@ -90,7 +90,7 @@ func TestSpecSetDefaults(t *testing.T) {
 			Spec{},
 			Spec{
 				ToolName:    defaultToolName,
-				ToolVersion: defaultToolVersion,
+				ToolVersion: "",
 				Version:     defaultVersion,
 				Language:    defaultLanguage,
 				VersionFile: defaultVersionFile,
@@ -100,7 +100,7 @@ func TestSpecSetDefaults(t *testing.T) {
 				Build: Build{
 					CrossCompile:   defaultCrossCompile,
 					MainFile:       defaultMainFile,
-					BinaryFile:     defaultBinaryFile,
+					BinaryFile:     "bin/spec",
 					VersionPackage: defaultVersionPackage,
 					GoVersions:     defaultGoVersions,
 					Platforms:      defaultPlatforms,
@@ -132,7 +132,7 @@ func TestSpecSetDefaults(t *testing.T) {
 			},
 			Spec{
 				ToolName:    defaultToolName,
-				ToolVersion: defaultToolVersion,
+				ToolVersion: "",
 				Version:     "2.0",
 				Language:    "go",
 				VersionFile: "version.yaml",

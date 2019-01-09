@@ -12,7 +12,6 @@ const (
 	SpecFile = "cherry.yaml"
 
 	defaultToolName    = "cherry"
-	defaultToolVersion = ""
 	defaultVersion     = "1.0"
 	defaultLanguage    = "go"
 	defaultVersionFile = "VERSION"
@@ -56,10 +55,6 @@ func Read(path string) (*Spec, error) {
 func (s *Spec) SetDefaults() {
 	if s.ToolName == "" {
 		s.ToolName = defaultToolName
-	}
-
-	if s.ToolVersion == "" {
-		s.ToolVersion = defaultToolVersion
 	}
 
 	if s.Version == "" {

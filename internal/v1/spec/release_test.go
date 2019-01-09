@@ -29,7 +29,7 @@ func TestReleaseSetDefaults(t *testing.T) {
 
 	for _, tc := range tests {
 		tc.release.SetDefaults()
-		assert.NotNil(t, tc.expectedRelease, tc.release)
+		assert.Equal(t, tc.expectedRelease, tc.release)
 	}
 }
 
