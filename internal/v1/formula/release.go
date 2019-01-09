@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/moorara/cherry/internal/service/semver"
@@ -152,9 +153,11 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 		}
 
 		f.Info("🧹 Cleaning up artifacts ...")
-		err = f.Cleanup(ctx)
-		if err != nil {
-			f.Warn(fmt.Sprintf("🔴 Error on cleaning up artifacts: %s", err))
+		for _, asset := range assets {
+			err := os.Remove(asset)
+			if err != nil {
+				f.Warn(fmt.Sprintf("🔴 Error on removing %s: %s", asset, err))
+			}
 		}
 	}
 
