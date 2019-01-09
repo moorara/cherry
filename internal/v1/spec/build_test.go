@@ -16,7 +16,7 @@ func TestBuildSetDefaults(t *testing.T) {
 			Build{
 				CrossCompile:   defaultCrossCompile,
 				MainFile:       defaultMainFile,
-				BinaryFile:     defaultBinaryFile,
+				BinaryFile:     "bin/spec",
 				VersionPackage: defaultVersionPackage,
 				GoVersions:     defaultGoVersions,
 				Platforms:      defaultPlatforms,
@@ -44,7 +44,7 @@ func TestBuildSetDefaults(t *testing.T) {
 
 	for _, tc := range tests {
 		tc.build.SetDefaults()
-		assert.NotNil(t, tc.expectedBuild, tc.build)
+		assert.Equal(t, tc.expectedBuild, tc.build)
 	}
 }
 

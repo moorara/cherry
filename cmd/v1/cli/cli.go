@@ -2,7 +2,6 @@ package cli
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/mitchellh/cli"
 	"github.com/moorara/cherry/cmd/version"
@@ -26,7 +25,6 @@ func New(ui cli.Ui, name, githubToken string) (*cli.CLI, error) {
 	// Update spec
 	s.SetDefaults()
 	s.ToolVersion = version.Version
-	s.Build.BinaryFile = "bin/" + filepath.Base(wd)
 
 	f, err := formula.New(ui, s, wd, githubToken)
 	if err != nil {

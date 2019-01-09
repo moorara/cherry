@@ -2,12 +2,13 @@ package spec
 
 import (
 	"flag"
+	"os"
+	"path/filepath"
 )
 
 const (
 	defaultCrossCompile   = false
 	defaultMainFile       = "main.go"
-	defaultBinaryFile     = "bin/app"
 	defaultVersionPackage = "./cmd/version"
 )
 
@@ -28,6 +29,14 @@ type (
 	}
 )
 
+func defaultBinaryFile() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		return "bin/app"
+	}
+	return "bin/" + filepath.Base(wd)
+}
+
 // SetDefaults set default values for empty fields
 func (b *Build) SetDefaults() {
 	if b.CrossCompile == false {
@@ -39,7 +48,7 @@ func (b *Build) SetDefaults() {
 	}
 
 	if b.BinaryFile == "" {
-		b.BinaryFile = defaultBinaryFile
+		b.BinaryFile = defaultBinaryFile()
 	}
 
 	if b.VersionPackage == "" {
