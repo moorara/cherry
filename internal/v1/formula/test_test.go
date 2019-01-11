@@ -22,7 +22,7 @@ func TestGetPackages(t *testing.T) {
 				WorkDir: os.TempDir(),
 			},
 			ctx:              context.Background(),
-			expectedError:    "can't load package",
+			expectedError:    "exit status 1",
 			expectedPackages: nil,
 		},
 		{
