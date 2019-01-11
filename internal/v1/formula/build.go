@@ -26,28 +26,30 @@ type (
 )
 
 func (f *formula) getBuildInfo(ctx context.Context) (*buildInfo, error) {
-	info := new(buildInfo)
-
 	data, err := ioutil.ReadFile(filepath.Join(f.WorkDir, f.Spec.VersionFile))
 	if err != nil {
 		return nil, err
 	}
+	version := strings.Trim(string(data), "\n")
 
-	info.Version = strings.Trim(string(data), "\n")
-
-	info.Revision, err = f.Git.GetCommitSHA(true)
+	commit, err := f.Git.GetHEAD()
 	if err != nil {
 		return nil, err
 	}
 
-	info.Branch, err = f.Git.GetBranchName()
+	branch, err := f.Git.GetBranch()
 	if err != nil {
 		return nil, err
 	}
 
-	info.GoVersion = runtime.Version()
-	info.BuildTool = fmt.Sprintf("%s@%s", f.Spec.ToolName, f.Spec.ToolVersion)
-	info.BuildTime = time.Now().UTC()
+	info := &buildInfo{
+		Version:   version,
+		Revision:  commit.ShortSHA,
+		Branch:    branch.Name,
+		GoVersion: runtime.Version(),
+		BuildTool: fmt.Sprintf("%s@%s", f.Spec.ToolName, f.Spec.ToolVersion),
+		BuildTime: time.Now().UTC(),
+	}
 
 	return info, nil
 }

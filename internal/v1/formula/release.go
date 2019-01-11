@@ -28,7 +28,39 @@ const (
 	githubTimeout = 30 * time.Second
 )
 
-func (f *formula) processVersions(level ReleaseLevel) (semver.SemVer, semver.SemVer, error) {
+func (f *formula) precheck() (string, string, error) {
+	if f.GithubToken == "" {
+		return "", "", errors.New("github token is not set")
+	}
+
+	repo, err := f.Git.GetRepo()
+	if err != nil {
+		return "", "", err
+	}
+
+	branch, err := f.Git.GetBranch()
+	if err != nil {
+		return "", "", err
+	}
+
+	if branch.Name != "master" {
+		return "", "", errors.New("release has to be run on master branch")
+	}
+
+	clean, err := f.Git.IsClean()
+	if err != nil {
+		return "", "", err
+	}
+
+	// This is to ensure that we do not commit any unwanted change while releasing
+	if !clean {
+		return "", "", errors.New("working directory is not clean and has uncommitted changes")
+	}
+
+	return repo.Path(), branch.Name, nil
+}
+
+func (f *formula) versions(level ReleaseLevel) (semver.SemVer, semver.SemVer, error) {
 	var empty, current, next semver.SemVer
 
 	sv, err := f.Manager.Read()
@@ -54,34 +86,9 @@ func (f *formula) processVersions(level ReleaseLevel) (semver.SemVer, semver.Sem
 }
 
 func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment string) error {
-	if f.GithubToken == "" {
-		return errors.New("github token is not set")
-	}
-
-	owner, name, err := f.Git.GetRepoName()
+	repo, branch, err := f.precheck()
 	if err != nil {
 		return err
-	}
-
-	repo := owner + "/" + name
-
-	branch, err := f.Git.GetBranchName()
-	if err != nil {
-		return err
-	}
-
-	if branch != "master" {
-		return errors.New("release has to be run on master branch")
-	}
-
-	clean, err := f.Git.IsClean()
-	if err != nil {
-		return err
-	}
-
-	// This is to ensure that we do not commit any unwanted change while releasing
-	if !clean {
-		return errors.New("working directory is not clean and has uncommitted changes")
 	}
 
 	f.Warn("🔓 Temporarily enabling push to master branch ...")
@@ -94,14 +101,13 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 	// Make sure we re-enable master branch protection
 	defer func() {
 		f.Warn("🔒 Re-disabling push to master branch ...")
-
 		err = f.Github.BranchProtectionForAdmin(context.Background(), repo, branch, true)
 		if err != nil {
 			f.Error(err.Error())
 		}
 	}()
 
-	current, next, err := f.processVersions(level)
+	current, next, err := f.versions(level)
 	if err != nil {
 		return err
 	}
