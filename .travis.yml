@@ -9,7 +9,8 @@ jobs:
     - stage: "Tests"
       name: "Unit Tests"
       language: go
-      go: 1.11
+      go:
+        - "1.11.x"
       env:
         - GO111MODULE=on
       script:
@@ -18,7 +19,8 @@ jobs:
     - stage: "Build"
       name: "Docker Images"
       language: go
-      go: 1.11
+      go:
+        - "1.11.x"
       env:
         - GO111MODULE=on
       script:
