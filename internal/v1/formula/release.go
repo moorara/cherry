@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/moorara/cherry/internal/service/semver"
+	"github.com/moorara/cherry/internal/service"
 )
 
 type (
@@ -60,10 +60,10 @@ func (f *formula) precheck() (string, string, error) {
 	return repo.Path(), branch.Name, nil
 }
 
-func (f *formula) versions(level ReleaseLevel) (semver.SemVer, semver.SemVer, error) {
-	var empty, current, next semver.SemVer
+func (f *formula) versions(level ReleaseLevel) (service.SemVer, service.SemVer, error) {
+	var empty, current, next service.SemVer
 
-	sv, err := f.Manager.Read()
+	sv, err := f.VersionManager.Read()
 	if err != nil {
 		return empty, empty, err
 	}
@@ -77,7 +77,7 @@ func (f *formula) versions(level ReleaseLevel) (semver.SemVer, semver.SemVer, er
 		current, next = sv.ReleaseMajor()
 	}
 
-	err = f.Manager.Update(current.Version())
+	err = f.VersionManager.Update(current.Version())
 	if err != nil {
 		return empty, empty, err
 	}
@@ -169,7 +169,7 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 
 	f.Info(fmt.Sprintf("✏️  Preparing next version %s ...", next.PreRelease()))
 
-	err = f.Manager.Update(next.PreRelease())
+	err = f.VersionManager.Update(next.PreRelease())
 	if err != nil {
 		return err
 	}

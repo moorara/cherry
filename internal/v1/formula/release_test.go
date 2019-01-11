@@ -5,10 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/moorara/cherry/internal/service"
 	"github.com/moorara/cherry/internal/v1/spec"
-
-	"github.com/moorara/cherry/internal/service/git"
-	"github.com/moorara/cherry/internal/service/semver"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -48,7 +46,7 @@ func TestPrecheck(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &git.Repo{
+					GetRepoOutRepo: &service.Repo{
 						Owner: "moorara",
 						Name:  "cherry",
 					},
@@ -64,11 +62,11 @@ func TestPrecheck(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &git.Repo{
+					GetRepoOutRepo: &service.Repo{
 						Owner: "moorara",
 						Name:  "cherry",
 					},
-					GetBranchOutBranch: &git.Branch{},
+					GetBranchOutBranch: &service.Branch{},
 				},
 			},
 			expectedError: "release has to be run on master branch",
@@ -80,11 +78,11 @@ func TestPrecheck(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &git.Repo{
+					GetRepoOutRepo: &service.Repo{
 						Owner: "moorara",
 						Name:  "cherry",
 					},
-					GetBranchOutBranch: &git.Branch{
+					GetBranchOutBranch: &service.Branch{
 						Name: "master",
 					},
 					IsCleanOutError: errors.New("cannot read git status"),
@@ -99,11 +97,11 @@ func TestPrecheck(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &git.Repo{
+					GetRepoOutRepo: &service.Repo{
 						Owner: "moorara",
 						Name:  "cherry",
 					},
-					GetBranchOutBranch: &git.Branch{
+					GetBranchOutBranch: &service.Branch{
 						Name: "master",
 					},
 					IsCleanOutResult: false,
@@ -118,11 +116,11 @@ func TestPrecheck(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &git.Repo{
+					GetRepoOutRepo: &service.Repo{
 						Owner: "moorara",
 						Name:  "cherry",
 					},
-					GetBranchOutBranch: &git.Branch{
+					GetBranchOutBranch: &service.Branch{
 						Name: "master",
 					},
 					IsCleanOutResult: true,
@@ -156,13 +154,13 @@ func TestVersions(t *testing.T) {
 		formula         *formula
 		level           ReleaseLevel
 		expectedError   string
-		expectedCurrent semver.SemVer
-		expectedNext    semver.SemVer
+		expectedCurrent service.SemVer
+		expectedNext    service.SemVer
 	}{
 		{
 			name: "ManagerReadError",
 			formula: &formula{
-				Manager: &mockSemVerManager{
+				VersionManager: &mockVersionManager{
 					ReadOutError: errors.New("invalid version file"),
 				},
 			},
@@ -172,7 +170,7 @@ func TestVersions(t *testing.T) {
 		{
 			name: "ManagerUpdateError",
 			formula: &formula{
-				Manager: &mockSemVerManager{
+				VersionManager: &mockVersionManager{
 					UpdateOutError: errors.New("version file error"),
 				},
 			},
@@ -182,35 +180,35 @@ func TestVersions(t *testing.T) {
 		{
 			name: "PatchRelease",
 			formula: &formula{
-				Manager: &mockSemVerManager{
-					ReadOutSemVer: semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+				VersionManager: &mockVersionManager{
+					ReadOutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
 				},
 			},
 			level:           PatchRelease,
-			expectedCurrent: semver.SemVer{Major: 0, Minor: 1, Patch: 0},
-			expectedNext:    semver.SemVer{Major: 0, Minor: 1, Patch: 1},
+			expectedCurrent: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+			expectedNext:    service.SemVer{Major: 0, Minor: 1, Patch: 1},
 		},
 		{
 			name: "MinorRelease",
 			formula: &formula{
-				Manager: &mockSemVerManager{
-					ReadOutSemVer: semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+				VersionManager: &mockVersionManager{
+					ReadOutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
 				},
 			},
 			level:           MinorRelease,
-			expectedCurrent: semver.SemVer{Major: 0, Minor: 2, Patch: 0},
-			expectedNext:    semver.SemVer{Major: 0, Minor: 2, Patch: 1},
+			expectedCurrent: service.SemVer{Major: 0, Minor: 2, Patch: 0},
+			expectedNext:    service.SemVer{Major: 0, Minor: 2, Patch: 1},
 		},
 		{
 			name: "MajorRelease",
 			formula: &formula{
-				Manager: &mockSemVerManager{
-					ReadOutSemVer: semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+				VersionManager: &mockVersionManager{
+					ReadOutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
 				},
 			},
 			level:           MajorRelease,
-			expectedCurrent: semver.SemVer{Major: 1, Minor: 0, Patch: 0},
-			expectedNext:    semver.SemVer{Major: 1, Minor: 0, Patch: 1},
+			expectedCurrent: service.SemVer{Major: 1, Minor: 0, Patch: 0},
+			expectedNext:    service.SemVer{Major: 1, Minor: 0, Patch: 1},
 		},
 	}
 
@@ -259,11 +257,11 @@ func TestRelease(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &git.Repo{
+					GetRepoOutRepo: &service.Repo{
 						Owner: "moorara",
 						Name:  "cherry",
 					},
-					GetBranchOutBranch: &git.Branch{
+					GetBranchOutBranch: &service.Branch{
 						Name: "master",
 					},
 					IsCleanOutResult: true,
@@ -284,11 +282,11 @@ func TestRelease(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &git.Repo{
+					GetRepoOutRepo: &service.Repo{
 						Owner: "moorara",
 						Name:  "cherry",
 					},
-					GetBranchOutBranch: &git.Branch{
+					GetBranchOutBranch: &service.Branch{
 						Name: "master",
 					},
 					IsCleanOutResult: true,
@@ -296,7 +294,7 @@ func TestRelease(t *testing.T) {
 				Github: &mockGithub{
 					BranchProtectionForAdminOutError: nil,
 				},
-				Manager: &mockSemVerManager{
+				VersionManager: &mockVersionManager{
 					ReadOutError: errors.New("invalid version file"),
 				},
 			},
@@ -312,11 +310,11 @@ func TestRelease(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &git.Repo{
+					GetRepoOutRepo: &service.Repo{
 						Owner: "moorara",
 						Name:  "cherry",
 					},
-					GetBranchOutBranch: &git.Branch{
+					GetBranchOutBranch: &service.Branch{
 						Name: "master",
 					},
 					IsCleanOutResult: true,
@@ -324,8 +322,8 @@ func TestRelease(t *testing.T) {
 				Github: &mockGithub{
 					BranchProtectionForAdminOutError: nil,
 				},
-				Manager: &mockSemVerManager{
-					ReadOutSemVer:  semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+				VersionManager: &mockVersionManager{
+					ReadOutSemVer:  service.SemVer{Major: 0, Minor: 1, Patch: 0},
 					UpdateOutError: nil,
 				},
 				Changelog: &mockChangelog{
@@ -344,11 +342,11 @@ func TestRelease(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &git.Repo{
+					GetRepoOutRepo: &service.Repo{
 						Owner: "moorara",
 						Name:  "cherry",
 					},
-					GetBranchOutBranch: &git.Branch{
+					GetBranchOutBranch: &service.Branch{
 						Name: "master",
 					},
 					IsCleanOutResult: true,
@@ -357,8 +355,8 @@ func TestRelease(t *testing.T) {
 				Github: &mockGithub{
 					BranchProtectionForAdminOutError: nil,
 				},
-				Manager: &mockSemVerManager{
-					ReadOutSemVer:  semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+				VersionManager: &mockVersionManager{
+					ReadOutSemVer:  service.SemVer{Major: 0, Minor: 1, Patch: 0},
 					UpdateOutError: nil,
 				},
 				Changelog: &mockChangelog{
@@ -377,11 +375,11 @@ func TestRelease(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &git.Repo{
+					GetRepoOutRepo: &service.Repo{
 						Owner: "moorara",
 						Name:  "cherry",
 					},
-					GetBranchOutBranch: &git.Branch{
+					GetBranchOutBranch: &service.Branch{
 						Name: "master",
 					},
 					IsCleanOutResult: true,
@@ -391,8 +389,8 @@ func TestRelease(t *testing.T) {
 				Github: &mockGithub{
 					BranchProtectionForAdminOutError: nil,
 				},
-				Manager: &mockSemVerManager{
-					ReadOutSemVer:  semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+				VersionManager: &mockVersionManager{
+					ReadOutSemVer:  service.SemVer{Major: 0, Minor: 1, Patch: 0},
 					UpdateOutError: nil,
 				},
 				Changelog: &mockChangelog{
@@ -411,11 +409,11 @@ func TestRelease(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &git.Repo{
+					GetRepoOutRepo: &service.Repo{
 						Owner: "moorara",
 						Name:  "cherry",
 					},
-					GetBranchOutBranch: &git.Branch{
+					GetBranchOutBranch: &service.Branch{
 						Name: "master",
 					},
 					IsCleanOutResult: true,
@@ -426,8 +424,8 @@ func TestRelease(t *testing.T) {
 				Github: &mockGithub{
 					BranchProtectionForAdminOutError: nil,
 				},
-				Manager: &mockSemVerManager{
-					ReadOutSemVer:  semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+				VersionManager: &mockVersionManager{
+					ReadOutSemVer:  service.SemVer{Major: 0, Minor: 1, Patch: 0},
 					UpdateOutError: nil,
 				},
 				Changelog: &mockChangelog{
@@ -446,11 +444,11 @@ func TestRelease(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &git.Repo{
+					GetRepoOutRepo: &service.Repo{
 						Owner: "moorara",
 						Name:  "cherry",
 					},
-					GetBranchOutBranch: &git.Branch{
+					GetBranchOutBranch: &service.Branch{
 						Name: "master",
 					},
 					IsCleanOutResult: true,
@@ -462,8 +460,8 @@ func TestRelease(t *testing.T) {
 					BranchProtectionForAdminOutError: nil,
 					CreateReleaseOutError:            errors.New("github create release error"),
 				},
-				Manager: &mockSemVerManager{
-					ReadOutSemVer:  semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+				VersionManager: &mockVersionManager{
+					ReadOutSemVer:  service.SemVer{Major: 0, Minor: 1, Patch: 0},
 					UpdateOutError: nil,
 				},
 				Changelog: &mockChangelog{

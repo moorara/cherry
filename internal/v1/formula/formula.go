@@ -5,10 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/mitchellh/cli"
-	"github.com/moorara/cherry/internal/service/changelog"
-	"github.com/moorara/cherry/internal/service/git"
-	"github.com/moorara/cherry/internal/service/github"
-	"github.com/moorara/cherry/internal/service/semver"
+	"github.com/moorara/cherry/internal/service"
 	"github.com/moorara/cherry/internal/v1/spec"
 )
 
@@ -27,10 +24,10 @@ type (
 
 	formula struct {
 		cli.Ui
-		git.Git
-		github.Github
-		changelog.Changelog
-		semver.Manager
+		service.Git
+		service.Github
+		service.Changelog
+		service.VersionManager
 		*spec.Spec
 
 		WorkDir     string
@@ -40,24 +37,24 @@ type (
 
 // New creates a new instance of formula
 func New(ui cli.Ui, spec *spec.Spec, workDir, githubToken string) (Formula, error) {
-	git := git.New(workDir)
-	github := github.New(githubTimeout, githubToken)
-	changelog := changelog.New(workDir, githubToken)
+	git := service.NewGit(workDir)
+	github := service.NewGithub(githubTimeout, githubToken)
+	changelog := service.NewChangelog(workDir, githubToken)
 
-	manager, err := semver.NewManager(filepath.Join(workDir, spec.VersionFile))
+	vmanager, err := service.NewVersionManager(filepath.Join(workDir, spec.VersionFile))
 	if err != nil {
 		return nil, err
 	}
 
 	return &formula{
-		Ui:          ui,
-		Git:         git,
-		Github:      github,
-		Changelog:   changelog,
-		Manager:     manager,
-		Spec:        spec,
-		WorkDir:     workDir,
-		GithubToken: githubToken,
+		Ui:             ui,
+		Git:            git,
+		Github:         github,
+		Changelog:      changelog,
+		VersionManager: vmanager,
+		Spec:           spec,
+		WorkDir:        workDir,
+		GithubToken:    githubToken,
 	}, nil
 }
 

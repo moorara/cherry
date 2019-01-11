@@ -1,4 +1,4 @@
-package git
+package service
 
 import (
 	"os"
@@ -27,7 +27,7 @@ func TestIsClean(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			git := New(tc.workDir)
+			git := NewGit(tc.workDir)
 			_, err := git.IsClean()
 
 			if tc.expectedError {
@@ -59,7 +59,7 @@ func TestGetRepo(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			git := New(tc.workDir)
+			git := NewGit(tc.workDir)
 			_, err := git.GetRepo()
 
 			if tc.expectedError {
@@ -91,7 +91,7 @@ func TestGetBranch(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			git := New(tc.workDir)
+			git := NewGit(tc.workDir)
 			_, err := git.GetBranch()
 
 			if tc.expectedError {
@@ -128,7 +128,7 @@ func TestGetHEAD(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			git := New(tc.workDir)
+			git := NewGit(tc.workDir)
 			_, err := git.GetHEAD()
 
 			if tc.expectedError {
@@ -159,7 +159,7 @@ func TestCommit(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			git := New(tc.workDir)
+			git := NewGit(tc.workDir)
 			err := git.Commit(tc.message, tc.files...)
 
 			if tc.expectedError {
@@ -188,7 +188,7 @@ func TestTag(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			git := New(tc.workDir)
+			git := NewGit(tc.workDir)
 			err := git.Tag(tc.tag)
 
 			if tc.expectedError {
@@ -217,7 +217,7 @@ func TestPush(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			git := New(tc.workDir)
+			git := NewGit(tc.workDir)
 			err := git.Push(tc.withTags)
 
 			if tc.expectedError {

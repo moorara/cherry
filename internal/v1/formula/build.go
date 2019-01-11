@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/moorara/cherry/internal/service/util"
+	"github.com/moorara/cherry/internal/util"
 )
 
 type (

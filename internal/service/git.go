@@ -1,4 +1,4 @@
-package git
+package service
 
 import (
 	"bytes"
@@ -43,8 +43,8 @@ type (
 	}
 )
 
-// New creates a new git client
-func New(workDir string) Git {
+// NewGit creates a new git client
+func NewGit(workDir string) Git {
 	return &git{
 		workDir: workDir,
 	}
