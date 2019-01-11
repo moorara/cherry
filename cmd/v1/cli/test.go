@@ -19,8 +19,8 @@ type (
 )
 
 const (
-	testError     = 40
-	testFlagError = 41
+	testError     = 20
+	testFlagError = 21
 	testTimeout   = 60 * time.Second
 	testSynopsis  = `run tests`
 	testHelp      = `

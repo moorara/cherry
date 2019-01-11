@@ -105,7 +105,7 @@ func (c *Release) Run(args []string) int {
 	err := c.Formula.Release(ctx, level, comment)
 	if err != nil {
 		c.Ui.Error(err.Error())
-		return buildError
+		return releaseError
 	}
 
 	return 0

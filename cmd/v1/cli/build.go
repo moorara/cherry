@@ -21,8 +21,8 @@ type (
 )
 
 const (
-	buildError     = 20
-	buildFlagError = 21
+	buildError     = 30
+	buildFlagError = 31
 	buildTimeout   = 60 * time.Second
 	buildSynopsis  = `build artifacts`
 	buildHelp      = `
