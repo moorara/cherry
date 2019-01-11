@@ -30,6 +30,7 @@ type (
 	Github interface {
 		BranchProtectionForAdmin(ctx context.Context, repo, branch string, enabled bool) error
 		CreateRelease(ctx context.Context, repo, branch string, version semver.SemVer, description string, draf, prerelease bool) (*Release, error)
+		GetRelease(ctx context.Context, repo string, version semver.SemVer) (*Release, error)
 		UploadAssets(ctx context.Context, repo string, version semver.SemVer, assets []string) error
 	}
 

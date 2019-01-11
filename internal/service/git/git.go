@@ -13,16 +13,33 @@ type (
 	// Git is the interface for a git client
 	Git interface {
 		IsClean() (bool, error)
-		GetRepoName() (string, string, error)
-		GetBranchName() (string, error)
-		GetCommitSHA(short bool) (string, error)
+		GetRepo() (*Repo, error)
+		GetBranch() (*Branch, error)
+		GetHEAD() (*Commit, error)
 		Commit(message string, files ...string) error
 		Tag(tag string) error
-		Push(includeTags bool) error
+		Push(withTags bool) error
 	}
 
 	git struct {
 		workDir string
+	}
+
+	// Repo is the model for a git repository
+	Repo struct {
+		Owner string
+		Name  string
+	}
+
+	// Branch is the model for a git branch
+	Branch struct {
+		Name string
+	}
+
+	// Commit is the model for a git commit
+	Commit struct {
+		SHA      string
+		ShortSHA string
 	}
 )
 
@@ -33,7 +50,6 @@ func New(workDir string) Git {
 	}
 }
 
-// IsClean determines if the Git repo has any uncommitted changes
 func (g *git) IsClean() (bool, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -49,8 +65,7 @@ func (g *git) IsClean() (bool, error) {
 	return len(stdout.String()) == 0, nil
 }
 
-// GetRepoName returns the owner and name of Git repo
-func (g *git) GetRepoName() (string, string, error) {
+func (g *git) GetRepo() (*Repo, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
@@ -59,7 +74,7 @@ func (g *git) GetRepoName() (string, string, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return "", "", fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return nil, fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
 	// origin  git@github.com:USERNAME/REPOSITORY.git (push)     --> git@github.com:USERNAME/REPOSITORY.git
@@ -67,7 +82,7 @@ func (g *git) GetRepoName() (string, string, error) {
 	re := regexp.MustCompile(`origin[[:blank:]]+(.*)[[:blank:]]\(push\)`)
 	subs := re.FindStringSubmatch(string(stdout.String()))
 	if len(subs) != 2 {
-		return "", "", errors.New("failed to get git repository url")
+		return nil, errors.New("failed to get git repository url")
 	}
 
 	gitURL := subs[1]
@@ -77,7 +92,7 @@ func (g *git) GetRepoName() (string, string, error) {
 	re = regexp.MustCompile(`(git@[^/]+:|https://[^/]+/)([^/]+/[^/]+)`)
 	subs = re.FindStringSubmatch(gitURL)
 	if len(subs) != 3 {
-		return "", "", errors.New("failed to get git repository name")
+		return nil, errors.New("failed to get git repository name")
 	}
 
 	// USERNAME/REPOSITORY.git --> USERNAME/REPOSITORY
@@ -89,10 +104,13 @@ func (g *git) GetRepoName() (string, string, error) {
 	owner := subs[0]
 	name := subs[1]
 
-	return owner, name, nil
+	return &Repo{
+		Owner: owner,
+		Name:  name,
+	}, nil
 }
 
-func (g *git) GetBranchName() (string, error) {
+func (g *git) GetBranch() (*Branch, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
@@ -101,35 +119,36 @@ func (g *git) GetBranchName() (string, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return nil, fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
-	branch := strings.Trim(string(stdout.String()), "\n")
+	name := strings.Trim(string(stdout.String()), "\n")
 
-	return branch, nil
+	return &Branch{
+		Name: name,
+	}, nil
 }
 
-func (g *git) GetCommitSHA(short bool) (string, error) {
+func (g *git) GetHEAD() (*Commit, error) {
 	var cmd *exec.Cmd
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	if short {
-		cmd = exec.Command("git", "rev-parse", "--short", "HEAD")
-	} else {
-		cmd = exec.Command("git", "rev-parse", "HEAD")
-	}
-
+	cmd = exec.Command("git", "rev-parse", "HEAD")
 	cmd.Dir = g.workDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return nil, fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
 	sha := strings.Trim(string(stdout.String()), "\n")
+	short := sha[:7]
 
-	return sha, nil
+	return &Commit{
+		SHA:      sha,
+		ShortSHA: short,
+	}, nil
 }
 
 func (g *git) Commit(message string, files ...string) error {
@@ -177,7 +196,7 @@ func (g *git) Tag(tag string) error {
 	return nil
 }
 
-func (g *git) Push(includeTags bool) error {
+func (g *git) Push(withTags bool) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
@@ -193,7 +212,7 @@ func (g *git) Push(includeTags bool) error {
 	stdout.Reset()
 	stderr.Reset()
 
-	if includeTags {
+	if withTags {
 		// git push --tags
 		cmd := exec.Command("git", "push", "--tags")
 		cmd.Dir = g.workDir
@@ -205,4 +224,9 @@ func (g *git) Push(includeTags bool) error {
 	}
 
 	return nil
+}
+
+// Path returns the owner/name combination
+func (r *Repo) Path() string {
+	return r.Owner + "/" + r.Name
 }

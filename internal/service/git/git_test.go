@@ -39,7 +39,7 @@ func TestIsClean(t *testing.T) {
 	}
 }
 
-func TestGetRepoName(t *testing.T) {
+func TestGetRepo(t *testing.T) {
 	tests := []struct {
 		name          string
 		workDir       string
@@ -60,7 +60,7 @@ func TestGetRepoName(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			git := New(tc.workDir)
-			_, _, err := git.GetRepoName()
+			_, err := git.GetRepo()
 
 			if tc.expectedError {
 				assert.Error(t, err)
@@ -71,7 +71,7 @@ func TestGetRepoName(t *testing.T) {
 	}
 }
 
-func TestGetBranchName(t *testing.T) {
+func TestGetBranch(t *testing.T) {
 	tests := []struct {
 		name          string
 		workDir       string
@@ -92,7 +92,7 @@ func TestGetBranchName(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			git := New(tc.workDir)
-			_, err := git.GetBranchName()
+			_, err := git.GetBranch()
 
 			if tc.expectedError {
 				assert.Error(t, err)
@@ -103,29 +103,25 @@ func TestGetBranchName(t *testing.T) {
 	}
 }
 
-func TestGetCommitSHA(t *testing.T) {
+func TestGetHEAD(t *testing.T) {
 	tests := []struct {
 		name          string
 		workDir       string
-		short         bool
 		expectedError bool
 	}{
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			short:         false,
 			expectedError: true,
 		},
 		{
 			name:          "FullSHA",
 			workDir:       ".",
-			short:         false,
 			expectedError: false,
 		},
 		{
 			name:          "ShortSHA",
 			workDir:       ".",
-			short:         true,
 			expectedError: false,
 		},
 	}
@@ -133,7 +129,7 @@ func TestGetCommitSHA(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			git := New(tc.workDir)
-			_, err := git.GetCommitSHA(tc.short)
+			_, err := git.GetHEAD()
 
 			if tc.expectedError {
 				assert.Error(t, err)
@@ -208,13 +204,13 @@ func TestPush(t *testing.T) {
 	tests := []struct {
 		name          string
 		workDir       string
-		includeTags   bool
+		withTags      bool
 		expectedError bool
 	}{
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			includeTags:   true,
+			withTags:      true,
 			expectedError: true,
 		},
 	}
@@ -222,7 +218,7 @@ func TestPush(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			git := New(tc.workDir)
-			err := git.Push(tc.includeTags)
+			err := git.Push(tc.withTags)
 
 			if tc.expectedError {
 				assert.Error(t, err)
@@ -230,5 +226,28 @@ func TestPush(t *testing.T) {
 				assert.NoError(t, err)
 			}
 		})
+	}
+}
+
+func TestRepoPath(t *testing.T) {
+	tests := []struct {
+		repo         Repo
+		expectedPath string
+	}{
+		{
+			repo:         Repo{},
+			expectedPath: "/",
+		},
+		{
+			repo: Repo{
+				Owner: "moorara",
+				Name:  "cherry",
+			},
+			expectedPath: "moorara/cherry",
+		},
+	}
+
+	for _, tc := range tests {
+		assert.Equal(t, tc.expectedPath, tc.repo.Path())
 	}
 }
