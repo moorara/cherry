@@ -1,4 +1,4 @@
-package github
+package service
 
 import (
 	"bytes"
@@ -13,8 +13,7 @@ import (
 
 	netURL "net/url"
 
-	"github.com/moorara/cherry/internal/service/semver"
-	"github.com/moorara/cherry/internal/service/util"
+	"github.com/moorara/cherry/internal/util"
 )
 
 const (
@@ -29,8 +28,9 @@ type (
 	// Github is the interface for API calls to GitHub
 	Github interface {
 		BranchProtectionForAdmin(ctx context.Context, repo, branch string, enabled bool) error
-		CreateRelease(ctx context.Context, repo, branch string, version semver.SemVer, description string, draf, prerelease bool) (*Release, error)
-		UploadAssets(ctx context.Context, repo string, version semver.SemVer, assets []string) error
+		CreateRelease(ctx context.Context, repo, branch string, version SemVer, description string, draf, prerelease bool) (*Release, error)
+		GetRelease(ctx context.Context, repo string, version SemVer) (*Release, error)
+		UploadAssets(ctx context.Context, repo string, version SemVer, assets []string) error
 	}
 
 	github struct {
@@ -70,8 +70,8 @@ type (
 	}
 )
 
-// New creates a new Github instance
-func New(timeout time.Duration, token string) Github {
+// NewGithub creates a new Github instance
+func NewGithub(timeout time.Duration, token string) Github {
 	transport := &http.Transport{}
 	client := &http.Client{
 		Timeout:   timeout,
@@ -160,7 +160,7 @@ func (gh *github) BranchProtectionForAdmin(ctx context.Context, repo, branch str
 	return nil
 }
 
-func (gh *github) CreateRelease(ctx context.Context, repo, branch string, version semver.SemVer, description string, draf, prerelease bool) (*Release, error) {
+func (gh *github) CreateRelease(ctx context.Context, repo, branch string, version SemVer, description string, draf, prerelease bool) (*Release, error) {
 	method := "POST"
 	url := fmt.Sprintf("%s/repos/%s/releases", gh.apiAddr, repo)
 	reqBody := releaseReq{
@@ -206,7 +206,7 @@ func (gh *github) CreateRelease(ctx context.Context, repo, branch string, versio
 	return release, nil
 }
 
-func (gh *github) GetRelease(ctx context.Context, repo string, version semver.SemVer) (*Release, error) {
+func (gh *github) GetRelease(ctx context.Context, repo string, version SemVer) (*Release, error) {
 	method := "GET"
 	url := fmt.Sprintf("%s/repos/%s/releases/tags/%s", gh.apiAddr, repo, version.GitTag())
 
@@ -240,7 +240,7 @@ func (gh *github) GetRelease(ctx context.Context, repo string, version semver.Se
 	return release, nil
 }
 
-func (gh *github) UploadAssets(ctx context.Context, repo string, version semver.SemVer, assets []string) error {
+func (gh *github) UploadAssets(ctx context.Context, repo string, version SemVer, assets []string) error {
 	release, err := gh.GetRelease(ctx, repo, version)
 	if err != nil {
 		return err

@@ -1,4 +1,4 @@
-package changelog
+package service
 
 import (
 	"bufio"
@@ -29,8 +29,8 @@ type (
 	}
 )
 
-// New creates a new instance of Changelog
-func New(workDir, githubToken string) Changelog {
+// NewChangelog creates a new instance of Changelog
+func NewChangelog(workDir, githubToken string) Changelog {
 	return &changelog{
 		workDir:     workDir,
 		githubToken: githubToken,

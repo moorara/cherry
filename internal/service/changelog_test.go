@@ -1,4 +1,4 @@
-package changelog
+package service
 
 import (
 	"testing"
@@ -24,7 +24,7 @@ func TestFilename(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			changelog := New(tc.workDir, tc.githubToken)
+			changelog := NewChangelog(tc.workDir, tc.githubToken)
 			assert.NotNil(t, changelog)
 
 			filename := changelog.Filename()

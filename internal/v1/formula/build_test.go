@@ -1,6 +1,7 @@
 package formula
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,7 +9,9 @@ import (
 
 func TestGetBuildInfo(t *testing.T) {
 	tests := []struct {
-		name string
+		name    string
+		formula *formula
+		ctx     context.Context
 	}{}
 
 	for _, tc := range tests {
@@ -20,7 +23,9 @@ func TestGetBuildInfo(t *testing.T) {
 
 func TestGetLDFlags(t *testing.T) {
 	tests := []struct {
-		name string
+		name    string
+		formula *formula
+		ctx     context.Context
 	}{}
 
 	for _, tc := range tests {
@@ -32,7 +37,9 @@ func TestGetLDFlags(t *testing.T) {
 
 func TestCompile(t *testing.T) {
 	tests := []struct {
-		name string
+		name    string
+		formula *formula
+		ctx     context.Context
 	}{}
 
 	for _, tc := range tests {
@@ -44,7 +51,9 @@ func TestCompile(t *testing.T) {
 
 func TestCrossCompile(t *testing.T) {
 	tests := []struct {
-		name string
+		name    string
+		formula *formula
+		ctx     context.Context
 	}{}
 
 	for _, tc := range tests {

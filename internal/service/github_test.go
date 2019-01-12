@@ -1,4 +1,4 @@
-package github
+package service
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/moorara/cherry/internal/service/semver"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +26,7 @@ func TestNew(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			github := New(tc.timeout, tc.token)
+			github := NewGithub(tc.timeout, tc.token)
 			assert.NotNil(t, github)
 		})
 	}
@@ -136,7 +135,7 @@ func TestCreateRelease(t *testing.T) {
 		ctx             context.Context
 		repo            string
 		branch          string
-		version         semver.SemVer
+		version         SemVer
 		description     string
 		draf            bool
 		prerelease      bool
@@ -150,7 +149,7 @@ func TestCreateRelease(t *testing.T) {
 			ctx:           context.Background(),
 			repo:          "username/repo",
 			branch:        "master",
-			version:       semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			version:       SemVer{Major: 0, Minor: 1, Patch: 0},
 			description:   "release description",
 			draf:          false,
 			prerelease:    false,
@@ -165,7 +164,7 @@ func TestCreateRelease(t *testing.T) {
 			ctx:            context.Background(),
 			repo:           "username/repo",
 			branch:         "master",
-			version:        semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			version:        SemVer{Major: 0, Minor: 1, Patch: 0},
 			description:    "release description",
 			draf:           false,
 			prerelease:     false,
@@ -180,7 +179,7 @@ func TestCreateRelease(t *testing.T) {
 			ctx:            context.Background(),
 			repo:           "username/repo",
 			branch:         "master",
-			version:        semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			version:        SemVer{Major: 0, Minor: 1, Patch: 0},
 			description:    "release description",
 			draf:           false,
 			prerelease:     false,
@@ -195,7 +194,7 @@ func TestCreateRelease(t *testing.T) {
 			ctx:            context.Background(),
 			repo:           "username/repo",
 			branch:         "master",
-			version:        semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			version:        SemVer{Major: 0, Minor: 1, Patch: 0},
 			description:    "release description",
 			draf:           false,
 			prerelease:     false,
@@ -254,7 +253,7 @@ func TestUploadAssets(t *testing.T) {
 		token                     string
 		ctx                       context.Context
 		repo                      string
-		version                   semver.SemVer
+		version                   SemVer
 		assets                    []string
 		expectedError             string
 	}{
@@ -264,7 +263,7 @@ func TestUploadAssets(t *testing.T) {
 			token:         "github-token",
 			ctx:           context.Background(),
 			repo:          "username/repo",
-			version:       semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			version:       SemVer{Major: 0, Minor: 1, Patch: 0},
 			assets:        []string{},
 			expectedError: "unsupported protocol scheme",
 		},
@@ -276,7 +275,7 @@ func TestUploadAssets(t *testing.T) {
 			token:                    "github-token",
 			ctx:                      context.Background(),
 			repo:                     "username/repo",
-			version:                  semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			version:                  SemVer{Major: 0, Minor: 1, Patch: 0},
 			assets:                   []string{},
 			expectedError:            "GET /repos/username/repo/releases/tags/v0.1.0 400",
 		},
@@ -288,7 +287,7 @@ func TestUploadAssets(t *testing.T) {
 			token:                    "github-token",
 			ctx:                      context.Background(),
 			repo:                     "username/repo",
-			version:                  semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			version:                  SemVer{Major: 0, Minor: 1, Patch: 0},
 			assets:                   []string{},
 			expectedError:            "invalid character 'i' looking for beginning of object key string",
 		},
@@ -300,7 +299,7 @@ func TestUploadAssets(t *testing.T) {
 			token:                    "github-token",
 			ctx:                      context.Background(),
 			repo:                     "username/repo",
-			version:                  semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			version:                  SemVer{Major: 0, Minor: 1, Patch: 0},
 			assets:                   []string{"./test/nil"},
 			expectedError:            "open test/nil: no such file or directory",
 		},
@@ -312,7 +311,7 @@ func TestUploadAssets(t *testing.T) {
 			token:                    "github-token",
 			ctx:                      context.Background(),
 			repo:                     "username/repo",
-			version:                  semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			version:                  SemVer{Major: 0, Minor: 1, Patch: 0},
 			assets:                   []string{"./test/empty"},
 			expectedError:            "EOF",
 		},
@@ -325,7 +324,7 @@ func TestUploadAssets(t *testing.T) {
 			token:                    "github-token",
 			ctx:                      context.Background(),
 			repo:                     "username/repo",
-			version:                  semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			version:                  SemVer{Major: 0, Minor: 1, Patch: 0},
 			assets:                   []string{"./test/asset"},
 			expectedError:            "unsupported protocol scheme",
 		},
@@ -340,7 +339,7 @@ func TestUploadAssets(t *testing.T) {
 			token:                     "github-token",
 			ctx:                       context.Background(),
 			repo:                      "username/repo",
-			version:                   semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			version:                   SemVer{Major: 0, Minor: 1, Patch: 0},
 			assets:                    []string{"./test/asset"},
 			expectedError:             "POST /repos/username/repo/releases/1/assets 500",
 		},
@@ -355,7 +354,7 @@ func TestUploadAssets(t *testing.T) {
 			token:                     "github-token",
 			ctx:                       context.Background(),
 			repo:                      "username/repo",
-			version:                   semver.SemVer{Major: 0, Minor: 1, Patch: 0},
+			version:                   SemVer{Major: 0, Minor: 1, Patch: 0},
 			assets:                    []string{"./test/asset"},
 			expectedError:             "",
 		},
