@@ -43,6 +43,10 @@ You can also use `-comment` flag to include a description for your release.
 
 You can take a look at [examples](./examples) to see how you can use and configure Cherry.
 
+## Docker
+
+The docker image for Cherry includes all the required tools and is accessible at [moorara/cherry](https://hub.docker.com/r/moorara/cherry).
+
 ## Development
 
 | Command           | Description                                          |
