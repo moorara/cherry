@@ -40,11 +40,7 @@ func New(ui cli.Ui, spec *spec.Spec, workDir, githubToken string) (Formula, erro
 	git := service.NewGit(workDir)
 	github := service.NewGithub(githubTimeout, githubToken)
 	changelog := service.NewChangelog(workDir, githubToken)
-
-	vmanager, err := service.NewVersionManager(filepath.Join(workDir, spec.VersionFile))
-	if err != nil {
-		return nil, err
-	}
+	vmanager := service.NewTextVersionManager(filepath.Join(workDir, spec.VersionFile))
 
 	return &formula{
 		Ui:             ui,
