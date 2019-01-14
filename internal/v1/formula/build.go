@@ -42,12 +42,17 @@ func (f *formula) getBuildInfo(ctx context.Context) (*buildInfo, error) {
 		return nil, err
 	}
 
+	buildTool := f.Spec.ToolName
+	if f.Spec.ToolVersion != "" {
+		buildTool += "@" + f.Spec.ToolVersion
+	}
+
 	info := &buildInfo{
 		Version:   version,
 		Revision:  commit.ShortSHA,
 		Branch:    branch.Name,
 		GoVersion: runtime.Version(),
-		BuildTool: fmt.Sprintf("%s@%s", f.Spec.ToolName, f.Spec.ToolVersion),
+		BuildTool: buildTool,
 		BuildTime: time.Now().UTC(),
 	}
 

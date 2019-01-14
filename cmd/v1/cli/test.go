@@ -21,7 +21,7 @@ type (
 const (
 	testError     = 20
 	testFlagError = 21
-	testTimeout   = 60 * time.Second
+	testTimeout   = 2 * time.Minute
 	testSynopsis  = `run tests`
 	testHelp      = `
 	Use this command for running unit tests and generating coverage report.
