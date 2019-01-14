@@ -59,8 +59,6 @@ type (
 		HTMLURL    string `json:"html_url"`
 		AssetsURL  string `json:"assets_url"`
 		UploadURL  string `json:"upload_url"`
-		TarballURL string `json:"tarball_url"`
-		ZipballURL string `json:"zipball_url"`
 	}
 
 	uploadContent struct {

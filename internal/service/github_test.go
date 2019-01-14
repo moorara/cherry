@@ -11,28 +11,36 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNew(t *testing.T) {
+func TestNewGithub(t *testing.T) {
 	tests := []struct {
-		name    string
 		timeout time.Duration
 		token   string
 	}{
 		{
-			"OK",
 			2 * time.Second,
 			"github_token",
 		},
 	}
 
 	for _, tc := range tests {
+		github := NewGithub(tc.timeout, tc.token)
+		assert.NotNil(t, github)
+	}
+}
+
+func TestGithubGetUploadContent(t *testing.T) {
+	tests := []struct {
+		name string
+	}{}
+
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			github := NewGithub(tc.timeout, tc.token)
-			assert.NotNil(t, github)
+			assert.NotNil(t, tc)
 		})
 	}
 }
 
-func TestBranchProtectionForAdmin(t *testing.T) {
+func TestGithubBranchProtectionForAdmin(t *testing.T) {
 	tests := []struct {
 		name           string
 		mockAPI        bool
@@ -95,9 +103,8 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			client := &http.Client{}
 			gh := &github{
-				client:     client,
+				client:     &http.Client{},
 				authHeader: "token " + tc.token,
 			}
 
@@ -125,7 +132,7 @@ func TestBranchProtectionForAdmin(t *testing.T) {
 	}
 }
 
-func TestCreateRelease(t *testing.T) {
+func TestGithubCreateRelease(t *testing.T) {
 	tests := []struct {
 		name            string
 		mockAPI         bool
@@ -209,9 +216,8 @@ func TestCreateRelease(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			client := &http.Client{}
 			gh := &github{
-				client:     client,
+				client:     &http.Client{},
 				authHeader: "token " + tc.token,
 			}
 
@@ -241,7 +247,102 @@ func TestCreateRelease(t *testing.T) {
 	}
 }
 
-func TestUploadAssets(t *testing.T) {
+func TestGithubGetRelease(t *testing.T) {
+	tests := []struct {
+		name            string
+		mockAPI         bool
+		mockStatusCode  int
+		mockBody        string
+		token           string
+		ctx             context.Context
+		repo            string
+		version         SemVer
+		expectedError   string
+		expectedRelease *Release
+	}{
+		{
+			name:          "RequestError",
+			mockAPI:       false,
+			token:         "github-token",
+			ctx:           context.Background(),
+			repo:          "username/repo",
+			version:       SemVer{Major: 0, Minor: 1, Patch: 0},
+			expectedError: "unsupported protocol scheme",
+		},
+		{
+			name:           "BadStatusCode",
+			mockAPI:        true,
+			mockStatusCode: 400,
+			mockBody:       "",
+			token:          "github-token",
+			ctx:            context.Background(),
+			repo:           "username/repo",
+			version:        SemVer{Major: 0, Minor: 1, Patch: 0},
+			expectedError:  "GET /repos/username/repo/releases/tags/v0.1.0 400",
+		},
+		{
+			name:           "InvalidResponse",
+			mockAPI:        true,
+			mockStatusCode: 200,
+			mockBody:       `{ invalid }`,
+			token:          "github-token",
+			ctx:            context.Background(),
+			repo:           "username/repo",
+			version:        SemVer{Major: 0, Minor: 1, Patch: 0},
+			expectedError:  "invalid character 'i' looking for beginning of object key string",
+		},
+		{
+			name:           "Success",
+			mockAPI:        true,
+			mockStatusCode: 200,
+			mockBody:       `{ "id": 1, "name": "v0.1.0", "draft": true, "prerelease": true }`,
+			token:          "github-token",
+			ctx:            context.Background(),
+			repo:           "username/repo",
+			version:        SemVer{Major: 0, Minor: 1, Patch: 0},
+			expectedRelease: &Release{
+				ID:         1,
+				Name:       "v0.1.0",
+				Draft:      true,
+				Prerelease: true,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			gh := &github{
+				client:     &http.Client{},
+				authHeader: "token " + tc.token,
+			}
+
+			if tc.mockAPI {
+				r := mux.NewRouter()
+				r.Methods("GET").Path("/repos/{owner}/{repo}/releases/tags/{tag}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(tc.mockStatusCode)
+					w.Write([]byte(tc.mockBody))
+				})
+
+				ts := httptest.NewServer(r)
+				defer ts.Close()
+
+				gh.apiAddr = ts.URL
+			}
+
+			release, err := gh.GetRelease(tc.ctx, tc.repo, tc.version)
+
+			if tc.expectedError != "" {
+				assert.Contains(t, err.Error(), tc.expectedError)
+				assert.Nil(t, release)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedRelease, release)
+			}
+		})
+	}
+}
+
+func TestGithubUploadAssets(t *testing.T) {
 	tests := []struct {
 		name                      string
 		mockAPI                   bool
@@ -258,16 +359,6 @@ func TestUploadAssets(t *testing.T) {
 		expectedError             string
 	}{
 		{
-			name:          "GetReleaseRequestError",
-			mockAPI:       false,
-			token:         "github-token",
-			ctx:           context.Background(),
-			repo:          "username/repo",
-			version:       SemVer{Major: 0, Minor: 1, Patch: 0},
-			assets:        []string{},
-			expectedError: "unsupported protocol scheme",
-		},
-		{
 			name:                     "GetReleaseBadStatusCode",
 			mockAPI:                  true,
 			mockGetReleaseStatusCode: 400,
@@ -280,22 +371,10 @@ func TestUploadAssets(t *testing.T) {
 			expectedError:            "GET /repos/username/repo/releases/tags/v0.1.0 400",
 		},
 		{
-			name:                     "GetReleaseInvalidResponse",
-			mockAPI:                  true,
-			mockGetReleaseStatusCode: 200,
-			mockGetReleaseBody:       `{ invalid }`,
-			token:                    "github-token",
-			ctx:                      context.Background(),
-			repo:                     "username/repo",
-			version:                  SemVer{Major: 0, Minor: 1, Patch: 0},
-			assets:                   []string{},
-			expectedError:            "invalid character 'i' looking for beginning of object key string",
-		},
-		{
 			name:                     "NoAsset",
 			mockAPI:                  true,
 			mockGetReleaseStatusCode: 200,
-			mockGetReleaseBody:       `{ "id": 1 }`,
+			mockGetReleaseBody:       `{ "id": 1, "name": "v0.1.0" }`,
 			token:                    "github-token",
 			ctx:                      context.Background(),
 			repo:                     "username/repo",

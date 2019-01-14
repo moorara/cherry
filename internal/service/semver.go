@@ -39,8 +39,8 @@ type (
 	}
 )
 
-// Parse reads a semantic version string and returns a SemVer
-func Parse(version string) (semver SemVer, err error) {
+// ParseSemVer reads a semantic version string and returns a SemVer
+func ParseSemVer(version string) (semver SemVer, err error) {
 	re := regexp.MustCompile("[.+-]")
 	comps := re.Split(version, -1)
 	if len(comps) < 3 {
@@ -169,7 +169,7 @@ func (m *textVersionManager) Read() (SemVer, error) {
 		return semver, fmt.Errorf("empty version file")
 	}
 
-	semver, err = Parse(version)
+	semver, err = ParseSemVer(version)
 	if err != nil {
 		return semver, err
 	}
@@ -219,7 +219,7 @@ func (m *jsonVersionManager) Read() (SemVer, error) {
 		return semver, fmt.Errorf("bad version key")
 	}
 
-	semver, err = Parse(version)
+	semver, err = ParseSemVer(version)
 	if err != nil {
 		return semver, err
 	}
