@@ -38,7 +38,7 @@ type (
 // New creates a new instance of formula
 func New(ui cli.Ui, spec *spec.Spec, workDir, githubToken string) (Formula, error) {
 	git := service.NewGit(workDir)
-	github := service.NewGithub(githubTimeout, githubToken)
+	github := service.NewGithub(githubToken)
 	changelog := service.NewChangelog(workDir, githubToken)
 	vmanager := service.NewTextVersionManager(filepath.Join(workDir, spec.VersionFile))
 

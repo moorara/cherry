@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 
 	netURL "net/url"
 
@@ -69,10 +68,9 @@ type (
 )
 
 // NewGithub creates a new Github instance
-func NewGithub(timeout time.Duration, token string) Github {
+func NewGithub(token string) Github {
 	transport := &http.Transport{}
 	client := &http.Client{
-		Timeout:   timeout,
 		Transport: transport,
 	}
 

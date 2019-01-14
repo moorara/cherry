@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/moorara/cherry/internal/service"
 )
@@ -22,10 +21,6 @@ const (
 	MinorRelease
 	// MajorRelease releases a the major component of a semantic version
 	MajorRelease
-)
-
-const (
-	githubTimeout = 30 * time.Second
 )
 
 func (f *formula) precheck() (string, string, error) {
