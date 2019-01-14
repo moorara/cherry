@@ -1,22 +1,19 @@
 name := cherry
-build_path := ./build
-coverage_path := ./coverage
-
-docker_tag ?= latest
 docker_image ?= moorara/$(name)
+docker_tag ?= latest
 
 
 clean:
-	@ rm -rf *.log $(name) $(build_path) $(coverage_path)
+	@ rm -rf bin coverage $(name)
 
 run:
 	@ go run main.go
 
 build:
-	@ ./scripts/build.sh --main main.go --binary $(name)
+	@ cherry build -cross-compile=false
 
 build-all:
-	@ ./scripts/build.sh --all --main main.go --binary $(build_path)/$(name)
+	@ cherry build -cross-compile=true
 
 test:
 	@ go test -race ./...
@@ -25,7 +22,7 @@ test-short:
 	@ go test -short ./...
 
 coverage:
-	@ ./scripts/test-unit-cover.sh
+	@ cherry test
 
 docker:
 	@ docker build -t $(docker_image):$(docker_tag) .
