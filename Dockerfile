@@ -3,7 +3,9 @@ FROM golang:1.11-alpine as builder
 RUN apk add --no-cache git
 WORKDIR /workspace
 COPY . .
-RUN CGO_ENABLED=0 ./scripts/build.sh --main main.go --binary cherry
+ENV CGO_ENABLED=0
+RUN git checkout "$(git tag --list | tail -n 1)" && go install && git checkout -
+RUN cherry build -cross-compile=false -binary-file=cherry
 
 # FINAL STAGE
 FROM golang:1.11-alpine
