@@ -21,7 +21,7 @@ type (
 const (
 	releaseError     = 40
 	releaseFlagError = 41
-	releaseTimeout   = 4 * time.Minute
+	releaseTimeout   = 5 * time.Minute
 	releaseSynopsis  = `create a new release`
 	releaseHelp      = `
 	Use this command for creating a new release.

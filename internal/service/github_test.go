@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
@@ -13,17 +12,15 @@ import (
 
 func TestNewGithub(t *testing.T) {
 	tests := []struct {
-		timeout time.Duration
-		token   string
+		token string
 	}{
 		{
-			2 * time.Second,
 			"github_token",
 		},
 	}
 
 	for _, tc := range tests {
-		github := NewGithub(tc.timeout, tc.token)
+		github := NewGithub(tc.token)
 		assert.NotNil(t, github)
 	}
 }
