@@ -169,7 +169,7 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 		return err
 	}
 
-	commitMessage = fmt.Sprintf("Beginning %s", next.PreRelease())
+	commitMessage = fmt.Sprintf("Beginning %s [skip ci]", next.PreRelease())
 	err = f.Git.Commit(commitMessage, f.Spec.VersionFile)
 	if err != nil {
 		return err
