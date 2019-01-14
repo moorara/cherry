@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIsClean(t *testing.T) {
+func TestGitIsClean(t *testing.T) {
 	tests := []struct {
 		name          string
 		workDir       string
@@ -39,7 +39,7 @@ func TestIsClean(t *testing.T) {
 	}
 }
 
-func TestGetRepo(t *testing.T) {
+func TestGitGetRepo(t *testing.T) {
 	tests := []struct {
 		name          string
 		workDir       string
@@ -71,7 +71,7 @@ func TestGetRepo(t *testing.T) {
 	}
 }
 
-func TestGetBranch(t *testing.T) {
+func TestGitGetBranch(t *testing.T) {
 	tests := []struct {
 		name          string
 		workDir       string
@@ -103,7 +103,7 @@ func TestGetBranch(t *testing.T) {
 	}
 }
 
-func TestGetHEAD(t *testing.T) {
+func TestGitGetHEAD(t *testing.T) {
 	tests := []struct {
 		name          string
 		workDir       string
@@ -140,7 +140,7 @@ func TestGetHEAD(t *testing.T) {
 	}
 }
 
-func TestCommit(t *testing.T) {
+func TestGitCommit(t *testing.T) {
 	tests := []struct {
 		name          string
 		workDir       string
@@ -171,7 +171,7 @@ func TestCommit(t *testing.T) {
 	}
 }
 
-func TestTag(t *testing.T) {
+func TestGitTag(t *testing.T) {
 	tests := []struct {
 		name          string
 		workDir       string
@@ -200,7 +200,7 @@ func TestTag(t *testing.T) {
 	}
 }
 
-func TestPush(t *testing.T) {
+func TestGitPush(t *testing.T) {
 	tests := []struct {
 		name          string
 		workDir       string

@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParse(t *testing.T) {
+func TestParseSemVer(t *testing.T) {
 	tests := []struct {
 		name           string
 		version        string
@@ -67,7 +67,7 @@ func TestParse(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			semver, err := Parse(tc.version)
+			semver, err := ParseSemVer(tc.version)
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)
@@ -79,7 +79,7 @@ func TestParse(t *testing.T) {
 	}
 }
 
-func TestVersion(t *testing.T) {
+func TestSemVerVersion(t *testing.T) {
 	tests := []struct {
 		semver          SemVer
 		expectedVersion string
@@ -104,7 +104,7 @@ func TestVersion(t *testing.T) {
 	}
 }
 
-func TestGitTag(t *testing.T) {
+func TestSemVerGitTag(t *testing.T) {
 	tests := []struct {
 		semver         SemVer
 		expectedGitTag string
@@ -129,7 +129,7 @@ func TestGitTag(t *testing.T) {
 	}
 }
 
-func TestPreRelease(t *testing.T) {
+func TestSemVerPreRelease(t *testing.T) {
 	tests := []struct {
 		semver             SemVer
 		expectedPreRelease string
@@ -154,7 +154,7 @@ func TestPreRelease(t *testing.T) {
 	}
 }
 
-func TestReleasePatch(t *testing.T) {
+func TestSemVerReleasePatch(t *testing.T) {
 	tests := []struct {
 		semver          SemVer
 		expectedCurrent SemVer
@@ -184,7 +184,7 @@ func TestReleasePatch(t *testing.T) {
 	}
 }
 
-func TestReleaseMinor(t *testing.T) {
+func TestSemVerReleaseMinor(t *testing.T) {
 	tests := []struct {
 		semver          SemVer
 		expectedCurrent SemVer
@@ -214,7 +214,7 @@ func TestReleaseMinor(t *testing.T) {
 	}
 }
 
-func TestReleaseMajor(t *testing.T) {
+func TestSemVerReleaseMajor(t *testing.T) {
 	tests := []struct {
 		semver          SemVer
 		expectedCurrent SemVer
@@ -244,7 +244,7 @@ func TestReleaseMajor(t *testing.T) {
 	}
 }
 
-func TestNewManager(t *testing.T) {
+func TestNewVersionManager(t *testing.T) {
 	tests := []struct {
 		name          string
 		file          string
@@ -283,7 +283,7 @@ func TestNewManager(t *testing.T) {
 	}
 }
 
-func TestNewTextManager(t *testing.T) {
+func TestNewTextVersionManager(t *testing.T) {
 	tests := []struct {
 		name string
 		file string
@@ -302,39 +302,47 @@ func TestNewTextManager(t *testing.T) {
 	}
 }
 
-func TestTextManagerRead(t *testing.T) {
+func TestTextVersionManagerRead(t *testing.T) {
 	tests := []struct {
-		name           string
-		file           string
-		expectedError  string
-		expectedSemVer SemVer
+		name               string
+		mockVersionFile    bool
+		versionFileContent string
+		expectedError      string
+		expectedSemVer     SemVer
 	}{
 		{
 			name:          "NoFile",
-			file:          "test/null",
 			expectedError: "no such file or directory",
 		},
 		{
-			name:          "EmptyFile",
-			file:          "test/VERSION-empty",
-			expectedError: "empty version file",
+			name:               "EmptyFile",
+			mockVersionFile:    true,
+			versionFileContent: "",
+			expectedError:      "empty version file",
 		},
 		{
-			name:          "InvalidVersion",
-			file:          "test/VERSION-invalid",
-			expectedError: "invalid semantic version",
+			name:               "InvalidVersion",
+			mockVersionFile:    true,
+			versionFileContent: "1.0",
+			expectedError:      "invalid semantic version",
 		},
 		{
-			name:           "Success",
-			file:           "test/VERSION",
-			expectedSemVer: SemVer{Major: 0, Minor: 1, Patch: 0},
+			name:               "Success",
+			mockVersionFile:    true,
+			versionFileContent: "0.1.0-0",
+			expectedSemVer:     SemVer{Major: 0, Minor: 1, Patch: 0},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			manager := &textVersionManager{
-				file: tc.file,
+			manager := &textVersionManager{}
+
+			if tc.mockVersionFile {
+				file, remove, err := createTempFile(tc.versionFileContent)
+				assert.NoError(t, err)
+				defer remove()
+				manager.file = file
 			}
 
 			semver, err := manager.Read()
@@ -350,28 +358,41 @@ func TestTextManagerRead(t *testing.T) {
 	}
 }
 
-func TestTextManagerUpdate(t *testing.T) {
+func TestTextVersionManagerUpdate(t *testing.T) {
 	tests := []struct {
-		name          string
-		file          string
-		version       string
-		expectedError string
+		name               string
+		mockVersionFile    bool
+		versionFileContent string
+		newVersion         string
+		expectedError      string
 	}{
 		{
-			name:          "BadFile",
-			file:          "/test/null",
-			version:       "0.2.0",
-			expectedError: "no such file or directory",
+			name:            "NoFile",
+			mockVersionFile: false,
+			newVersion:      "0.1.0",
+			expectedError:   "no such file or directory",
+		},
+		{
+			name:               "Success",
+			mockVersionFile:    true,
+			versionFileContent: "0.1.0-0",
+			newVersion:         "0.1.0",
+			expectedError:      "",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			manager := &textVersionManager{
-				file: tc.file,
+			manager := &textVersionManager{}
+
+			if tc.mockVersionFile {
+				file, remove, err := createTempFile(tc.versionFileContent)
+				assert.NoError(t, err)
+				defer remove()
+				manager.file = file
 			}
 
-			err := manager.Update(tc.version)
+			err := manager.Update(tc.newVersion)
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)
@@ -382,7 +403,7 @@ func TestTextManagerUpdate(t *testing.T) {
 	}
 }
 
-func TestNewJSONManager(t *testing.T) {
+func TestNewJSONVersionManager(t *testing.T) {
 	tests := []struct {
 		name string
 		file string
@@ -401,49 +422,60 @@ func TestNewJSONManager(t *testing.T) {
 	}
 }
 
-func TestJSONManagerRead(t *testing.T) {
+func TestJSONVersionManagerRead(t *testing.T) {
 	tests := []struct {
-		name           string
-		file           string
-		expectedError  string
-		expectedSemVer SemVer
+		name               string
+		mockVersionFile    bool
+		versionFileContent string
+		expectedError      string
+		expectedSemVer     SemVer
 	}{
 		{
-			name:          "NoFile",
-			file:          "test/null",
-			expectedError: "no such file or directory",
+			name:            "NoFile",
+			mockVersionFile: false,
+			expectedError:   "no such file or directory",
 		},
 		{
-			name:          "EmptyFile",
-			file:          "test/package-empty.json",
-			expectedError: "unexpected end of JSON input",
+			name:               "EmptyFile",
+			mockVersionFile:    true,
+			versionFileContent: ``,
+			expectedError:      "unexpected end of JSON input",
 		},
 		{
-			name:          "NoVersionKey",
-			file:          "test/package-no-version.json",
-			expectedError: "no version key",
+			name:               "NoVersionKey",
+			mockVersionFile:    true,
+			versionFileContent: `{ "name": "node-service" }`,
+			expectedError:      "no version key",
 		},
 		{
-			name:          "BadVersionKey",
-			file:          "test/package-bad-version.json",
-			expectedError: "bad version key",
+			name:               "BadVersionKey",
+			mockVersionFile:    true,
+			versionFileContent: `{ "name": "node-service", "version": 1 }`,
+			expectedError:      "bad version key",
 		},
 		{
-			name:          "InvalidVersionKey",
-			file:          "test/package-invalid-version.json",
-			expectedError: "invalid semantic version",
+			name:               "InvalidVersionKey",
+			mockVersionFile:    true,
+			versionFileContent: `{ "name": "node-service", "version": "1.0" }`,
+			expectedError:      "invalid semantic version",
 		},
 		{
-			name:           "Success",
-			file:           "test/package.json",
-			expectedSemVer: SemVer{Major: 0, Minor: 1, Patch: 0},
+			name:               "Success",
+			mockVersionFile:    true,
+			versionFileContent: `{ "name": "node-service", "version": "0.1.0-0" }`,
+			expectedSemVer:     SemVer{Major: 0, Minor: 1, Patch: 0},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			manager := &jsonVersionManager{
-				file: tc.file,
+			manager := &jsonVersionManager{}
+
+			if tc.mockVersionFile {
+				file, remove, err := createTempFile(tc.versionFileContent)
+				assert.NoError(t, err)
+				defer remove()
+				manager.file = file
 			}
 
 			semver, err := manager.Read()
@@ -459,28 +491,41 @@ func TestJSONManagerRead(t *testing.T) {
 	}
 }
 
-func TestJSONManagerUpdate(t *testing.T) {
+func TestJSONVersionManagerUpdate(t *testing.T) {
 	tests := []struct {
-		name          string
-		file          string
-		version       string
-		expectedError string
+		name               string
+		mockVersionFile    bool
+		versionFileContent string
+		newVersion         string
+		expectedError      string
 	}{
 		{
-			name:          "BadFile",
-			file:          "/test/null",
-			version:       "0.2.0",
-			expectedError: "no such file or directory",
+			name:            "NoFile",
+			mockVersionFile: false,
+			newVersion:      "0.1.0",
+			expectedError:   "no such file or directory",
+		},
+		{
+			name:               "Success",
+			mockVersionFile:    true,
+			versionFileContent: `{ "name": "node-service", "version": "0.1.0-0" }`,
+			newVersion:         "0.1.0",
+			expectedError:      "",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			manager := &jsonVersionManager{
-				file: tc.file,
+			manager := &jsonVersionManager{}
+
+			if tc.mockVersionFile {
+				file, remove, err := createTempFile(tc.versionFileContent)
+				assert.NoError(t, err)
+				defer remove()
+				manager.file = file
 			}
 
-			err := manager.Update(tc.version)
+			err := manager.Update(tc.newVersion)
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)
