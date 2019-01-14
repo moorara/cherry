@@ -1,5 +1,51 @@
 # Change Log
 
+## [v0.1.2](https://github.com/moorara/cherry/tree/v0.1.2) (2019-01-13)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.1.1...v0.1.2)
+
+**Implemented enhancements:**
+
+- Remove scripts and switch to cherry! [\#27](https://github.com/moorara/cherry/issues/27)
+
+**Fixed bugs:**
+
+- Fix uploading issue [\#24](https://github.com/moorara/cherry/issues/24)
+- Tests are failing in build [\#9](https://github.com/moorara/cherry/issues/9)
+
+**Closed issues:**
+
+- Add examples [\#31](https://github.com/moorara/cherry/issues/31)
+- Install tools on docker image [\#19](https://github.com/moorara/cherry/issues/19)
+
+**Merged pull requests:**
+
+- Cherry for Cherry! 🎉 [\#35](https://github.com/moorara/cherry/pull/35) ([moorara](https://github.com/moorara))
+- Improve testing [\#34](https://github.com/moorara/cherry/pull/34) ([moorara](https://github.com/moorara))
+- Install required tools on Docker image [\#33](https://github.com/moorara/cherry/pull/33) ([moorara](https://github.com/moorara))
+- Add examples and improve readme [\#32](https://github.com/moorara/cherry/pull/32) ([moorara](https://github.com/moorara))
+- Improve testing and coverage [\#30](https://github.com/moorara/cherry/pull/30) ([moorara](https://github.com/moorara))
+- Improve build and release [\#29](https://github.com/moorara/cherry/pull/29) ([moorara](https://github.com/moorara))
+- Fix build bug [\#28](https://github.com/moorara/cherry/pull/28) ([moorara](https://github.com/moorara))
+- Fix upload for artifacts [\#26](https://github.com/moorara/cherry/pull/26) ([moorara](https://github.com/moorara))
+- Fix issues [\#23](https://github.com/moorara/cherry/pull/23) ([moorara](https://github.com/moorara))
+- Finish release command [\#21](https://github.com/moorara/cherry/pull/21) ([moorara](https://github.com/moorara))
+- Use spec [\#20](https://github.com/moorara/cherry/pull/20) ([moorara](https://github.com/moorara))
+- Refactor semver package [\#18](https://github.com/moorara/cherry/pull/18) ([moorara](https://github.com/moorara))
+- Keep iterating [\#17](https://github.com/moorara/cherry/pull/17) ([moorara](https://github.com/moorara))
+- Working on release command [\#16](https://github.com/moorara/cherry/pull/16) ([moorara](https://github.com/moorara))
+- Iterate release command [\#15](https://github.com/moorara/cherry/pull/15) ([moorara](https://github.com/moorara))
+- Refactoring [\#14](https://github.com/moorara/cherry/pull/14) ([moorara](https://github.com/moorara))
+- Implement build package and command [\#13](https://github.com/moorara/cherry/pull/13) ([moorara](https://github.com/moorara))
+- Add test package [\#12](https://github.com/moorara/cherry/pull/12) ([moorara](https://github.com/moorara))
+- github: handle context cancellation [\#11](https://github.com/moorara/cherry/pull/11) ([moorara](https://github.com/moorara))
+- issue-9: fix test failures in build [\#10](https://github.com/moorara/cherry/pull/10) ([moorara](https://github.com/moorara))
+- Add more unit tests [\#8](https://github.com/moorara/cherry/pull/8) ([moorara](https://github.com/moorara))
+- Refactoring and adding more packages [\#7](https://github.com/moorara/cherry/pull/7) ([moorara](https://github.com/moorara))
+- Add util package [\#6](https://github.com/moorara/cherry/pull/6) ([moorara](https://github.com/moorara))
+- Add cli commands [\#5](https://github.com/moorara/cherry/pull/5) ([moorara](https://github.com/moorara))
+- Add model package [\#4](https://github.com/moorara/cherry/pull/4) ([moorara](https://github.com/moorara))
+- Update README [\#3](https://github.com/moorara/cherry/pull/3) ([moorara](https://github.com/moorara))
+
 ## [v0.1.1](https://github.com/moorara/cherry/tree/v0.1.1) (2018-11-25)
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.0...v0.1.1)
 
