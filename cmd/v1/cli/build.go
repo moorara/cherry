@@ -23,7 +23,7 @@ type (
 const (
 	buildError     = 30
 	buildFlagError = 31
-	buildTimeout   = 60 * time.Second
+	buildTimeout   = 2 * time.Minute
 	buildSynopsis  = `build artifacts`
 	buildHelp      = `
 	Use this command for building artifacts.
