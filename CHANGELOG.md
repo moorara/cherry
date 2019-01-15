@@ -1,6 +1,25 @@
 # Change Log
 
-## [v0.1.4](https://github.com/moorara/cherry/tree/v0.1.4) (2019-01-13)
+## [v0.1.5](https://github.com/moorara/cherry/tree/v0.1.5) (2019-01-15)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.1.4...v0.1.5)
+
+**Fixed bugs:**
+
+- Fix failing docker build for release commits [\#42](https://github.com/moorara/cherry/issues/42)
+
+**Closed issues:**
+
+- Skip CI on next release commit [\#40](https://github.com/moorara/cherry/issues/40)
+- Push Docker image to Docker Hub [\#37](https://github.com/moorara/cherry/issues/37)
+
+**Merged pull requests:**
+
+- Change CircleCI badge style [\#45](https://github.com/moorara/cherry/pull/45) ([moorara](https://github.com/moorara))
+- Switch to CircleCI [\#44](https://github.com/moorara/cherry/pull/44) ([moorara](https://github.com/moorara))
+- Add install script [\#43](https://github.com/moorara/cherry/pull/43) ([moorara](https://github.com/moorara))
+- Skip CI for next version commit [\#41](https://github.com/moorara/cherry/pull/41) ([moorara](https://github.com/moorara))
+
+## [v0.1.4](https://github.com/moorara/cherry/tree/v0.1.4) (2019-01-14)
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.3...v0.1.4)
 
 **Fixed bugs:**
