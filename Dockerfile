@@ -4,7 +4,7 @@ RUN apk add --no-cache git
 WORKDIR /workspace
 COPY . .
 ENV CGO_ENABLED=0
-RUN git checkout "$(git tag --list | tail -n 1)" && go install && git checkout -
+RUN scripts/install.sh
 RUN cherry build -cross-compile=false -binary-file=cherry
 
 # FINAL STAGE
