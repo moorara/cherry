@@ -86,6 +86,13 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 		return err
 	}
 
+	f.Info("⬇️ Pulling master branch ...")
+
+	err = f.Git.Pull()
+	if err != nil {
+		return err
+	}
+
 	f.Warn("🔓 Temporarily enabling push to master branch ...")
 
 	err = f.Github.BranchProtectionForAdmin(ctx, repo, branch, false)

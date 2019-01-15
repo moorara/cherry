@@ -349,6 +349,45 @@ func TestRelease(t *testing.T) {
 			expectedError: "github token is not set",
 		},
 		{
+			name: "GitPullFails",
+			formula: &formula{
+				GithubToken: "github-token",
+				Spec:        &spec.Spec{},
+				Ui:          &mockUI{},
+				Git: &mockGit{
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
+					},
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
+					},
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: errors.New("git pull error"),
+						},
+					},
+				},
+			},
+			ctx:           context.Background(),
+			level:         PatchRelease,
+			comment:       "release description",
+			expectedError: "git pull error",
+		},
+		{
 			name: "DisableBranchProtectionFails",
 			formula: &formula{
 				GithubToken: "github-token",
@@ -373,6 +412,11 @@ func TestRelease(t *testing.T) {
 					IsCleanMocks: []IsCleanMock{
 						{
 							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: nil,
 						},
 					},
 				},
@@ -414,6 +458,11 @@ func TestRelease(t *testing.T) {
 					IsCleanMocks: []IsCleanMock{
 						{
 							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: nil,
 						},
 					},
 				},
@@ -465,6 +514,11 @@ func TestRelease(t *testing.T) {
 					IsCleanMocks: []IsCleanMock{
 						{
 							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: nil,
 						},
 					},
 				},
@@ -528,6 +582,11 @@ func TestRelease(t *testing.T) {
 					IsCleanMocks: []IsCleanMock{
 						{
 							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: nil,
 						},
 					},
 					CommitMocks: []CommitMock{
@@ -601,6 +660,11 @@ func TestRelease(t *testing.T) {
 					IsCleanMocks: []IsCleanMock{
 						{
 							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: nil,
 						},
 					},
 					CommitMocks: []CommitMock{
@@ -679,6 +743,11 @@ func TestRelease(t *testing.T) {
 					IsCleanMocks: []IsCleanMock{
 						{
 							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: nil,
 						},
 					},
 					CommitMocks: []CommitMock{
@@ -762,6 +831,11 @@ func TestRelease(t *testing.T) {
 					IsCleanMocks: []IsCleanMock{
 						{
 							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: nil,
 						},
 					},
 					CommitMocks: []CommitMock{
@@ -850,6 +924,11 @@ func TestRelease(t *testing.T) {
 					IsCleanMocks: []IsCleanMock{
 						{
 							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: nil,
 						},
 					},
 					CommitMocks: []CommitMock{
@@ -944,6 +1023,11 @@ func TestRelease(t *testing.T) {
 					IsCleanMocks: []IsCleanMock{
 						{
 							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: nil,
 						},
 					},
 					CommitMocks: []CommitMock{
@@ -1041,6 +1125,11 @@ func TestRelease(t *testing.T) {
 					IsCleanMocks: []IsCleanMock{
 						{
 							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: nil,
 						},
 					},
 					CommitMocks: []CommitMock{
@@ -1141,6 +1230,11 @@ func TestRelease(t *testing.T) {
 					IsCleanMocks: []IsCleanMock{
 						{
 							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: nil,
 						},
 					},
 					CommitMocks: []CommitMock{

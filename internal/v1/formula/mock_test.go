@@ -66,6 +66,8 @@ type (
 		TagMocks         []TagMock
 		PushCounter      int
 		PushMocks        []PushMock
+		PullMockCounter  int
+		PullMocks        []PullMock
 	}
 
 	IsCleanMock struct {
@@ -103,58 +105,61 @@ type (
 		InWithTags bool
 		OutError   error
 	}
+
+	PullMock struct {
+		OutError error
+	}
 )
 
 func (m *mockGit) IsClean() (bool, error) {
-	i := m.IsCleanCounter
+	mock := &m.IsCleanMocks[m.IsCleanCounter]
 	m.IsCleanCounter++
-	mock := m.IsCleanMocks[i]
 	return mock.OutResult, mock.OutError
 }
 
 func (m *mockGit) GetRepo() (*service.Repo, error) {
-	i := m.GetRepoCounter
+	mock := &m.GetRepoMocks[m.GetRepoCounter]
 	m.GetRepoCounter++
-	mock := m.GetRepoMocks[i]
 	return mock.OutRepo, mock.OutError
 }
 
 func (m *mockGit) GetBranch() (*service.Branch, error) {
-	i := m.GetBranchCounter
+	mock := &m.GetBranchMocks[m.GetBranchCounter]
 	m.GetBranchCounter++
-	mock := m.GetBranchMocks[i]
 	return mock.OutBranch, mock.OutError
 }
 
 func (m *mockGit) GetHEAD() (*service.Commit, error) {
-	i := m.GetHEADCounter
+	mock := &m.GetHEADMocks[m.GetHEADCounter]
 	m.GetHEADCounter++
-	mock := m.GetHEADMocks[i]
 	return mock.OutCommit, mock.OutError
 }
 
 func (m *mockGit) Commit(message string, files ...string) error {
-	i := m.CommitCounter
+	mock := &m.CommitMocks[m.CommitCounter]
 	m.CommitCounter++
-	mock := m.CommitMocks[i]
 	mock.InMessage = message
 	mock.InFiles = files
 	return mock.OutError
 }
 
 func (m *mockGit) Tag(tag string) error {
-	i := m.TagCounter
+	mock := &m.TagMocks[m.TagCounter]
 	m.TagCounter++
-	mock := m.TagMocks[i]
 	mock.InTag = tag
 	return mock.OutError
 }
 
 func (m *mockGit) Push(withTags bool) error {
-	i := m.PushCounter
+	mock := &m.PushMocks[m.PushCounter]
 	m.PushCounter++
-	mock := m.PushMocks[i]
 	mock.InWithTags = withTags
+	return mock.OutError
+}
+
+func (m *mockGit) Pull() error {
+	mock := &m.PullMocks[m.PullMockCounter]
+	m.PullMockCounter++
 	return mock.OutError
 }
 
@@ -208,9 +213,8 @@ type (
 )
 
 func (m *mockGithub) BranchProtectionForAdmin(ctx context.Context, repo, branch string, enabled bool) error {
-	i := m.BranchProtectionForAdminCounter
+	mock := &m.BranchProtectionForAdminMocks[m.BranchProtectionForAdminCounter]
 	m.BranchProtectionForAdminCounter++
-	mock := m.BranchProtectionForAdminMocks[i]
 	mock.InCtx = ctx
 	mock.InRepo = repo
 	mock.InBranch = branch
@@ -219,9 +223,8 @@ func (m *mockGithub) BranchProtectionForAdmin(ctx context.Context, repo, branch 
 }
 
 func (m *mockGithub) CreateRelease(ctx context.Context, repo, branch string, version service.SemVer, description string, draf, prerelease bool) (*service.Release, error) {
-	i := m.CreateReleaseCounter
+	mock := &m.CreateReleaseMocks[m.CreateReleaseCounter]
 	m.CreateReleaseCounter++
-	mock := m.CreateReleaseMocks[i]
 	mock.InCtx = ctx
 	mock.InRepo = repo
 	mock.InBranch = branch
@@ -233,9 +236,8 @@ func (m *mockGithub) CreateRelease(ctx context.Context, repo, branch string, ver
 }
 
 func (m *mockGithub) GetRelease(ctx context.Context, repo string, version service.SemVer) (*service.Release, error) {
-	i := m.GetReleaseCounter
+	mock := &m.GetReleaseMocks[m.GetReleaseCounter]
 	m.GetReleaseCounter++
-	mock := m.GetReleaseMocks[i]
 	mock.InCtx = ctx
 	mock.InRepo = repo
 	mock.InVersion = version
@@ -243,9 +245,8 @@ func (m *mockGithub) GetRelease(ctx context.Context, repo string, version servic
 }
 
 func (m *mockGithub) UploadAssets(ctx context.Context, repo string, version service.SemVer, assets []string) error {
-	i := m.UploadAssetsCounter
+	mock := &m.UploadAssetsMocks[m.UploadAssetsCounter]
 	m.UploadAssetsCounter++
-	mock := m.UploadAssetsMocks[i]
 	mock.InCtx = ctx
 	mock.InRepo = repo
 	mock.InVersion = version
@@ -274,16 +275,14 @@ type (
 )
 
 func (m *mockChangelog) Filename() string {
-	i := m.FilenameCounter
+	mock := &m.FilenameMocks[m.FilenameCounter]
 	m.FilenameCounter++
-	mock := m.FilenameMocks[i]
 	return mock.OutResult
 }
 
 func (m *mockChangelog) Generate(ctx context.Context, gitTag string) (string, error) {
-	i := m.GenerateCounter
+	mock := &m.GenerateMocks[m.GenerateCounter]
 	m.GenerateCounter++
-	mock := m.GenerateMocks[i]
 	mock.InCtx = ctx
 	mock.InGitTag = gitTag
 	return mock.OutResult, mock.OutError
@@ -309,16 +308,14 @@ type (
 )
 
 func (m *mockVersionManager) Read() (service.SemVer, error) {
-	i := m.ReadCounter
+	mock := &m.ReadMocks[m.ReadCounter]
 	m.ReadCounter++
-	mock := m.ReadMocks[i]
 	return mock.OutSemVer, mock.OutError
 }
 
 func (m *mockVersionManager) Update(version string) error {
-	i := m.UpdateCounter
+	mock := &m.UpdateMocks[m.UpdateCounter]
 	m.UpdateCounter++
-	mock := m.UpdateMocks[i]
 	mock.InVersion = version
 	return mock.OutError
 }
