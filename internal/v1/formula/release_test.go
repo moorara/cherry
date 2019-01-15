@@ -34,7 +34,11 @@ func TestPrecheck(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutError: errors.New("cannot read git repo"),
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutError: errors.New("cannot read git repo"),
+						},
+					},
 				},
 			},
 			expectedError: "cannot read git repo",
@@ -46,11 +50,19 @@ func TestPrecheck(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &service.Repo{
-						Owner: "moorara",
-						Name:  "cherry",
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
 					},
-					GetBranchOutError: errors.New("cannot read git branch"),
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutError: errors.New("cannot read git branch"),
+						},
+					},
 				},
 			},
 			expectedError: "cannot read git branch",
@@ -62,11 +74,21 @@ func TestPrecheck(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &service.Repo{
-						Owner: "moorara",
-						Name:  "cherry",
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
 					},
-					GetBranchOutBranch: &service.Branch{},
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "develop",
+							},
+						},
+					},
 				},
 			},
 			expectedError: "release has to be run on master branch",
@@ -78,14 +100,26 @@ func TestPrecheck(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &service.Repo{
-						Owner: "moorara",
-						Name:  "cherry",
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
 					},
-					GetBranchOutBranch: &service.Branch{
-						Name: "master",
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
 					},
-					IsCleanOutError: errors.New("cannot read git status"),
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutError: errors.New("cannot read git status"),
+						},
+					},
 				},
 			},
 			expectedError: "cannot read git status",
@@ -97,14 +131,26 @@ func TestPrecheck(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &service.Repo{
-						Owner: "moorara",
-						Name:  "cherry",
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
 					},
-					GetBranchOutBranch: &service.Branch{
-						Name: "master",
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
 					},
-					IsCleanOutResult: false,
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: false,
+						},
+					},
 				},
 			},
 			expectedError: "working directory is not clean",
@@ -116,14 +162,26 @@ func TestPrecheck(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &service.Repo{
-						Owner: "moorara",
-						Name:  "cherry",
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
 					},
-					GetBranchOutBranch: &service.Branch{
-						Name: "master",
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
 					},
-					IsCleanOutResult: true,
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
 				},
 			},
 			expectedRepo:   "moorara/cherry",
@@ -161,7 +219,11 @@ func TestVersions(t *testing.T) {
 			name: "ManagerReadError",
 			formula: &formula{
 				VersionManager: &mockVersionManager{
-					ReadOutError: errors.New("invalid version file"),
+					ReadMocks: []ReadMock{
+						{
+							OutError: errors.New("invalid version file"),
+						},
+					},
 				},
 			},
 			level:         PatchRelease,
@@ -171,7 +233,16 @@ func TestVersions(t *testing.T) {
 			name: "ManagerUpdateError",
 			formula: &formula{
 				VersionManager: &mockVersionManager{
-					UpdateOutError: errors.New("version file error"),
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: errors.New("version file error"),
+						},
+					},
 				},
 			},
 			level:         PatchRelease,
@@ -181,7 +252,16 @@ func TestVersions(t *testing.T) {
 			name: "PatchRelease",
 			formula: &formula{
 				VersionManager: &mockVersionManager{
-					ReadOutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+					},
 				},
 			},
 			level:           PatchRelease,
@@ -192,7 +272,16 @@ func TestVersions(t *testing.T) {
 			name: "MinorRelease",
 			formula: &formula{
 				VersionManager: &mockVersionManager{
-					ReadOutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+					},
 				},
 			},
 			level:           MinorRelease,
@@ -203,7 +292,16 @@ func TestVersions(t *testing.T) {
 			name: "MajorRelease",
 			formula: &formula{
 				VersionManager: &mockVersionManager{
-					ReadOutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+					},
 				},
 			},
 			level:           MajorRelease,
@@ -257,17 +355,33 @@ func TestRelease(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &service.Repo{
-						Owner: "moorara",
-						Name:  "cherry",
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
 					},
-					GetBranchOutBranch: &service.Branch{
-						Name: "master",
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
 					},
-					IsCleanOutResult: true,
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
 				},
 				Github: &mockGithub{
-					BranchProtectionForAdminOutError: errors.New("github branch protection api error"),
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: errors.New("github branch protection api error"),
+						},
+					},
 				},
 			},
 			ctx:           context.Background(),
@@ -282,20 +396,43 @@ func TestRelease(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &service.Repo{
-						Owner: "moorara",
-						Name:  "cherry",
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
 					},
-					GetBranchOutBranch: &service.Branch{
-						Name: "master",
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
 					},
-					IsCleanOutResult: true,
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
 				},
 				Github: &mockGithub{
-					BranchProtectionForAdminOutError: nil,
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
 				},
 				VersionManager: &mockVersionManager{
-					ReadOutError: errors.New("invalid version file"),
+					ReadMocks: []ReadMock{
+						{
+							OutError: errors.New("invalid version file"),
+						},
+					},
 				},
 			},
 			ctx:           context.Background(),
@@ -310,24 +447,55 @@ func TestRelease(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &service.Repo{
-						Owner: "moorara",
-						Name:  "cherry",
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
 					},
-					GetBranchOutBranch: &service.Branch{
-						Name: "master",
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
 					},
-					IsCleanOutResult: true,
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
 				},
 				Github: &mockGithub{
-					BranchProtectionForAdminOutError: nil,
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
 				},
 				VersionManager: &mockVersionManager{
-					ReadOutSemVer:  service.SemVer{Major: 0, Minor: 1, Patch: 0},
-					UpdateOutError: nil,
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+					},
 				},
 				Changelog: &mockChangelog{
-					GenerateOutError: errors.New("changelog generation error"),
+					GenerateMocks: []GenerateMock{
+						{
+							OutError: errors.New("changelog generation error"),
+						},
+					},
 				},
 			},
 			ctx:           context.Background(),
@@ -342,25 +510,65 @@ func TestRelease(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &service.Repo{
-						Owner: "moorara",
-						Name:  "cherry",
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
 					},
-					GetBranchOutBranch: &service.Branch{
-						Name: "master",
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
 					},
-					IsCleanOutResult: true,
-					CommitOutError:   errors.New("git commit error"),
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
+					CommitMocks: []CommitMock{
+						{
+							OutError: errors.New("git commit error"),
+						},
+					},
 				},
 				Github: &mockGithub{
-					BranchProtectionForAdminOutError: nil,
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
 				},
 				VersionManager: &mockVersionManager{
-					ReadOutSemVer:  service.SemVer{Major: 0, Minor: 1, Patch: 0},
-					UpdateOutError: nil,
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+					},
 				},
 				Changelog: &mockChangelog{
-					GenerateOutResult: "changelog",
+					FilenameMocks: []FilenameMock{
+						{
+							OutResult: "CHANGELOG.md",
+						},
+					},
+					GenerateMocks: []GenerateMock{
+						{
+							OutResult: "changelog",
+						},
+					},
 				},
 			},
 			ctx:           context.Background(),
@@ -375,26 +583,70 @@ func TestRelease(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &service.Repo{
-						Owner: "moorara",
-						Name:  "cherry",
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
 					},
-					GetBranchOutBranch: &service.Branch{
-						Name: "master",
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
 					},
-					IsCleanOutResult: true,
-					CommitOutError:   nil,
-					TagOutError:      errors.New("git tag error"),
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
+					CommitMocks: []CommitMock{
+						{
+							OutError: nil,
+						},
+					},
+					TagMocks: []TagMock{
+						{
+							OutError: errors.New("git tag error"),
+						},
+					},
 				},
 				Github: &mockGithub{
-					BranchProtectionForAdminOutError: nil,
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
 				},
 				VersionManager: &mockVersionManager{
-					ReadOutSemVer:  service.SemVer{Major: 0, Minor: 1, Patch: 0},
-					UpdateOutError: nil,
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+					},
 				},
 				Changelog: &mockChangelog{
-					GenerateOutResult: "changelog",
+					FilenameMocks: []FilenameMock{
+						{
+							OutResult: "CHANGELOG.md",
+						},
+					},
+					GenerateMocks: []GenerateMock{
+						{
+							OutResult: "changelog",
+						},
+					},
 				},
 			},
 			ctx:           context.Background(),
@@ -409,27 +661,75 @@ func TestRelease(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &service.Repo{
-						Owner: "moorara",
-						Name:  "cherry",
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
 					},
-					GetBranchOutBranch: &service.Branch{
-						Name: "master",
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
 					},
-					IsCleanOutResult: true,
-					CommitOutError:   nil,
-					TagOutError:      nil,
-					PushOutError:     errors.New("git push error"),
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
+					CommitMocks: []CommitMock{
+						{
+							OutError: nil,
+						},
+					},
+					TagMocks: []TagMock{
+						{
+							OutError: nil,
+						},
+					},
+					PushMocks: []PushMock{
+						{
+							OutError: errors.New("git push error"),
+						},
+					},
 				},
 				Github: &mockGithub{
-					BranchProtectionForAdminOutError: nil,
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
 				},
 				VersionManager: &mockVersionManager{
-					ReadOutSemVer:  service.SemVer{Major: 0, Minor: 1, Patch: 0},
-					UpdateOutError: nil,
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+					},
 				},
 				Changelog: &mockChangelog{
-					GenerateOutResult: "changelog",
+					FilenameMocks: []FilenameMock{
+						{
+							OutResult: "CHANGELOG.md",
+						},
+					},
+					GenerateMocks: []GenerateMock{
+						{
+							OutResult: "changelog",
+						},
+					},
 				},
 			},
 			ctx:           context.Background(),
@@ -444,34 +744,477 @@ func TestRelease(t *testing.T) {
 				Spec:        &spec.Spec{},
 				Ui:          &mockUI{},
 				Git: &mockGit{
-					GetRepoOutRepo: &service.Repo{
-						Owner: "moorara",
-						Name:  "cherry",
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
 					},
-					GetBranchOutBranch: &service.Branch{
-						Name: "master",
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
 					},
-					IsCleanOutResult: true,
-					CommitOutError:   nil,
-					TagOutError:      nil,
-					PushOutError:     nil,
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
+					CommitMocks: []CommitMock{
+						{
+							OutError: nil,
+						},
+					},
+					TagMocks: []TagMock{
+						{
+							OutError: nil,
+						},
+					},
+					PushMocks: []PushMock{
+						{
+							OutError: nil,
+						},
+					},
 				},
 				Github: &mockGithub{
-					BranchProtectionForAdminOutError: nil,
-					CreateReleaseOutError:            errors.New("github create release error"),
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+					CreateReleaseMocks: []CreateReleaseMock{
+						{
+							OutError: errors.New("github create release error"),
+						},
+					},
 				},
 				VersionManager: &mockVersionManager{
-					ReadOutSemVer:  service.SemVer{Major: 0, Minor: 1, Patch: 0},
-					UpdateOutError: nil,
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+					},
 				},
 				Changelog: &mockChangelog{
-					GenerateOutResult: "changelog",
+					FilenameMocks: []FilenameMock{
+						{
+							OutResult: "CHANGELOG.md",
+						},
+					},
+					GenerateMocks: []GenerateMock{
+						{
+							OutResult: "changelog",
+						},
+					},
 				},
 			},
 			ctx:           context.Background(),
 			level:         PatchRelease,
 			comment:       "release description",
 			expectedError: "github create release error",
+		},
+		{
+			name: "NextVersionUpdateFails",
+			formula: &formula{
+				GithubToken: "github-token",
+				Spec:        &spec.Spec{},
+				Ui:          &mockUI{},
+				Git: &mockGit{
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
+					},
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
+					},
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
+					CommitMocks: []CommitMock{
+						{
+							OutError: nil,
+						},
+					},
+					TagMocks: []TagMock{
+						{
+							OutError: nil,
+						},
+					},
+					PushMocks: []PushMock{
+						{
+							OutError: nil,
+						},
+					},
+				},
+				Github: &mockGithub{
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+					CreateReleaseMocks: []CreateReleaseMock{
+						{
+							OutRelease: &service.Release{
+								ID:   1,
+								Name: "0.1.0",
+							},
+						},
+					},
+				},
+				VersionManager: &mockVersionManager{
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: errors.New("version manager update error"),
+						},
+					},
+				},
+				Changelog: &mockChangelog{
+					FilenameMocks: []FilenameMock{
+						{
+							OutResult: "CHANGELOG.md",
+						},
+					},
+					GenerateMocks: []GenerateMock{
+						{
+							OutResult: "changelog",
+						},
+					},
+				},
+			},
+			ctx:           context.Background(),
+			level:         PatchRelease,
+			comment:       "release description",
+			expectedError: "version manager update error",
+		},
+		{
+			name: "NextVersionCommitFails",
+			formula: &formula{
+				GithubToken: "github-token",
+				Spec:        &spec.Spec{},
+				Ui:          &mockUI{},
+				Git: &mockGit{
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
+					},
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
+					},
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
+					CommitMocks: []CommitMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: errors.New("git commit error"),
+						},
+					},
+					TagMocks: []TagMock{
+						{
+							OutError: nil,
+						},
+					},
+					PushMocks: []PushMock{
+						{
+							OutError: nil,
+						},
+					},
+				},
+				Github: &mockGithub{
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+					CreateReleaseMocks: []CreateReleaseMock{
+						{
+							OutRelease: &service.Release{
+								ID:   1,
+								Name: "0.1.0",
+							},
+						},
+					},
+				},
+				VersionManager: &mockVersionManager{
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+				},
+				Changelog: &mockChangelog{
+					FilenameMocks: []FilenameMock{
+						{
+							OutResult: "CHANGELOG.md",
+						},
+					},
+					GenerateMocks: []GenerateMock{
+						{
+							OutResult: "changelog",
+						},
+					},
+				},
+			},
+			ctx:           context.Background(),
+			level:         PatchRelease,
+			comment:       "release description",
+			expectedError: "git commit error",
+		},
+		{
+			name: "NextVersionPushFails",
+			formula: &formula{
+				GithubToken: "github-token",
+				Spec:        &spec.Spec{},
+				Ui:          &mockUI{},
+				Git: &mockGit{
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
+					},
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
+					},
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
+					CommitMocks: []CommitMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+					TagMocks: []TagMock{
+						{
+							OutError: nil,
+						},
+					},
+					PushMocks: []PushMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: errors.New("git push error"),
+						},
+					},
+				},
+				Github: &mockGithub{
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+					CreateReleaseMocks: []CreateReleaseMock{
+						{
+							OutRelease: &service.Release{
+								ID:   1,
+								Name: "0.1.0",
+							},
+						},
+					},
+				},
+				VersionManager: &mockVersionManager{
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+				},
+				Changelog: &mockChangelog{
+					FilenameMocks: []FilenameMock{
+						{
+							OutResult: "CHANGELOG.md",
+						},
+					},
+					GenerateMocks: []GenerateMock{
+						{
+							OutResult: "changelog",
+						},
+					},
+				},
+			},
+			ctx:           context.Background(),
+			level:         PatchRelease,
+			comment:       "release description",
+			expectedError: "git push error",
+		},
+		{
+			name: "Success",
+			formula: &formula{
+				GithubToken: "github-token",
+				Spec:        &spec.Spec{},
+				Ui:          &mockUI{},
+				Git: &mockGit{
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
+					},
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
+					},
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
+					CommitMocks: []CommitMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+					TagMocks: []TagMock{
+						{
+							OutError: nil,
+						},
+					},
+					PushMocks: []PushMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+				},
+				Github: &mockGithub{
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+					CreateReleaseMocks: []CreateReleaseMock{
+						{
+							OutRelease: &service.Release{
+								ID:   1,
+								Name: "0.1.0",
+							},
+						},
+					},
+				},
+				VersionManager: &mockVersionManager{
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+				},
+				Changelog: &mockChangelog{
+					FilenameMocks: []FilenameMock{
+						{
+							OutResult: "CHANGELOG.md",
+						},
+					},
+					GenerateMocks: []GenerateMock{
+						{
+							OutResult: "changelog",
+						},
+					},
+				},
+			},
+			ctx:           context.Background(),
+			level:         PatchRelease,
+			comment:       "release description",
+			expectedError: "",
 		},
 	}
 
