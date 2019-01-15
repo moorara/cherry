@@ -1,4 +1,4 @@
-[![Build Status][travisci-image]][travisci-url]
+[![Build Status][circleci-image]][circleci-url]
 [![Go Report Card][goreport-image]][goreport-url]
 
 # Cherry
@@ -57,20 +57,22 @@ You can also use `-comment` flag to include a description for your release.
 
 ## Development
 
-| Command           | Description                                          |
-|-------------------|------------------------------------------------------|
-| `make run`        | Run the application locally                          |
-| `make build`      | Build the binary locally                             |
-| `make build-all`  | Build the binary locally for all supported platforms |
-| `make test`       | Run the unit tests                                   |
-| `make test-short` | Run the unit tests using `-short` flag               |
-| `make coverage`   | Run the unit tests with coverage report              |
-| `make docker`     | Build Docker image                                   |
-| `make push`       | Push built image to registry                         |
+| Command            | Description                                          |
+|--------------------|------------------------------------------------------|
+| `make run`         | Run the application locally                          |
+| `make build`       | Build the binary locally                             |
+| `make build-all`   | Build the binary locally for all supported platforms |
+| `make test`        | Run the unit tests                                   |
+| `make test-short`  | Run the unit tests using `-short` flag               |
+| `make coverage`    | Run the unit tests with coverage report              |
+| `make docker`      | Build Docker image                                   |
+| `make push`        | Push built image to registry                         |
+| `make save-docker` | Save built image to disk                             |
+| `make load-docker` | Load saved image from disk                           |
 
 
-[travisci-url]: https://travis-ci.org/moorara/cherry
-[travisci-image]: https://travis-ci.org/moorara/cherry.svg?branch=master
+[circleci-url]: https://circleci.com/gh/moorara/cherry/tree/master
+[circleci-image]: https://circleci.com/gh/moorara/cherry/tree/master.svg?style=svg
 
 [goreport-url]: https://goreportcard.com/report/github.com/moorara/cherry
 [goreport-image]: https://goreportcard.com/badge/github.com/moorara/cherry

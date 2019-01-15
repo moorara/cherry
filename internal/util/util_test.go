@@ -62,7 +62,7 @@ func TestEnsureEnvVars(t *testing.T) {
 		},
 		{
 			"MultipleEnvVar",
-			[]string{"HOME", "SHELL", "USER"},
+			[]string{"HOME", "PATH", "PWD"},
 			nil,
 		},
 		{

@@ -1,0 +1,110 @@
+## Reusable Definitinos
+##
+go-job: &go-job
+  docker:
+    - image: golang:1.11
+
+docker-job: &docker-job
+  docker:
+    - image: docker:stable-git
+
+go-modules: &go-modules
+  name: Go Modules
+  command: go mod tidy
+
+write-version: &write-version
+  name: Write Version
+  command: |
+    VERSION=$(cat VERSION)
+    VERSION=${VERSION/-0/-$CIRCLE_BUILD_NUM}
+    echo ${VERSION} > VERSION
+
+install-cherry: &install-cherry
+  name: Install Cherry
+  command: curl -s https://raw.githubusercontent.com/moorara/cherry/master/scripts/install.sh | bash
+
+login-docker: &login-docker
+  name: Login to Docker Hub
+  command: docker login -u $DOCKER_USER -p $DOCKER_PASS
+
+
+## CircleCI Config
+##
+version: 2
+jobs:
+
+  unit-test:
+    <<: *go-job
+    steps:
+      - checkout
+      - run: *go-modules
+      - run: *install-cherry
+      - run:
+          name: Unit Tests
+          command: go test -race ./...
+      - run:
+          name: Test Coverage
+          command: cherry test
+      - store_artifacts:
+          path: coverage/
+
+  build-binary:
+    <<: *go-job
+    steps:
+      - checkout
+      - run: *go-modules
+      - run: *write-version
+      - run: *install-cherry
+      - run:
+          name: Build Binaries
+          command: cherry build
+      - store_artifacts:
+          path: bin/
+
+  build-docker:
+    <<: *docker-job
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: *write-version
+      - run:
+          name: Build Docker Image
+          command: |
+            docker_image="$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME:$(cat VERSION)"
+            docker image build -t $docker_image .
+            docker image save -o docker.tar $docker_image
+      - persist_to_workspace:
+          root: .
+          paths:
+            - VERSION
+            - docker.tar
+
+  push-docker:
+    <<: *docker-job
+    steps:
+      - setup_remote_docker
+      - run: *login-docker
+      - attach_workspace:
+          at: .
+      - run:
+          name: Push Docker Image
+          command: |
+            docker image load -i docker.tar
+            docker_image="$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
+            docker image tag $docker_image:$(cat VERSION) $docker_image:latest
+            docker image push $docker_image
+
+
+workflows:
+  version: 2
+  build-test-push:
+    jobs:
+      - unit-test
+      - build-binary
+      - build-docker
+      - push-docker:
+          requires:
+            - build-docker
+          filters:
+            branches:
+              only: master

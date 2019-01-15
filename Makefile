@@ -30,8 +30,14 @@ docker:
 push:
 	@ docker push $(docker_image):$(docker_tag)
 
+save-docker:
+	@ docker image save -o docker.tar $(docker_image):$(docker_tag)
+
+load-docker:
+	@ docker image load -i docker.tar
+
 
 .PHONY: clean
 .PHONY: run build build-all
 .PHONY: test test-short coverage
-.PHONY: docker push
+.PHONY: docker push save-docker load-docker
