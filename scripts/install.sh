@@ -17,16 +17,16 @@ get_latest_release() {
   bin_pattern="/moorara/cherry/releases/download/v.*/cherry-$os-$arch"
 
   if hash curl 2>/dev/null; then
-    bin_path=$(curl -sL $release_url | grep -o $bin_pattern)
+    bin_path=$(curl -sL $release_url | grep -o "$bin_pattern")
   elif hash wget 2>/dev/null; then
-    bin_path=$(wget -qO- $release_url | grep -o $bin_pattern)
+    bin_path=$(wget -qO- $release_url | grep -o "$bin_pattern")
   else
     printf "No command available to get %s\n" "$release_url"
     exit 1
   fi
 
   download_url="https://github.com$bin_path"
-  latest_version=$(echo $bin_path | cut -d '/' -f6 | cut -d 'v' -f2)
+  latest_version=$(echo "$bin_path" | cut -d '/' -f6 | cut -d 'v' -f2)
 }
 
 install_cherry() {
@@ -57,10 +57,10 @@ main() {
     arch="amd64"
   fi
 
-  get_latest_release $os $arch
-  install_cherry $download_url
+  get_latest_release "$os" "$arch"
+  install_cherry "$download_url"
 
-  printf "Cherry $latest_version installed successfully.\n"
+  printf "Cherry %s installed successfully.\n" "$latest_version"
 }
 
 
