@@ -72,7 +72,7 @@ You can also use `-comment` flag to include a description for your release.
 
 
 [circleci-url]: https://circleci.com/gh/moorara/cherry/tree/master
-[circleci-image]: https://circleci.com/gh/moorara/cherry/tree/master.svg?style=svg
+[circleci-image]: https://circleci.com/gh/moorara/cherry/tree/master.svg?style=shield
 
 [goreport-url]: https://goreportcard.com/report/github.com/moorara/cherry
 [goreport-image]: https://goreportcard.com/badge/github.com/moorara/cherry
