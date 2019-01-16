@@ -1,5 +1,13 @@
 # Change Log
 
+## [v0.1.6](https://github.com/moorara/cherry/tree/v0.1.6) (2019-01-15)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.1.5...v0.1.6)
+
+**Merged pull requests:**
+
+- Improve Release formula [\#47](https://github.com/moorara/cherry/pull/47) ([moorara](https://github.com/moorara))
+- Improve tests for formula package [\#46](https://github.com/moorara/cherry/pull/46) ([moorara](https://github.com/moorara))
+
 ## [v0.1.5](https://github.com/moorara/cherry/tree/v0.1.5) (2019-01-15)
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.4...v0.1.5)
 
