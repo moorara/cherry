@@ -19,6 +19,7 @@ type (
 		Commit(message string, files ...string) error
 		Tag(tag string) error
 		Push(withTags bool) error
+		Pull() error
 	}
 
 	git struct {
@@ -221,6 +222,22 @@ func (g *git) Push(withTags bool) error {
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 		}
+	}
+
+	return nil
+}
+
+func (g *git) Pull() error {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	// git tag ...
+	cmd := exec.Command("git", "pull")
+	cmd.Dir = g.workDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
 	return nil

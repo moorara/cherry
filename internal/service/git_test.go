@@ -229,6 +229,33 @@ func TestGitPush(t *testing.T) {
 	}
 }
 
+func TestGitPull(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError bool
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			git := NewGit(tc.workDir)
+			err := git.Pull()
+
+			if tc.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestRepoPath(t *testing.T) {
 	tests := []struct {
 		repo         Repo
