@@ -7,6 +7,8 @@
 #   ./install.sh
 #
 
+# -o pipefail will cause the grep and head pipes exit with 141 code.
+# https://stackoverflow.com/questions/19120263/why-exit-code-141-with-grep-q
 set -eu
 
 

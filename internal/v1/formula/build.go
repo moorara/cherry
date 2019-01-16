@@ -26,25 +26,25 @@ type (
 )
 
 func (f *formula) getBuildInfo(ctx context.Context) (*buildInfo, error) {
-	data, err := ioutil.ReadFile(filepath.Join(f.WorkDir, f.Spec.VersionFile))
+	data, err := ioutil.ReadFile(filepath.Join(f.workDir, f.spec.VersionFile))
 	if err != nil {
 		return nil, err
 	}
 	version := strings.Trim(string(data), "\n")
 
-	commit, err := f.Git.GetHEAD()
+	commit, err := f.git.GetHEAD()
 	if err != nil {
 		return nil, err
 	}
 
-	branch, err := f.Git.GetBranch()
+	branch, err := f.git.GetBranch()
 	if err != nil {
 		return nil, err
 	}
 
-	buildTool := f.Spec.ToolName
-	if f.Spec.ToolVersion != "" {
-		buildTool += "@" + f.Spec.ToolVersion
+	buildTool := f.spec.ToolName
+	if f.spec.ToolVersion != "" {
+		buildTool += "@" + f.spec.ToolVersion
 	}
 
 	info := &buildInfo{
@@ -63,8 +63,8 @@ func (f *formula) getLDFlags(ctx context.Context, info *buildInfo) (string, erro
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	cmd := exec.CommandContext(ctx, "go", "list", f.Spec.Build.VersionPackage)
-	cmd.Dir = f.WorkDir
+	cmd := exec.CommandContext(ctx, "go", "list", f.spec.Build.VersionPackage)
+	cmd.Dir = f.workDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -99,15 +99,15 @@ func (f *formula) Compile(ctx context.Context) error {
 		return err
 	}
 
-	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", ldflags, "-o", f.Spec.Build.BinaryFile, f.Spec.Build.MainFile)
-	cmd.Dir = f.WorkDir
+	cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", ldflags, "-o", f.spec.Build.BinaryFile, f.spec.Build.MainFile)
+	cmd.Dir = f.workDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
-	f.Info(fmt.Sprintf("✅ %s", f.Spec.Build.BinaryFile))
+	f.Infof("🍒 %s", f.spec.Build.BinaryFile)
 
 	return nil
 }
@@ -123,9 +123,9 @@ func (f *formula) CrossCompile(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 
-	artifacts := make([]string, len(f.Spec.Build.Platforms))
+	artifacts := make([]string, len(f.spec.Build.Platforms))
 
-	for i, platform := range f.Spec.Build.Platforms {
+	for i, platform := range f.spec.Build.Platforms {
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
 
@@ -138,9 +138,9 @@ func (f *formula) CrossCompile(ctx context.Context) ([]string, error) {
 		stdout.Reset()
 		stderr.Reset()
 
-		bin := fmt.Sprintf("%s-%s", f.Spec.Build.BinaryFile, platform)
-		cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", ldflags, "-o", bin, f.Spec.Build.MainFile)
-		cmd.Dir = f.WorkDir
+		bin := fmt.Sprintf("%s-%s", f.spec.Build.BinaryFile, platform)
+		cmd := exec.CommandContext(ctx, "go", "build", "-ldflags", ldflags, "-o", bin, f.spec.Build.MainFile)
+		cmd.Dir = f.workDir
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
@@ -148,7 +148,7 @@ func (f *formula) CrossCompile(ctx context.Context) ([]string, error) {
 		}
 
 		artifacts[i] = bin
-		f.Info(fmt.Sprintf("✅ %s", bin))
+		f.Infof("🍒 %s", bin)
 
 		// Restore environment variables
 		reset()

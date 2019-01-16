@@ -51,11 +51,17 @@ func (m *mockUI) AskSecret(query string) (string, error) {
 }
 
 type mockFormula struct {
-	InfoInMessage string
+	PrintfInMsg  string
+	PrintfInArgs []interface{}
 
-	WarnInMessage string
+	InfofInMsg  string
+	InfofInArgs []interface{}
 
-	ErrorInMessage string
+	WarnfInMsg  string
+	WarnfInArgs []interface{}
+
+	ErrorfInMsg  string
+	ErrorfInArgs []interface{}
 
 	CoverInCtx    context.Context
 	CoverOutError error
@@ -73,16 +79,24 @@ type mockFormula struct {
 	ReleaseOutError  error
 }
 
-func (m *mockFormula) Info(message string) {
-	m.InfoInMessage = message
+func (m *mockFormula) Printf(msg string, args ...interface{}) {
+	m.PrintfInMsg = msg
+	m.PrintfInArgs = args
 }
 
-func (m *mockFormula) Warn(message string) {
-	m.WarnInMessage = message
+func (m *mockFormula) Infof(msg string, args ...interface{}) {
+	m.InfofInMsg = msg
+	m.InfofInArgs = args
 }
 
-func (m *mockFormula) Error(message string) {
-	m.ErrorInMessage = message
+func (m *mockFormula) Warnf(msg string, args ...interface{}) {
+	m.WarnfInMsg = msg
+	m.WarnfInArgs = args
+}
+
+func (m *mockFormula) Errorf(msg string, args ...interface{}) {
+	m.ErrorfInMsg = msg
+	m.ErrorfInArgs = args
 }
 
 func (m *mockFormula) Cover(ctx context.Context) error {

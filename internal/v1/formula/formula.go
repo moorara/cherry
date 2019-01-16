@@ -2,6 +2,7 @@ package formula
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 
 	"github.com/mitchellh/cli"
@@ -12,9 +13,10 @@ import (
 type (
 	// Formula is the interface for all available formulas
 	Formula interface {
-		Info(string)
-		Warn(string)
-		Error(string)
+		Printf(string, ...interface{})
+		Infof(string, ...interface{})
+		Warnf(string, ...interface{})
+		Errorf(string, ...interface{})
 
 		Cover(context.Context) error
 		Compile(context.Context) error
@@ -23,15 +25,14 @@ type (
 	}
 
 	formula struct {
-		cli.Ui
-		service.Git
-		service.Github
-		service.Changelog
-		service.VersionManager
-		*spec.Spec
-
-		WorkDir     string
-		GithubToken string
+		ui          cli.Ui
+		git         service.Git
+		github      service.Github
+		changelog   service.Changelog
+		vmanager    service.VersionManager
+		spec        *spec.Spec
+		workDir     string
+		githubToken string
 	}
 )
 
@@ -43,31 +44,37 @@ func New(ui cli.Ui, spec *spec.Spec, workDir, githubToken string) (Formula, erro
 	vmanager := service.NewTextVersionManager(filepath.Join(workDir, spec.VersionFile))
 
 	return &formula{
-		Ui:             ui,
-		Git:            git,
-		Github:         github,
-		Changelog:      changelog,
-		VersionManager: vmanager,
-		Spec:           spec,
-		WorkDir:        workDir,
-		GithubToken:    githubToken,
+		ui:          ui,
+		git:         git,
+		github:      github,
+		changelog:   changelog,
+		vmanager:    vmanager,
+		spec:        spec,
+		workDir:     workDir,
+		githubToken: githubToken,
 	}, nil
 }
 
-func (f *formula) Info(msg string) {
-	if f.Ui != nil {
-		f.Ui.Info(msg)
+func (f *formula) Printf(msg string, args ...interface{}) {
+	if f.ui != nil {
+		f.ui.Output(fmt.Sprintf(msg, args...))
 	}
 }
 
-func (f *formula) Warn(msg string) {
-	if f.Ui != nil {
-		f.Ui.Warn(msg)
+func (f *formula) Infof(msg string, args ...interface{}) {
+	if f.ui != nil {
+		f.ui.Info(fmt.Sprintf(msg, args...))
 	}
 }
 
-func (f *formula) Error(msg string) {
-	if f.Ui != nil {
-		f.Ui.Error(msg)
+func (f *formula) Warnf(msg string, args ...interface{}) {
+	if f.ui != nil {
+		f.ui.Warn(fmt.Sprintf(msg, args...))
+	}
+}
+
+func (f *formula) Errorf(msg string, args ...interface{}) {
+	if f.ui != nil {
+		f.ui.Error(fmt.Sprintf(msg, args...))
 	}
 }
