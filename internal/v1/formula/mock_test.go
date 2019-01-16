@@ -205,8 +205,7 @@ type (
 
 	UploadAssetsMock struct {
 		InCtx     context.Context
-		InRepo    string
-		InVersion service.SemVer
+		InRelease *service.Release
 		InAssets  []string
 		OutError  error
 	}
@@ -244,12 +243,11 @@ func (m *mockGithub) GetRelease(ctx context.Context, repo string, version servic
 	return mock.OutRelease, mock.OutError
 }
 
-func (m *mockGithub) UploadAssets(ctx context.Context, repo string, version service.SemVer, assets []string) error {
+func (m *mockGithub) UploadAssets(ctx context.Context, release *service.Release, assets ...string) error {
 	mock := &m.UploadAssetsMocks[m.UploadAssetsCounter]
 	m.UploadAssetsCounter++
 	mock.InCtx = ctx
-	mock.InRepo = repo
-	mock.InVersion = version
+	mock.InRelease = release
 	mock.InAssets = assets
 	return mock.OutError
 }

@@ -150,11 +150,13 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 			// We don't break the release process if we cannot build artifacts
 			f.Errorf("🔴 Error on building artifacts: %s", err)
 		} else {
-			f.Printf("⬆️ Uploading artifacts for release %s ...", release.Name)
-			err = f.github.UploadAssets(ctx, repo, current, assets)
-			if err != nil {
-				// We don't break the release process if we cannot upload artifacts
-				f.Errorf("🔴 Error on uploading artifacts: %s", err)
+			for _, asset := range assets {
+				f.Printf("⬆️  Uploading %s to release %s ...", asset, release.Name)
+				err = f.github.UploadAssets(ctx, release, asset)
+				if err != nil {
+					// We don't break the release process if we cannot upload artifacts
+					f.Errorf("🔴 Error on uploading artifact %s: %s", asset, err)
+				}
 			}
 		}
 

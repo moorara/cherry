@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	netURL "net/url"
 
@@ -17,8 +18,6 @@ import (
 
 const (
 	apiAddr    = "https://api.github.com"
-	uploadAddr = "https://uploads.github.com"
-
 	acceptType = "application/vnd.github.v3+json"
 	userAgent  = "moorara/cherry"
 )
@@ -29,13 +28,12 @@ type (
 		BranchProtectionForAdmin(ctx context.Context, repo, branch string, enabled bool) error
 		CreateRelease(ctx context.Context, repo, branch string, version SemVer, description string, draf, prerelease bool) (*Release, error)
 		GetRelease(ctx context.Context, repo string, version SemVer) (*Release, error)
-		UploadAssets(ctx context.Context, repo string, version SemVer, assets []string) error
+		UploadAssets(ctx context.Context, release *Release, assets ...string) error
 	}
 
 	github struct {
 		client     *http.Client
 		apiAddr    string
-		uploadAddr string
 		authHeader string
 	}
 
@@ -77,7 +75,6 @@ func NewGithub(token string) Github {
 	return &github{
 		client:     client,
 		apiAddr:    apiAddr,
-		uploadAddr: uploadAddr,
 		authHeader: "token " + token,
 	}
 }
@@ -236,18 +233,15 @@ func (gh *github) GetRelease(ctx context.Context, repo string, version SemVer) (
 	return release, nil
 }
 
-func (gh *github) UploadAssets(ctx context.Context, repo string, version SemVer, assets []string) error {
-	release, err := gh.GetRelease(ctx, repo, version)
-	if err != nil {
-		return err
-	}
-
+func (gh *github) UploadAssets(ctx context.Context, release *Release, assets ...string) error {
 	for _, asset := range assets {
 		assetPath := filepath.Clean(asset)
 		assetName := filepath.Base(assetPath)
 
 		method := "POST"
-		url := fmt.Sprintf("%s/repos/%s/releases/%d/assets?name=%s", gh.uploadAddr, repo, release.ID, netURL.QueryEscape(assetName))
+		re := regexp.MustCompile(`\{\?[0-9A-Za-z_,]+\}`)
+		url := re.ReplaceAllLiteralString(release.UploadURL, "")
+		url = fmt.Sprintf("%s?name=%s", url, netURL.QueryEscape(assetName))
 
 		content, err := gh.getUploadContent(assetPath)
 		if err != nil {
