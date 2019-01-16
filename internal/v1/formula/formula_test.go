@@ -43,34 +43,45 @@ func TestNew(t *testing.T) {
 
 func TestFormula(t *testing.T) {
 	tests := []struct {
-		ui      cli.Ui
-		message string
+		ui              cli.Ui
+		message         string
+		args            []interface{}
+		expectedMessage string
 	}{
 		{
 			ui:      &mockUI{},
-			message: "Hello, World!",
+			message: "Hello, %s!",
+			args: []interface{}{
+				"World",
+			},
+			expectedMessage: "Hello, World!",
 		},
 	}
 
 	for _, tc := range tests {
 		ui := &mockUI{}
 		f := &formula{
-			Ui: ui,
+			ui: ui,
 		}
 
-		t.Run("Info", func(t *testing.T) {
-			f.Info(tc.message)
-			assert.Equal(t, tc.message, ui.InfoInMessage)
+		t.Run("Printf", func(t *testing.T) {
+			f.Printf(tc.message, tc.args...)
+			assert.Equal(t, tc.expectedMessage, ui.OutputInMessage)
 		})
 
-		t.Run("Warn", func(t *testing.T) {
-			f.Warn(tc.message)
-			assert.Equal(t, tc.message, ui.WarnInMessage)
+		t.Run("Infof", func(t *testing.T) {
+			f.Infof(tc.message, tc.args...)
+			assert.Equal(t, tc.expectedMessage, ui.InfoInMessage)
 		})
 
-		t.Run("Error", func(t *testing.T) {
-			f.Error(tc.message)
-			assert.Equal(t, tc.message, ui.ErrorInMessage)
+		t.Run("Warnf", func(t *testing.T) {
+			f.Warnf(tc.message, tc.args...)
+			assert.Equal(t, tc.expectedMessage, ui.WarnInMessage)
+		})
+
+		t.Run("Errorf", func(t *testing.T) {
+			f.Errorf(tc.message, tc.args...)
+			assert.Equal(t, tc.expectedMessage, ui.ErrorInMessage)
 		})
 	}
 }

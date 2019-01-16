@@ -21,19 +21,19 @@ func TestPrecheck(t *testing.T) {
 		{
 			name: "NoGitHubToken",
 			formula: &formula{
-				GithubToken: "",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
+				githubToken: "",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
 			},
 			expectedError: "github token is not set",
 		},
 		{
 			name: "GitRepoError",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutError: errors.New("cannot read git repo"),
@@ -46,10 +46,10 @@ func TestPrecheck(t *testing.T) {
 		{
 			name: "GetBranchError",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -70,10 +70,10 @@ func TestPrecheck(t *testing.T) {
 		{
 			name: "NotOnMasterBranch",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -96,10 +96,10 @@ func TestPrecheck(t *testing.T) {
 		{
 			name: "IsCleanFails",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -127,10 +127,10 @@ func TestPrecheck(t *testing.T) {
 		{
 			name: "RepoNotClean",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -158,10 +158,10 @@ func TestPrecheck(t *testing.T) {
 		{
 			name: "Success",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -218,7 +218,7 @@ func TestVersions(t *testing.T) {
 		{
 			name: "ManagerReadError",
 			formula: &formula{
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutError: errors.New("invalid version file"),
@@ -232,7 +232,7 @@ func TestVersions(t *testing.T) {
 		{
 			name: "ManagerUpdateError",
 			formula: &formula{
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
@@ -251,7 +251,7 @@ func TestVersions(t *testing.T) {
 		{
 			name: "PatchRelease",
 			formula: &formula{
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
@@ -271,7 +271,7 @@ func TestVersions(t *testing.T) {
 		{
 			name: "MinorRelease",
 			formula: &formula{
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
@@ -291,7 +291,7 @@ func TestVersions(t *testing.T) {
 		{
 			name: "MajorRelease",
 			formula: &formula{
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
@@ -339,9 +339,9 @@ func TestRelease(t *testing.T) {
 		{
 			name: "PrecheckFails",
 			formula: &formula{
-				GithubToken: "",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
+				githubToken: "",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
 			},
 			ctx:           context.Background(),
 			level:         PatchRelease,
@@ -351,10 +351,10 @@ func TestRelease(t *testing.T) {
 		{
 			name: "GitPullFails",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -390,10 +390,10 @@ func TestRelease(t *testing.T) {
 		{
 			name: "DisableBranchProtectionFails",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -420,7 +420,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Github: &mockGithub{
+				github: &mockGithub{
 					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
 						{
 							OutError: errors.New("github branch protection api error"),
@@ -436,10 +436,10 @@ func TestRelease(t *testing.T) {
 		{
 			name: "VersionsFails",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -466,7 +466,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Github: &mockGithub{
+				github: &mockGithub{
 					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
 						{
 							OutError: nil,
@@ -476,7 +476,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutError: errors.New("invalid version file"),
@@ -492,10 +492,10 @@ func TestRelease(t *testing.T) {
 		{
 			name: "ChangelogFails",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -522,7 +522,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Github: &mockGithub{
+				github: &mockGithub{
 					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
 						{
 							OutError: nil,
@@ -532,7 +532,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
@@ -544,7 +544,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Changelog: &mockChangelog{
+				changelog: &mockChangelog{
 					GenerateMocks: []GenerateMock{
 						{
 							OutError: errors.New("changelog generation error"),
@@ -560,10 +560,10 @@ func TestRelease(t *testing.T) {
 		{
 			name: "GitCommitFails",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -595,7 +595,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Github: &mockGithub{
+				github: &mockGithub{
 					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
 						{
 							OutError: nil,
@@ -605,7 +605,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
@@ -617,7 +617,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Changelog: &mockChangelog{
+				changelog: &mockChangelog{
 					FilenameMocks: []FilenameMock{
 						{
 							OutResult: "CHANGELOG.md",
@@ -638,10 +638,10 @@ func TestRelease(t *testing.T) {
 		{
 			name: "GitTagFails",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -678,7 +678,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Github: &mockGithub{
+				github: &mockGithub{
 					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
 						{
 							OutError: nil,
@@ -688,7 +688,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
@@ -700,7 +700,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Changelog: &mockChangelog{
+				changelog: &mockChangelog{
 					FilenameMocks: []FilenameMock{
 						{
 							OutResult: "CHANGELOG.md",
@@ -721,10 +721,10 @@ func TestRelease(t *testing.T) {
 		{
 			name: "GitPushFails",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -766,7 +766,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Github: &mockGithub{
+				github: &mockGithub{
 					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
 						{
 							OutError: nil,
@@ -776,7 +776,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
@@ -788,7 +788,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Changelog: &mockChangelog{
+				changelog: &mockChangelog{
 					FilenameMocks: []FilenameMock{
 						{
 							OutResult: "CHANGELOG.md",
@@ -809,10 +809,10 @@ func TestRelease(t *testing.T) {
 		{
 			name: "CreateReleaseFails",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -854,7 +854,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Github: &mockGithub{
+				github: &mockGithub{
 					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
 						{
 							OutError: nil,
@@ -869,7 +869,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
@@ -881,7 +881,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Changelog: &mockChangelog{
+				changelog: &mockChangelog{
 					FilenameMocks: []FilenameMock{
 						{
 							OutResult: "CHANGELOG.md",
@@ -902,10 +902,10 @@ func TestRelease(t *testing.T) {
 		{
 			name: "NextVersionUpdateFails",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -947,7 +947,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Github: &mockGithub{
+				github: &mockGithub{
 					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
 						{
 							OutError: nil,
@@ -965,7 +965,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
@@ -980,7 +980,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Changelog: &mockChangelog{
+				changelog: &mockChangelog{
 					FilenameMocks: []FilenameMock{
 						{
 							OutResult: "CHANGELOG.md",
@@ -1001,10 +1001,10 @@ func TestRelease(t *testing.T) {
 		{
 			name: "NextVersionCommitFails",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -1049,7 +1049,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Github: &mockGithub{
+				github: &mockGithub{
 					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
 						{
 							OutError: nil,
@@ -1067,7 +1067,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
@@ -1082,7 +1082,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Changelog: &mockChangelog{
+				changelog: &mockChangelog{
 					FilenameMocks: []FilenameMock{
 						{
 							OutResult: "CHANGELOG.md",
@@ -1103,10 +1103,10 @@ func TestRelease(t *testing.T) {
 		{
 			name: "NextVersionPushFails",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -1154,7 +1154,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Github: &mockGithub{
+				github: &mockGithub{
 					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
 						{
 							OutError: nil,
@@ -1172,7 +1172,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
@@ -1187,7 +1187,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Changelog: &mockChangelog{
+				changelog: &mockChangelog{
 					FilenameMocks: []FilenameMock{
 						{
 							OutResult: "CHANGELOG.md",
@@ -1208,10 +1208,10 @@ func TestRelease(t *testing.T) {
 		{
 			name: "Success",
 			formula: &formula{
-				GithubToken: "github-token",
-				Spec:        &spec.Spec{},
-				Ui:          &mockUI{},
-				Git: &mockGit{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
 							OutRepo: &service.Repo{
@@ -1259,7 +1259,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Github: &mockGithub{
+				github: &mockGithub{
 					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
 						{
 							OutError: nil,
@@ -1277,7 +1277,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				VersionManager: &mockVersionManager{
+				vmanager: &mockVersionManager{
 					ReadMocks: []ReadMock{
 						{
 							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
@@ -1292,7 +1292,7 @@ func TestRelease(t *testing.T) {
 						},
 					},
 				},
-				Changelog: &mockChangelog{
+				changelog: &mockChangelog{
 					FilenameMocks: []FilenameMock{
 						{
 							OutResult: "CHANGELOG.md",

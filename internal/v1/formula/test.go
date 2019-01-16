@@ -23,7 +23,7 @@ func (f *formula) getPackages(ctx context.Context) ([]string, error) {
 	var stderr bytes.Buffer
 
 	cmd := exec.CommandContext(ctx, "go", "list", "./...")
-	cmd.Dir = f.WorkDir
+	cmd.Dir = f.workDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -55,25 +55,29 @@ func (f *formula) testPackage(ctx context.Context, pkg, coverfile string) error 
 
 	// Run go test with cover mode
 	cmd := exec.CommandContext(ctx, "go", "test", "-covermode", atomicMode, "-coverprofile", tf.Name(), pkg)
-	cmd.Dir = f.WorkDir
+	cmd.Dir = f.workDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err = cmd.Run()
 	testOutput := strings.Trim(stdout.String(), "\n")
 
 	if err != nil {
-		f.Error(fmt.Sprintf("\n%s\n", testOutput))
+		f.Errorf("\n%s\n", testOutput)
 		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
-	f.Info(fmt.Sprintf("✅ %s", testOutput))
+	if strings.HasPrefix(testOutput, "ok") {
+		f.Infof("✅ %s", testOutput)
+	} else {
+		f.Warnf("⚠️  %s", testOutput)
+	}
 
 	stdout.Reset()
 	stderr.Reset()
 
 	// Get the coverage data
 	cmd = exec.CommandContext(ctx, "tail", "-n", "+2", tf.Name())
-	cmd.Dir = f.WorkDir
+	cmd.Dir = f.workDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -95,7 +99,7 @@ func (f *formula) Cover(ctx context.Context) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	reportpath := filepath.Join(f.WorkDir, f.Spec.Test.ReportPath)
+	reportpath := filepath.Join(f.workDir, f.spec.Test.ReportPath)
 	coverfile := filepath.Join(reportpath, coverFile)
 	reportfile := filepath.Join(reportpath, reportFile)
 
@@ -129,7 +133,7 @@ func (f *formula) Cover(ctx context.Context) error {
 
 	// Generate the singleton html coverage report for all packages
 	cmd := exec.CommandContext(ctx, "go", "tool", "cover", "-html", coverfile, "-o", reportfile)
-	cmd.Dir = f.WorkDir
+	cmd.Dir = f.workDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {

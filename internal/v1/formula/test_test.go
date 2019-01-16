@@ -19,7 +19,7 @@ func TestGetPackages(t *testing.T) {
 		{
 			name: "Error",
 			formula: &formula{
-				WorkDir: os.TempDir(),
+				workDir: os.TempDir(),
 			},
 			ctx:              context.Background(),
 			expectedError:    "exit status 1",
@@ -28,7 +28,7 @@ func TestGetPackages(t *testing.T) {
 		{
 			name: "Success",
 			formula: &formula{
-				WorkDir: ".",
+				workDir: ".",
 			},
 			ctx:           context.Background(),
 			expectedError: "",
