@@ -7,26 +7,27 @@
 #   ./install.sh
 #
 
-set -euo pipefail
+set -eu
 
 
 get_latest_release() {
   os="$1"
   arch="$2"
-  release_url="https://github.com/moorara/cherry/releases/latest"
+  release_url="https://github.com/moorara/cherry/releases"
   bin_pattern="/moorara/cherry/releases/download/v.*/cherry-$os-$arch"
 
   if hash curl 2>/dev/null; then
-    bin_path=$(curl -sL $release_url | grep -o "$bin_pattern")
+    content=$(curl -sL $release_url)
   elif hash wget 2>/dev/null; then
-    bin_path=$(wget -qO- $release_url | grep -o "$bin_pattern")
+    content=$(wget -qO- $release_url)
   else
     printf "No command available to get %s\n" "$release_url"
     exit 1
   fi
 
+  bin_path=$(echo "$content" | grep -o "$bin_pattern" | head -n 1)
   download_url="https://github.com$bin_path"
-  latest_version=$(echo "$bin_path" | cut -d '/' -f6 | cut -d 'v' -f2)
+  latest_version=$(echo "$bin_path" | cut -d '/' -f6 | cut -d 'v' -f 2)
 }
 
 install_cherry() {
