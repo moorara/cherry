@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"os"
-	"path/filepath"
+	"os/exec"
 	"time"
 
 	"github.com/mitchellh/cli"
@@ -66,7 +66,7 @@ func (c *Update) Run(args []string) int {
 	ctx, cancel := context.WithTimeout(context.Background(), updateTimeout)
 	defer cancel()
 
-	binPath, err := filepath.Abs(os.Args[0])
+	binPath, err := exec.LookPath(os.Args[0])
 	if err != nil {
 		return updateBinPathError
 	}
