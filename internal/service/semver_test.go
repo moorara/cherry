@@ -3,6 +3,7 @@ package service
 import (
 	"testing"
 
+	"github.com/moorara/cherry/internal/util"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -339,7 +340,7 @@ func TestTextVersionManagerRead(t *testing.T) {
 			manager := &textVersionManager{}
 
 			if tc.mockVersionFile {
-				file, remove, err := createTempFile(tc.versionFileContent)
+				file, remove, err := util.CreateTempFile("test-", tc.versionFileContent)
 				assert.NoError(t, err)
 				defer remove()
 				manager.file = file
@@ -386,7 +387,7 @@ func TestTextVersionManagerUpdate(t *testing.T) {
 			manager := &textVersionManager{}
 
 			if tc.mockVersionFile {
-				file, remove, err := createTempFile(tc.versionFileContent)
+				file, remove, err := util.CreateTempFile("test-", tc.versionFileContent)
 				assert.NoError(t, err)
 				defer remove()
 				manager.file = file
@@ -472,7 +473,7 @@ func TestJSONVersionManagerRead(t *testing.T) {
 			manager := &jsonVersionManager{}
 
 			if tc.mockVersionFile {
-				file, remove, err := createTempFile(tc.versionFileContent)
+				file, remove, err := util.CreateTempFile("test-", tc.versionFileContent)
 				assert.NoError(t, err)
 				defer remove()
 				manager.file = file
@@ -519,7 +520,7 @@ func TestJSONVersionManagerUpdate(t *testing.T) {
 			manager := &jsonVersionManager{}
 
 			if tc.mockVersionFile {
-				file, remove, err := createTempFile(tc.versionFileContent)
+				file, remove, err := util.CreateTempFile("test-", tc.versionFileContent)
 				assert.NoError(t, err)
 				defer remove()
 				manager.file = file

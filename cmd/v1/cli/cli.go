@@ -43,6 +43,9 @@ func New(ui cli.Ui, name, githubToken string) (*cli.CLI, error) {
 		"release": func() (cmd cli.Command, err error) {
 			return NewRelease(ui, s, f)
 		},
+		"update": func() (cmd cli.Command, err error) {
+			return NewUpdate(ui, f)
+		},
 	}
 
 	return app, nil

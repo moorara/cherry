@@ -12,7 +12,7 @@ import (
 )
 
 type (
-	// Build is the build CLI command
+	// Build is the build cli command
 	Build struct {
 		cli.Ui
 		*spec.Spec
@@ -69,7 +69,7 @@ func (c *Build) Help() string {
 	return buf.String()
 }
 
-// Run runs the actual command with the given CLI instance and command-line arguments
+// Run runs the actual command with the given command-line arguments
 func (c *Build) Run(args []string) int {
 	// Parse command flags
 	fs := c.Spec.Build.FlagSet()

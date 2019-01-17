@@ -22,6 +22,7 @@ type (
 		Compile(context.Context) error
 		CrossCompile(context.Context) ([]string, error)
 		Release(ctx context.Context, level ReleaseLevel, comment string) error
+		Update(ctx context.Context, binPath string) error
 	}
 
 	formula struct {

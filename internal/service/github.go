@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	netURL "net/url"
 
@@ -29,6 +30,8 @@ type (
 		CreateRelease(ctx context.Context, repo string, in ReleaseInput) (*Release, error)
 		EditRelease(ctx context.Context, repo string, releaseID int, in ReleaseInput) (*Release, error)
 		GetRelease(ctx context.Context, repo string, version SemVer) (*Release, error)
+		GetReleases(ctx context.Context, repo string) ([]Release, error)
+		GetLatestRelease(ctx context.Context, repo string) (*Release, error)
 		UploadAssets(ctx context.Context, release *Release, assets ...string) error
 	}
 
@@ -40,17 +43,18 @@ type (
 
 	// Release is the model for GitHub release
 	Release struct {
-		ID         int    `json:"id"`
-		Name       string `json:"name"`
-		TagName    string `json:"tag_name"`
-		Target     string `json:"target_commitish"`
-		Draft      bool   `json:"draft"`
-		Prerelease bool   `json:"prerelease"`
-		Body       string `json:"body"`
-		URL        string `json:"url"`
-		HTMLURL    string `json:"html_url"`
-		AssetsURL  string `json:"assets_url"`
-		UploadURL  string `json:"upload_url"`
+		ID         int     `json:"id"`
+		Name       string  `json:"name"`
+		TagName    string  `json:"tag_name"`
+		Target     string  `json:"target_commitish"`
+		Draft      bool    `json:"draft"`
+		Prerelease bool    `json:"prerelease"`
+		Body       string  `json:"body"`
+		URL        string  `json:"url"`
+		HTMLURL    string  `json:"html_url"`
+		AssetsURL  string  `json:"assets_url"`
+		UploadURL  string  `json:"upload_url"`
+		Assets     []Asset `json:"assets"`
 	}
 
 	// ReleaseInput is the model for creating and editing a release
@@ -61,6 +65,17 @@ type (
 		Draft      bool   `json:"draft"`
 		Prerelease bool   `json:"prerelease"`
 		Body       string `json:"body"`
+	}
+
+	// Asset is the model for release assets
+	Asset struct {
+		ID          int    `json:"id"`
+		Name        string `json:"name"`
+		Label       string `json:"label"`
+		State       string `json:"state"`
+		Size        int    `json:"size"`
+		ContentType string `json:"content_type"`
+		DownloadURL string `json:"browser_download_url"`
 	}
 
 	uploadContent struct {
@@ -80,8 +95,15 @@ func NewGithub(token string) Github {
 	return &github{
 		client:     client,
 		apiAddr:    apiAddr,
-		authHeader: "token " + token,
+		authHeader: fmt.Sprintf("token %s", token),
 	}
+}
+
+func (gh *github) isTokenValid() bool {
+	hasPrefix := strings.HasPrefix(gh.authHeader, "token")
+	isLenValid := len(gh.authHeader) > 6
+
+	return hasPrefix && isLenValid
 }
 
 func (gh *github) getUploadContent(filepath string) (*uploadContent, error) {
@@ -243,9 +265,83 @@ func (gh *github) GetRelease(ctx context.Context, repo string, version SemVer) (
 		return nil, err
 	}
 
-	req.Header.Set("Authorization", gh.authHeader)
 	req.Header.Set("Accept", acceptType)
 	req.Header.Set("User-Agent", userAgent) // ref: https://developer.github.com/v3/#user-agent-required
+	if gh.isTokenValid() {
+		req.Header.Set("Authorization", gh.authHeader)
+	}
+
+	req = req.WithContext(ctx)
+
+	res, err := gh.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return nil, util.NewHTTPError(res)
+	}
+
+	release := new(Release)
+	err = json.NewDecoder(res.Body).Decode(release)
+	if err != nil {
+		return nil, err
+	}
+
+	return release, nil
+}
+
+func (gh *github) GetReleases(ctx context.Context, repo string) ([]Release, error) {
+	method := "GET"
+	url := fmt.Sprintf("%s/repos/%s/releases", gh.apiAddr, repo)
+
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept", acceptType)
+	req.Header.Set("User-Agent", userAgent) // ref: https://developer.github.com/v3/#user-agent-required
+	if gh.isTokenValid() {
+		req.Header.Set("Authorization", gh.authHeader)
+	}
+
+	req = req.WithContext(ctx)
+
+	res, err := gh.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return nil, util.NewHTTPError(res)
+	}
+
+	releases := make([]Release, 0)
+	err = json.NewDecoder(res.Body).Decode(&releases)
+	if err != nil {
+		return nil, err
+	}
+
+	return releases, nil
+}
+
+func (gh *github) GetLatestRelease(ctx context.Context, repo string) (*Release, error) {
+	method := "GET"
+	url := fmt.Sprintf("%s/repos/%s/releases/latest", gh.apiAddr, repo)
+
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept", acceptType)
+	req.Header.Set("User-Agent", userAgent) // ref: https://developer.github.com/v3/#user-agent-required
+	if gh.isTokenValid() {
+		req.Header.Set("Authorization", gh.authHeader)
+	}
 
 	req = req.WithContext(ctx)
 
