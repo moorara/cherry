@@ -1,5 +1,16 @@
 # Change Log
 
+## [v0.2.0](https://github.com/moorara/cherry/tree/v0.2.0) (2019-01-17)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.1.9...v0.2.0)
+
+**Implemented enhancements:**
+
+- Implement update command [\#52](https://github.com/moorara/cherry/issues/52)
+
+**Merged pull requests:**
+
+- Add self-update command 🎉 [\#53](https://github.com/moorara/cherry/pull/53) ([moorara](https://github.com/moorara))
+
 ## [v0.1.9](https://github.com/moorara/cherry/tree/v0.1.9) (2019-01-17)
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.8...v0.1.9)
 
