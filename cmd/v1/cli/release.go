@@ -10,7 +10,7 @@ import (
 )
 
 type (
-	// Release is the release CLI command
+	// Release is the release cli command
 	Release struct {
 		cli.Ui
 		*spec.Spec
@@ -67,7 +67,7 @@ func (c *Release) Help() string {
 	return releaseHelp
 }
 
-// Run runs the actual command with the given CLI instance and command-line arguments
+// Run runs the actual command with the given command-line arguments
 func (c *Release) Run(args []string) int {
 	var level formula.ReleaseLevel
 	var patch, minor, major bool

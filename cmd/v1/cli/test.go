@@ -10,7 +10,7 @@ import (
 )
 
 type (
-	// Test is the test CLI command
+	// Test is the test cli command
 	Test struct {
 		cli.Ui
 		*spec.Spec
@@ -59,7 +59,7 @@ func (c *Test) Help() string {
 	return testHelp
 }
 
-// Run runs the actual command with the given CLI instance and command-line arguments
+// Run runs the actual command with the given command-line arguments
 func (c *Test) Run(args []string) int {
 	// Parse command flags
 	fs := c.Spec.Test.FlagSet()

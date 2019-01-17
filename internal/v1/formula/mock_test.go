@@ -173,6 +173,10 @@ type (
 		EditReleaseMocks                []EditReleaseMock
 		GetReleaseCounter               int
 		GetReleaseMocks                 []GetReleaseMock
+		GetReleasesCounter              int
+		GetReleasesMocks                []GetReleasesMock
+		GetLatestReleaseCounter         int
+		GetLatestReleaseMocks           []GetLatestReleaseMock
 		UploadAssetsCounter             int
 		UploadAssetsMocks               []UploadAssetsMock
 	}
@@ -206,6 +210,20 @@ type (
 		InCtx      context.Context
 		InRepo     string
 		InVersion  service.SemVer
+		OutRelease *service.Release
+		OutError   error
+	}
+
+	GetReleasesMock struct {
+		InCtx       context.Context
+		InRepo      string
+		OutReleases []service.Release
+		OutError    error
+	}
+
+	GetLatestReleaseMock struct {
+		InCtx      context.Context
+		InRepo     string
 		OutRelease *service.Release
 		OutError   error
 	}
@@ -253,6 +271,22 @@ func (m *mockGithub) GetRelease(ctx context.Context, repo string, version servic
 	mock.InCtx = ctx
 	mock.InRepo = repo
 	mock.InVersion = version
+	return mock.OutRelease, mock.OutError
+}
+
+func (m *mockGithub) GetReleases(ctx context.Context, repo string) ([]service.Release, error) {
+	mock := &m.GetReleasesMocks[m.GetReleasesCounter]
+	m.GetReleasesCounter++
+	mock.InCtx = ctx
+	mock.InRepo = repo
+	return mock.OutReleases, mock.OutError
+}
+
+func (m *mockGithub) GetLatestRelease(ctx context.Context, repo string) (*service.Release, error) {
+	mock := &m.GetLatestReleaseMocks[m.GetLatestReleaseCounter]
+	m.GetLatestReleaseCounter++
+	mock.InCtx = ctx
+	mock.InRepo = repo
 	return mock.OutRelease, mock.OutError
 }
 

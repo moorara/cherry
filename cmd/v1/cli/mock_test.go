@@ -77,6 +77,10 @@ type mockFormula struct {
 	ReleaseInLevel   formula.ReleaseLevel
 	ReleaseInComment string
 	ReleaseOutError  error
+
+	UpdateInCtx     context.Context
+	UpdateInBinPath string
+	UpdateOutError  error
 }
 
 func (m *mockFormula) Printf(msg string, args ...interface{}) {
@@ -119,4 +123,10 @@ func (m *mockFormula) Release(ctx context.Context, level formula.ReleaseLevel, c
 	m.ReleaseInLevel = level
 	m.ReleaseInComment = comment
 	return m.ReleaseOutError
+}
+
+func (m *mockFormula) Update(ctx context.Context, binPath string) error {
+	m.UpdateInCtx = ctx
+	m.UpdateInBinPath = binPath
+	return m.UpdateOutError
 }
