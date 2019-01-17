@@ -169,6 +169,8 @@ type (
 		BranchProtectionForAdminMocks   []BranchProtectionForAdminMock
 		CreateReleaseCounter            int
 		CreateReleaseMocks              []CreateReleaseMock
+		EditReleaseCounter              int
+		EditReleaseMocks                []EditReleaseMock
 		GetReleaseCounter               int
 		GetReleaseMocks                 []GetReleaseMock
 		UploadAssetsCounter             int
@@ -184,15 +186,20 @@ type (
 	}
 
 	CreateReleaseMock struct {
-		InCtx         context.Context
-		InRepo        string
-		InBranch      string
-		InVersion     service.SemVer
-		InDescription string
-		InDraf        bool
-		InPrerelease  bool
-		OutRelease    *service.Release
-		OutError      error
+		InCtx      context.Context
+		InRepo     string
+		InInput    service.ReleaseInput
+		OutRelease *service.Release
+		OutError   error
+	}
+
+	EditReleaseMock struct {
+		InCtx       context.Context
+		InRepo      string
+		InReleaseID int
+		InInput     service.ReleaseInput
+		OutRelease  *service.Release
+		OutError    error
 	}
 
 	GetReleaseMock struct {
@@ -221,16 +228,22 @@ func (m *mockGithub) BranchProtectionForAdmin(ctx context.Context, repo, branch 
 	return mock.OutError
 }
 
-func (m *mockGithub) CreateRelease(ctx context.Context, repo, branch string, version service.SemVer, description string, draf, prerelease bool) (*service.Release, error) {
+func (m *mockGithub) CreateRelease(ctx context.Context, repo string, input service.ReleaseInput) (*service.Release, error) {
 	mock := &m.CreateReleaseMocks[m.CreateReleaseCounter]
 	m.CreateReleaseCounter++
 	mock.InCtx = ctx
 	mock.InRepo = repo
-	mock.InBranch = branch
-	mock.InVersion = version
-	mock.InDescription = description
-	mock.InDraf = draf
-	mock.InPrerelease = prerelease
+	mock.InInput = input
+	return mock.OutRelease, mock.OutError
+}
+
+func (m *mockGithub) EditRelease(ctx context.Context, repo string, releaseID int, input service.ReleaseInput) (*service.Release, error) {
+	mock := &m.EditReleaseMocks[m.EditReleaseCounter]
+	m.EditReleaseCounter++
+	mock.InCtx = ctx
+	mock.InRepo = repo
+	mock.InReleaseID = releaseID
+	mock.InInput = input
 	return mock.OutRelease, mock.OutError
 }
 

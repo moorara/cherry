@@ -26,7 +26,8 @@ type (
 	// Github is the interface for API calls to GitHub
 	Github interface {
 		BranchProtectionForAdmin(ctx context.Context, repo, branch string, enabled bool) error
-		CreateRelease(ctx context.Context, repo, branch string, version SemVer, description string, draf, prerelease bool) (*Release, error)
+		CreateRelease(ctx context.Context, repo string, in ReleaseInput) (*Release, error)
+		EditRelease(ctx context.Context, repo string, releaseID int, in ReleaseInput) (*Release, error)
 		GetRelease(ctx context.Context, repo string, version SemVer) (*Release, error)
 		UploadAssets(ctx context.Context, release *Release, assets ...string) error
 	}
@@ -37,25 +38,29 @@ type (
 		authHeader string
 	}
 
-	releaseReq struct {
+	// Release is the model for GitHub release
+	Release struct {
+		ID         int    `json:"id"`
 		Name       string `json:"name"`
 		TagName    string `json:"tag_name"`
 		Target     string `json:"target_commitish"`
 		Draft      bool   `json:"draft"`
 		Prerelease bool   `json:"prerelease"`
 		Body       string `json:"body"`
-	}
-
-	// Release is the model for GitHub release
-	Release struct {
-		ID         int    `json:"id"`
-		Name       string `json:"name"`
-		Draft      bool   `json:"draft"`
-		Prerelease bool   `json:"prerelease"`
 		URL        string `json:"url"`
 		HTMLURL    string `json:"html_url"`
 		AssetsURL  string `json:"assets_url"`
 		UploadURL  string `json:"upload_url"`
+	}
+
+	// ReleaseInput is the model for creating and editing a release
+	ReleaseInput struct {
+		Name       string `json:"name"`
+		TagName    string `json:"tag_name"`
+		Target     string `json:"target_commitish"`
+		Draft      bool   `json:"draft"`
+		Prerelease bool   `json:"prerelease"`
+		Body       string `json:"body"`
 	}
 
 	uploadContent struct {
@@ -153,20 +158,12 @@ func (gh *github) BranchProtectionForAdmin(ctx context.Context, repo, branch str
 	return nil
 }
 
-func (gh *github) CreateRelease(ctx context.Context, repo, branch string, version SemVer, description string, draf, prerelease bool) (*Release, error) {
+func (gh *github) CreateRelease(ctx context.Context, repo string, in ReleaseInput) (*Release, error) {
 	method := "POST"
 	url := fmt.Sprintf("%s/repos/%s/releases", gh.apiAddr, repo)
-	reqBody := releaseReq{
-		Name:       version.Version(),
-		TagName:    version.GitTag(),
-		Target:     branch,
-		Draft:      draf,
-		Prerelease: prerelease,
-		Body:       description,
-	}
 
 	body := new(bytes.Buffer)
-	json.NewEncoder(body).Encode(reqBody)
+	json.NewEncoder(body).Encode(in)
 
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
@@ -187,6 +184,44 @@ func (gh *github) CreateRelease(ctx context.Context, repo, branch string, versio
 	defer res.Body.Close()
 
 	if res.StatusCode != 201 {
+		return nil, util.NewHTTPError(res)
+	}
+
+	release := new(Release)
+	err = json.NewDecoder(res.Body).Decode(release)
+	if err != nil {
+		return nil, err
+	}
+
+	return release, nil
+}
+
+func (gh *github) EditRelease(ctx context.Context, repo string, releaseID int, in ReleaseInput) (*Release, error) {
+	method := "PATCH"
+	url := fmt.Sprintf("%s/repos/%s/releases/%d", gh.apiAddr, repo, releaseID)
+
+	body := new(bytes.Buffer)
+	json.NewEncoder(body).Encode(in)
+
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", gh.authHeader)
+	req.Header.Set("Accept", acceptType)
+	req.Header.Set("User-Agent", userAgent) // ref: https://developer.github.com/v3/#user-agent-required
+	req.Header.Set("Content-Type", "application/json")
+
+	req = req.WithContext(ctx)
+
+	res, err := gh.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
 		return nil, util.NewHTTPError(res)
 	}
 

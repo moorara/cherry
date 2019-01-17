@@ -136,8 +136,16 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 		return err
 	}
 
-	description := fmt.Sprintf("%s\n\n%s", comment, changelogText)
-	release, err := f.github.CreateRelease(ctx, repo, branch, current, description, false, false)
+	createInput := service.ReleaseInput{
+		Name:       current.Version(),
+		TagName:    current.GitTag(),
+		Target:     branch,
+		Draft:      false,
+		Prerelease: false,
+		Body:       fmt.Sprintf("%s\n\n%s", comment, changelogText),
+	}
+
+	release, err := f.github.CreateRelease(ctx, repo, createInput)
 	if err != nil {
 		return err
 	}
