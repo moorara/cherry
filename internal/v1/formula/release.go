@@ -23,7 +23,7 @@ const (
 	MajorRelease
 )
 
-func (f *formula) precheck() (string, string, error) {
+func (f *formula) ensure() (string, string, error) {
 	if f.githubToken == "" {
 		return "", "", errors.New("github token is not set")
 	}
@@ -50,6 +50,12 @@ func (f *formula) precheck() (string, string, error) {
 	// This is to ensure that we do not commit any unwanted change while releasing
 	if !clean {
 		return "", "", errors.New("working directory is not clean and has uncommitted changes")
+	}
+
+	f.Printf("⬇️  Pulling master branch ...")
+	err = f.git.Pull()
+	if err != nil {
+		return "", "", err
 	}
 
 	return repo.Path(), branch.Name, nil
@@ -81,13 +87,75 @@ func (f *formula) versions(level ReleaseLevel) (service.SemVer, service.SemVer, 
 }
 
 func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment string) error {
-	repo, branch, err := f.precheck()
+	repo, branch, err := f.ensure()
 	if err != nil {
 		return err
 	}
 
-	f.Printf("⬇️  Pulling master branch ...")
-	err = f.git.Pull()
+	current, next, err := f.versions(level)
+	if err != nil {
+		return err
+	}
+
+	f.Printf("➡️  Creating draft release %s ...", current.Version())
+	release, err := f.github.CreateRelease(ctx, repo, service.ReleaseInput{
+		Name:       current.Version(),
+		TagName:    current.GitTag(),
+		Target:     branch,
+		Draft:      true,
+		Prerelease: false,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	f.Printf("➡️  Creating/Updating change log ...")
+	changelogText, err := f.changelog.Generate(ctx, current.GitTag())
+	if err != nil {
+		return err
+	}
+
+	f.Infof("▶️  Releasing current version %s ...", current.Version())
+
+	commitMessage := fmt.Sprintf("Releasing %s", current.Version())
+	err = f.git.Commit(commitMessage, f.spec.VersionFile, f.changelog.Filename())
+	if err != nil {
+		return err
+	}
+
+	err = f.git.Tag(current.GitTag())
+	if err != nil {
+		return err
+	}
+
+	// Building and uploading artifacts
+	if f.spec.Release.Build {
+		f.Printf("➡️  Building artifacts for release %s ...", release.Name)
+		assets, err := f.CrossCompile(ctx)
+		if err != nil {
+			return err
+		}
+
+		for _, asset := range assets {
+			f.Printf("⬆️  Uploading %s to release %s ...", asset, release.Name)
+			err = f.github.UploadAssets(ctx, release, asset)
+			if err != nil {
+				return err
+			}
+			os.Remove(asset)
+		}
+	}
+
+	f.Infof("▶️  Preparing next version %s ...", next.PreRelease())
+
+	err = f.vmanager.Update(next.PreRelease())
+	if err != nil {
+		return err
+	}
+
+	commitMessage = fmt.Sprintf("Beginning %s [skip ci]", next.PreRelease())
+	err = f.git.Commit(commitMessage, f.spec.VersionFile)
 	if err != nil {
 		return err
 	}
@@ -107,76 +175,22 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 		}
 	}()
 
-	current, next, err := f.versions(level)
-	if err != nil {
-		return err
-	}
-
-	f.Infof("🚀 Releasing current version %s ...", current.Version())
-
-	// Create or update the change log
-	changelogText, err := f.changelog.Generate(ctx, current.GitTag())
-	if err != nil {
-		return err
-	}
-
-	commitMessage := fmt.Sprintf("Releasing %s", current.Version())
-	err = f.git.Commit(commitMessage, f.spec.VersionFile, f.changelog.Filename())
-	if err != nil {
-		return err
-	}
-
-	err = f.git.Tag(current.GitTag())
-	if err != nil {
-		return err
-	}
-
+	f.Printf("⬆️  Pushing commits ...")
 	err = f.git.Push(true)
 	if err != nil {
 		return err
 	}
 
-	description := fmt.Sprintf("%s\n\n%s", comment, changelogText)
-	release, err := f.github.CreateRelease(ctx, repo, branch, current, description, false, false)
-	if err != nil {
-		return err
-	}
+	f.Printf("⬆️  Publishing release %s ...", release.Name)
+	release, err = f.github.EditRelease(ctx, repo, release.ID, service.ReleaseInput{
+		Name:       current.Version(),
+		TagName:    current.GitTag(),
+		Target:     branch,
+		Draft:      false,
+		Prerelease: false,
+		Body:       fmt.Sprintf("%s\n\n%s", comment, changelogText),
+	})
 
-	// Building and uploading artifacts
-	if f.spec.Release.Build {
-		f.Printf("🏗️ Building artifacts for release %s ...", release.Name)
-		assets, err := f.CrossCompile(ctx)
-		if err != nil {
-			// We don't break the release process if we cannot build artifacts
-			f.Errorf("🔴 Error on building artifacts: %s", err)
-		} else {
-			f.Printf("⬆️ Uploading artifacts for release %s ...", release.Name)
-			err = f.github.UploadAssets(ctx, repo, current, assets)
-			if err != nil {
-				// We don't break the release process if we cannot upload artifacts
-				f.Errorf("🔴 Error on uploading artifacts: %s", err)
-			}
-		}
-
-		for _, asset := range assets {
-			os.Remove(asset)
-		}
-	}
-
-	f.Infof("✏️  Preparing next version %s ...", next.PreRelease())
-
-	err = f.vmanager.Update(next.PreRelease())
-	if err != nil {
-		return err
-	}
-
-	commitMessage = fmt.Sprintf("Beginning %s [skip ci]", next.PreRelease())
-	err = f.git.Commit(commitMessage, f.spec.VersionFile)
-	if err != nil {
-		return err
-	}
-
-	err = f.git.Push(false)
 	if err != nil {
 		return err
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -138,25 +139,24 @@ func TestGithubCreateRelease(t *testing.T) {
 		token           string
 		ctx             context.Context
 		repo            string
-		branch          string
-		version         SemVer
-		description     string
-		draf            bool
-		prerelease      bool
+		input           ReleaseInput
 		expectedError   string
 		expectedRelease *Release
 	}{
 		{
-			name:          "RequestError",
-			mockAPI:       false,
-			token:         "github-token",
-			ctx:           context.Background(),
-			repo:          "username/repo",
-			branch:        "master",
-			version:       SemVer{Major: 0, Minor: 1, Patch: 0},
-			description:   "release description",
-			draf:          false,
-			prerelease:    false,
+			name:    "RequestError",
+			mockAPI: false,
+			token:   "github-token",
+			ctx:     context.Background(),
+			repo:    "username/repo",
+			input: ReleaseInput{
+				Name:       "0.1.0",
+				TagName:    "v0.1.0",
+				Target:     "master",
+				Draft:      false,
+				Prerelease: false,
+				Body:       "release description",
+			},
 			expectedError: "unsupported protocol scheme",
 		},
 		{
@@ -167,12 +167,15 @@ func TestGithubCreateRelease(t *testing.T) {
 			token:          "github-token",
 			ctx:            context.Background(),
 			repo:           "username/repo",
-			branch:         "master",
-			version:        SemVer{Major: 0, Minor: 1, Patch: 0},
-			description:    "release description",
-			draf:           false,
-			prerelease:     false,
-			expectedError:  "POST /repos/username/repo/releases 400",
+			input: ReleaseInput{
+				Name:       "0.1.0",
+				TagName:    "v0.1.0",
+				Target:     "master",
+				Draft:      false,
+				Prerelease: false,
+				Body:       "release description",
+			},
+			expectedError: "POST /repos/username/repo/releases 400",
 		},
 		{
 			name:           "InvalidResponse",
@@ -182,31 +185,40 @@ func TestGithubCreateRelease(t *testing.T) {
 			token:          "github-token",
 			ctx:            context.Background(),
 			repo:           "username/repo",
-			branch:         "master",
-			version:        SemVer{Major: 0, Minor: 1, Patch: 0},
-			description:    "release description",
-			draf:           false,
-			prerelease:     false,
-			expectedError:  "invalid character 'i' looking for beginning of object key string",
+			input: ReleaseInput{
+				Name:       "0.1.0",
+				TagName:    "v0.1.0",
+				Target:     "master",
+				Draft:      false,
+				Prerelease: false,
+				Body:       "release description",
+			},
+			expectedError: "invalid character 'i' looking for beginning of object key string",
 		},
 		{
 			name:           "Success",
 			mockAPI:        true,
 			mockStatusCode: 201,
-			mockBody:       `{ "id": 1, "name": "0.1.0", "tag_name": "v0.1.0" }`,
+			mockBody:       `{ "id": 12345678, "name": "0.1.0", "tag_name": "v0.1.0", "target_commitish": "master", "draft": false, "prerelease": false, "body": "release description" }`,
 			token:          "github-token",
 			ctx:            context.Background(),
 			repo:           "username/repo",
-			branch:         "master",
-			version:        SemVer{Major: 0, Minor: 1, Patch: 0},
-			description:    "release description",
-			draf:           false,
-			prerelease:     false,
-			expectedRelease: &Release{
-				ID:         1,
+			input: ReleaseInput{
 				Name:       "0.1.0",
+				TagName:    "v0.1.0",
+				Target:     "master",
 				Draft:      false,
 				Prerelease: false,
+				Body:       "release description",
+			},
+			expectedRelease: &Release{
+				ID:         12345678,
+				Name:       "0.1.0",
+				TagName:    "v0.1.0",
+				Target:     "master",
+				Draft:      false,
+				Prerelease: false,
+				Body:       "release description",
 			},
 		},
 	}
@@ -231,7 +243,138 @@ func TestGithubCreateRelease(t *testing.T) {
 				gh.apiAddr = ts.URL
 			}
 
-			release, err := gh.CreateRelease(tc.ctx, tc.repo, tc.branch, tc.version, tc.description, tc.draf, tc.prerelease)
+			release, err := gh.CreateRelease(tc.ctx, tc.repo, tc.input)
+
+			if tc.expectedError != "" {
+				assert.Contains(t, err.Error(), tc.expectedError)
+				assert.Nil(t, release)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedRelease, release)
+			}
+		})
+	}
+}
+
+func TestGithubEditRelease(t *testing.T) {
+	tests := []struct {
+		name            string
+		mockAPI         bool
+		mockStatusCode  int
+		mockBody        string
+		token           string
+		ctx             context.Context
+		repo            string
+		releaseID       int
+		input           ReleaseInput
+		expectedError   string
+		expectedRelease *Release
+	}{
+		{
+			name:      "RequestError",
+			mockAPI:   false,
+			token:     "github-token",
+			ctx:       context.Background(),
+			repo:      "username/repo",
+			releaseID: 12345678,
+			input: ReleaseInput{
+				Name:       "0.1.0",
+				TagName:    "v0.1.0",
+				Target:     "master",
+				Draft:      false,
+				Prerelease: false,
+				Body:       "release description",
+			},
+			expectedError: "unsupported protocol scheme",
+		},
+		{
+			name:           "BadStatusCode",
+			mockAPI:        true,
+			mockStatusCode: 400,
+			mockBody:       "",
+			token:          "github-token",
+			ctx:            context.Background(),
+			repo:           "username/repo",
+			releaseID:      12345678,
+			input: ReleaseInput{
+				Name:       "0.1.0",
+				TagName:    "v0.1.0",
+				Target:     "master",
+				Draft:      false,
+				Prerelease: false,
+				Body:       "release description",
+			},
+			expectedError: "PATCH /repos/username/repo/releases/12345678 400",
+		},
+		{
+			name:           "InvalidResponse",
+			mockAPI:        true,
+			mockStatusCode: 200,
+			mockBody:       `{ invalid }`,
+			token:          "github-token",
+			ctx:            context.Background(),
+			repo:           "username/repo",
+			releaseID:      12345678,
+			input: ReleaseInput{
+				Name:       "0.1.0",
+				TagName:    "v0.1.0",
+				Target:     "master",
+				Draft:      false,
+				Prerelease: false,
+				Body:       "release description",
+			},
+			expectedError: "invalid character 'i' looking for beginning of object key string",
+		},
+		{
+			name:           "Success",
+			mockAPI:        true,
+			mockStatusCode: 200,
+			mockBody:       `{ "id": 1, "name": "0.1.0", "tag_name": "v0.1.0", "target_commitish": "master", "draft": false, "prerelease": false, "body": "release description" }`,
+			token:          "github-token",
+			ctx:            context.Background(),
+			repo:           "username/repo",
+			releaseID:      12345678,
+			input: ReleaseInput{
+				Name:       "0.1.0",
+				TagName:    "v0.1.0",
+				Target:     "master",
+				Draft:      false,
+				Prerelease: false,
+				Body:       "release description",
+			},
+			expectedRelease: &Release{
+				ID:         1,
+				Name:       "0.1.0",
+				TagName:    "v0.1.0",
+				Target:     "master",
+				Draft:      false,
+				Prerelease: false,
+				Body:       "release description",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			gh := &github{
+				client:     &http.Client{},
+				authHeader: "token " + tc.token,
+			}
+
+			if tc.mockAPI {
+				r := mux.NewRouter()
+				r.Methods("PATCH").Path("/repos/{owner}/{repo}/releases/{id}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(tc.mockStatusCode)
+					w.Write([]byte(tc.mockBody))
+				})
+
+				ts := httptest.NewServer(r)
+				defer ts.Close()
+
+				gh.apiAddr = ts.URL
+			}
+
+			release, err := gh.EditRelease(tc.ctx, tc.repo, tc.releaseID, tc.input)
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)
@@ -342,97 +485,80 @@ func TestGithubGetRelease(t *testing.T) {
 func TestGithubUploadAssets(t *testing.T) {
 	tests := []struct {
 		name                      string
-		mockAPI                   bool
-		mockGetReleaseStatusCode  int
-		mockGetReleaseBody        string
 		mockUploadAPI             bool
 		mockUploadAssetStatusCode int
 		mockUploadAssetBody       string
 		token                     string
 		ctx                       context.Context
-		repo                      string
-		version                   SemVer
+		release                   *Release
 		assets                    []string
 		expectedError             string
 	}{
 		{
-			name:                     "GetReleaseBadStatusCode",
-			mockAPI:                  true,
-			mockGetReleaseStatusCode: 400,
-			mockGetReleaseBody:       "",
-			token:                    "github-token",
-			ctx:                      context.Background(),
-			repo:                     "username/repo",
-			version:                  SemVer{Major: 0, Minor: 1, Patch: 0},
-			assets:                   []string{},
-			expectedError:            "GET /repos/username/repo/releases/tags/v0.1.0 400",
+			name:  "AssetNotExist",
+			token: "github-token",
+			ctx:   context.Background(),
+			release: &Release{
+				ID:        12345678,
+				Name:      "0.1.0",
+				UploadURL: "https://uploads.github.com/repos/username/repo/releases/12345678/assets{?name,label}",
+			},
+			assets:        []string{"./test/nil"},
+			expectedError: "open test/nil: no such file or directory",
 		},
 		{
-			name:                     "NoAsset",
-			mockAPI:                  true,
-			mockGetReleaseStatusCode: 200,
-			mockGetReleaseBody:       `{ "id": 1, "name": "v0.1.0" }`,
-			token:                    "github-token",
-			ctx:                      context.Background(),
-			repo:                     "username/repo",
-			version:                  SemVer{Major: 0, Minor: 1, Patch: 0},
-			assets:                   []string{"./test/nil"},
-			expectedError:            "open test/nil: no such file or directory",
+			name:  "EmptyAsset",
+			token: "github-token",
+			ctx:   context.Background(),
+			release: &Release{
+				ID:        12345678,
+				Name:      "0.1.0",
+				UploadURL: "https://uploads.github.com/repos/username/repo/releases/12345678/assets{?name,label}",
+			},
+			assets:        []string{"./test/empty"},
+			expectedError: "EOF",
 		},
 		{
-			name:                     "EmptyAsset",
-			mockAPI:                  true,
-			mockGetReleaseStatusCode: 200,
-			mockGetReleaseBody:       `{ "id": 1 }`,
-			token:                    "github-token",
-			ctx:                      context.Background(),
-			repo:                     "username/repo",
-			version:                  SemVer{Major: 0, Minor: 1, Patch: 0},
-			assets:                   []string{"./test/empty"},
-			expectedError:            "EOF",
-		},
-		{
-			name:                     "UploadAssetRequestError",
-			mockAPI:                  true,
-			mockGetReleaseStatusCode: 200,
-			mockGetReleaseBody:       `{ "id": 1 }`,
-			mockUploadAPI:            false,
-			token:                    "github-token",
-			ctx:                      context.Background(),
-			repo:                     "username/repo",
-			version:                  SemVer{Major: 0, Minor: 1, Patch: 0},
-			assets:                   []string{"./test/asset"},
-			expectedError:            "unsupported protocol scheme",
+			name:  "UploadAssetRequestError",
+			token: "github-token",
+			ctx:   context.Background(),
+			release: &Release{
+				ID:        12345678,
+				Name:      "0.1.0",
+				UploadURL: "",
+			},
+			assets:        []string{"./test/asset"},
+			expectedError: "unsupported protocol scheme",
 		},
 		{
 			name:                      "UploadAssetBadStatusCode",
-			mockAPI:                   true,
-			mockGetReleaseStatusCode:  200,
-			mockGetReleaseBody:        `{ "id": 1 }`,
 			mockUploadAPI:             true,
 			mockUploadAssetStatusCode: 500,
 			mockUploadAssetBody:       "",
 			token:                     "github-token",
 			ctx:                       context.Background(),
-			repo:                      "username/repo",
-			version:                   SemVer{Major: 0, Minor: 1, Patch: 0},
-			assets:                    []string{"./test/asset"},
-			expectedError:             "POST /repos/username/repo/releases/1/assets 500",
+			release: &Release{
+				ID:        12345678,
+				Name:      "0.1.0",
+				UploadURL: "https://uploads.github.com/repos/username/repo/releases/12345678/assets{?name,label}",
+			},
+			assets:        []string{"./test/asset"},
+			expectedError: "POST /repos/username/repo/releases/12345678/assets 500",
 		},
 		{
 			name:                      "Successful",
-			mockAPI:                   true,
-			mockGetReleaseStatusCode:  200,
-			mockGetReleaseBody:        `{ "id": 1 }`,
 			mockUploadAPI:             true,
 			mockUploadAssetStatusCode: 201,
 			mockUploadAssetBody:       `{}`,
 			token:                     "github-token",
 			ctx:                       context.Background(),
-			repo:                      "username/repo",
-			version:                   SemVer{Major: 0, Minor: 1, Patch: 0},
-			assets:                    []string{"./test/asset"},
-			expectedError:             "",
+			release: &Release{
+				ID:        12345678,
+				Name:      "0.1.0",
+				UploadURL: "https://uploads.github.com/repos/username/repo/releases/12345678/assets{?name,label}",
+			},
+			assets:        []string{"./test/asset"},
+			expectedError: "",
 		},
 	}
 
@@ -442,19 +568,6 @@ func TestGithubUploadAssets(t *testing.T) {
 			gh := &github{
 				client:     client,
 				authHeader: "token " + tc.token,
-			}
-
-			if tc.mockAPI {
-				r := mux.NewRouter()
-				r.Methods("GET").Path("/repos/{owner}/{repo}/releases/tags/{tag}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(tc.mockGetReleaseStatusCode)
-					w.Write([]byte(tc.mockGetReleaseBody))
-				})
-
-				ts := httptest.NewServer(r)
-				defer ts.Close()
-
-				gh.apiAddr = ts.URL
 			}
 
 			if tc.mockUploadAPI {
@@ -467,10 +580,10 @@ func TestGithubUploadAssets(t *testing.T) {
 				ts := httptest.NewServer(r)
 				defer ts.Close()
 
-				gh.uploadAddr = ts.URL
+				tc.release.UploadURL = strings.Replace(tc.release.UploadURL, "https://uploads.github.com", ts.URL, 1)
 			}
 
-			err := gh.UploadAssets(tc.ctx, tc.repo, tc.version, tc.assets)
+			err := gh.UploadAssets(tc.ctx, tc.release, tc.assets...)
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)
