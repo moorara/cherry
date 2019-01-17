@@ -11,24 +11,24 @@ import (
 func TestNew(t *testing.T) {
 	tests := []struct {
 		name          string
-		ui            cli.Ui
-		spec          *spec.Spec
 		workDir       string
 		githubToken   string
+		spec          *spec.Spec
+		ui            cli.Ui
 		expectedError string
 	}{
 		{
 			name:        "Success",
-			ui:          &mockUI{},
-			spec:        &spec.Spec{},
 			workDir:     ".",
 			githubToken: "github-token",
+			spec:        &spec.Spec{},
+			ui:          &mockUI{},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			f, err := New(tc.ui, tc.spec, tc.workDir, tc.githubToken)
+			f, err := New(tc.workDir, tc.githubToken, tc.spec, tc.ui)
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)

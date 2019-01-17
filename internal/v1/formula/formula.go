@@ -25,33 +25,33 @@ type (
 	}
 
 	formula struct {
+		workDir     string
+		githubToken string
+		spec        *spec.Spec
 		ui          cli.Ui
 		git         service.Git
 		github      service.Github
 		changelog   service.Changelog
 		vmanager    service.VersionManager
-		spec        *spec.Spec
-		workDir     string
-		githubToken string
 	}
 )
 
 // New creates a new instance of formula
-func New(ui cli.Ui, spec *spec.Spec, workDir, githubToken string) (Formula, error) {
+func New(workDir, githubToken string, spec *spec.Spec, ui cli.Ui) (Formula, error) {
 	git := service.NewGit(workDir)
 	github := service.NewGithub(githubToken)
 	changelog := service.NewChangelog(workDir, githubToken)
 	vmanager := service.NewTextVersionManager(filepath.Join(workDir, spec.VersionFile))
 
 	return &formula{
+		workDir:     workDir,
+		githubToken: githubToken,
+		spec:        spec,
 		ui:          ui,
 		git:         git,
 		github:      github,
 		changelog:   changelog,
 		vmanager:    vmanager,
-		spec:        spec,
-		workDir:     workDir,
-		githubToken: githubToken,
 	}, nil
 }
 

@@ -26,7 +26,7 @@ func New(ui cli.Ui, name, githubToken string) (*cli.CLI, error) {
 	s.SetDefaults()
 	s.ToolVersion = version.Version
 
-	f, err := formula.New(ui, s, wd, githubToken)
+	f, err := formula.New(wd, githubToken, s, ui)
 	if err != nil {
 		return nil, err
 	}
