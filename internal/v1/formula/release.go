@@ -116,7 +116,7 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 		return err
 	}
 
-	f.Infof("▶️  Releasing current version %s ...", current.Version())
+	// f.Printf("▶️  Releasing current version %s ...", current.Version())
 
 	commitMessage := fmt.Sprintf("Releasing %s", current.Version())
 	err = f.git.Commit(commitMessage, f.spec.VersionFile, f.changelog.Filename())
@@ -147,19 +147,6 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 		}
 	}
 
-	f.Infof("▶️  Preparing next version %s ...", next.PreRelease())
-
-	err = f.vmanager.Update(next.PreRelease())
-	if err != nil {
-		return err
-	}
-
-	commitMessage = fmt.Sprintf("Beginning %s [skip ci]", next.PreRelease())
-	err = f.git.Commit(commitMessage, f.spec.VersionFile)
-	if err != nil {
-		return err
-	}
-
 	f.Warnf("🔓 Temporarily enabling push to master branch ...")
 	err = f.github.BranchProtectionForAdmin(ctx, repo, branch, false)
 	if err != nil {
@@ -175,13 +162,32 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 		}
 	}()
 
-	f.Printf("⬆️  Pushing commits ...")
+	f.Infof("⬆️  Pushing commit for release %s ...", release.Name)
 	err = f.git.Push(true)
 	if err != nil {
 		return err
 	}
 
-	f.Printf("⬆️  Publishing release %s ...", release.Name)
+	// f.Printf("▶️  Preparing next version %s ...", next.PreRelease())
+
+	err = f.vmanager.Update(next.PreRelease())
+	if err != nil {
+		return err
+	}
+
+	commitMessage = fmt.Sprintf("Beginning %s [skip ci]", next.PreRelease())
+	err = f.git.Commit(commitMessage, f.spec.VersionFile)
+	if err != nil {
+		return err
+	}
+
+	f.Infof("⬆️  Pushing commit for next version %s ...", next.PreRelease())
+	err = f.git.Push(false)
+	if err != nil {
+		return err
+	}
+
+	f.Infof("⬆️  Publishing release %s ...", release.Name)
 	release, err = f.github.EditRelease(ctx, repo, release.ID, service.ReleaseInput{
 		Name:       current.Version(),
 		TagName:    current.GitTag(),
