@@ -831,7 +831,7 @@ func TestRelease(t *testing.T) {
 			expectedError: "no such file or directory",
 		},
 		{
-			name: "NextVersionUpdateFails",
+			name: "DisableBranchProtectionFails",
 			formula: &formula{
 				githubToken: "github-token",
 				spec:        &spec.Spec{},
@@ -885,6 +885,213 @@ func TestRelease(t *testing.T) {
 								Prerelease: false,
 								Body:       "",
 							},
+						},
+					},
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: errors.New("github disable branch protection error"),
+						},
+					},
+				},
+				changelog: &mockChangelog{
+					FilenameMocks: []FilenameMock{
+						{
+							OutResult: "CHANGELOG.md",
+						},
+					},
+					GenerateMocks: []GenerateMock{
+						{
+							OutResult: "changelog text",
+						},
+					},
+				},
+				vmanager: &mockVersionManager{
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+					},
+				},
+			},
+			ctx:           context.Background(),
+			level:         PatchRelease,
+			comment:       "release description",
+			expectedError: "github disable branch protection error",
+		},
+		{
+			name: "GitPushFails",
+			formula: &formula{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
+					},
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
+					},
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: nil,
+						},
+					},
+					CommitMocks: []CommitMock{
+						{
+							OutError: nil,
+						},
+					},
+					TagMocks: []TagMock{
+						{
+							OutError: nil,
+						},
+					},
+					PushMocks: []PushMock{
+						{
+							OutError: errors.New("git push error"),
+						},
+					},
+				},
+				github: &mockGithub{
+					CreateReleaseMocks: []CreateReleaseMock{
+						{
+							OutRelease: &service.Release{
+								ID:         12345678,
+								Name:       "0.1.0",
+								TagName:    "v0.1.0",
+								Target:     "master",
+								Draft:      true,
+								Prerelease: false,
+								Body:       "",
+							},
+						},
+					},
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+				},
+				changelog: &mockChangelog{
+					FilenameMocks: []FilenameMock{
+						{
+							OutResult: "CHANGELOG.md",
+						},
+					},
+					GenerateMocks: []GenerateMock{
+						{
+							OutResult: "changelog text",
+						},
+					},
+				},
+				vmanager: &mockVersionManager{
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+					},
+				},
+			},
+			ctx:           context.Background(),
+			level:         PatchRelease,
+			comment:       "release description",
+			expectedError: "git push error",
+		},
+		{
+			name: "NextVersionUpdateFails",
+			formula: &formula{
+				githubToken: "github-token",
+				spec:        &spec.Spec{},
+				ui:          &mockUI{},
+				git: &mockGit{
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
+					},
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
+					},
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: nil,
+						},
+					},
+					CommitMocks: []CommitMock{
+						{
+							OutError: nil,
+						},
+					},
+					TagMocks: []TagMock{
+						{
+							OutError: nil,
+						},
+					},
+					PushMocks: []PushMock{
+						{
+							OutError: nil,
+						},
+					},
+				},
+				github: &mockGithub{
+					CreateReleaseMocks: []CreateReleaseMock{
+						{
+							OutRelease: &service.Release{
+								ID:         12345678,
+								Name:       "0.1.0",
+								TagName:    "v0.1.0",
+								Target:     "master",
+								Draft:      true,
+								Prerelease: false,
+								Body:       "",
+							},
+						},
+					},
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
 						},
 					},
 				},
@@ -966,6 +1173,11 @@ func TestRelease(t *testing.T) {
 							OutError: nil,
 						},
 					},
+					PushMocks: []PushMock{
+						{
+							OutError: nil,
+						},
+					},
 				},
 				github: &mockGithub{
 					CreateReleaseMocks: []CreateReleaseMock{
@@ -979,6 +1191,14 @@ func TestRelease(t *testing.T) {
 								Prerelease: false,
 								Body:       "",
 							},
+						},
+					},
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
 						},
 					},
 				},
@@ -1016,106 +1236,7 @@ func TestRelease(t *testing.T) {
 			expectedError: "git commit error",
 		},
 		{
-			name: "DisableBranchProtectionFails",
-			formula: &formula{
-				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
-				git: &mockGit{
-					GetRepoMocks: []GetRepoMock{
-						{
-							OutRepo: &service.Repo{
-								Owner: "moorara",
-								Name:  "cherry",
-							},
-						},
-					},
-					GetBranchMocks: []GetBranchMock{
-						{
-							OutBranch: &service.Branch{
-								Name: "master",
-							},
-						},
-					},
-					IsCleanMocks: []IsCleanMock{
-						{
-							OutResult: true,
-						},
-					},
-					PullMocks: []PullMock{
-						{
-							OutError: nil,
-						},
-					},
-					CommitMocks: []CommitMock{
-						{
-							OutError: nil,
-						},
-						{
-							OutError: nil,
-						},
-					},
-					TagMocks: []TagMock{
-						{
-							OutError: nil,
-						},
-					},
-				},
-				github: &mockGithub{
-					CreateReleaseMocks: []CreateReleaseMock{
-						{
-							OutRelease: &service.Release{
-								ID:         12345678,
-								Name:       "0.1.0",
-								TagName:    "v0.1.0",
-								Target:     "master",
-								Draft:      true,
-								Prerelease: false,
-								Body:       "",
-							},
-						},
-					},
-					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
-						{
-							OutError: errors.New("github disable branch protection error"),
-						},
-					},
-				},
-				changelog: &mockChangelog{
-					FilenameMocks: []FilenameMock{
-						{
-							OutResult: "CHANGELOG.md",
-						},
-					},
-					GenerateMocks: []GenerateMock{
-						{
-							OutResult: "changelog text",
-						},
-					},
-				},
-				vmanager: &mockVersionManager{
-					ReadMocks: []ReadMock{
-						{
-							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
-						},
-					},
-					UpdateMocks: []UpdateMock{
-						{
-							OutError: nil,
-						},
-						{
-							OutError: nil,
-						},
-					},
-				},
-			},
-			ctx:           context.Background(),
-			level:         PatchRelease,
-			comment:       "release description",
-			expectedError: "github disable branch protection error",
-		},
-		{
-			name: "GitPushFails",
+			name: "NextVersionGitPushFails",
 			formula: &formula{
 				githubToken: "github-token",
 				spec:        &spec.Spec{},
@@ -1160,6 +1281,9 @@ func TestRelease(t *testing.T) {
 						},
 					},
 					PushMocks: []PushMock{
+						{
+							OutError: nil,
+						},
 						{
 							OutError: errors.New("git push error"),
 						},
@@ -1267,6 +1391,9 @@ func TestRelease(t *testing.T) {
 						},
 					},
 					PushMocks: []PushMock{
+						{
+							OutError: nil,
+						},
 						{
 							OutError: nil,
 						},
@@ -1379,6 +1506,9 @@ func TestRelease(t *testing.T) {
 						},
 					},
 					PushMocks: []PushMock{
+						{
+							OutError: nil,
+						},
 						{
 							OutError: nil,
 						},
@@ -1499,6 +1629,9 @@ func TestRelease(t *testing.T) {
 						},
 					},
 					PushMocks: []PushMock{
+						{
+							OutError: nil,
+						},
 						{
 							OutError: nil,
 						},
