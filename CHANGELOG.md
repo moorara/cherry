@@ -1,5 +1,18 @@
 # Change Log
 
+## [v0.2.1](https://github.com/moorara/cherry/tree/v0.2.1) (2019-01-17)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.2.0...v0.2.1)
+
+**Fixed bugs:**
+
+- Fix build bug for release commit [\#55](https://github.com/moorara/cherry/issues/55)
+- Fix update bug [\#54](https://github.com/moorara/cherry/issues/54)
+
+**Merged pull requests:**
+
+- Fix release bug [\#57](https://github.com/moorara/cherry/pull/57) ([moorara](https://github.com/moorara))
+- Fix update bug [\#56](https://github.com/moorara/cherry/pull/56) ([moorara](https://github.com/moorara))
+
 ## [v0.2.0](https://github.com/moorara/cherry/tree/v0.2.0) (2019-01-17)
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.9...v0.2.0)
 
