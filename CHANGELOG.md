@@ -1,6 +1,19 @@
 # Change Log
 
-## [v0.2.1](https://github.com/moorara/cherry/tree/v0.2.1) (2019-01-17)
+## [v0.2.2](https://github.com/moorara/cherry/tree/v0.2.2) (2019-01-28)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.2.1...v0.2.2)
+
+**Fixed bugs:**
+
+- Cherry cannot be self-updated! [\#58](https://github.com/moorara/cherry/issues/58)
+
+**Merged pull requests:**
+
+- Add community files [\#62](https://github.com/moorara/cherry/pull/62) ([moorara](https://github.com/moorara))
+- Fix update bug [\#61](https://github.com/moorara/cherry/pull/61) ([moorara](https://github.com/moorara))
+- Update Go modules [\#60](https://github.com/moorara/cherry/pull/60) ([moorara](https://github.com/moorara))
+
+## [v0.2.1](https://github.com/moorara/cherry/tree/v0.2.1) (2019-01-18)
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.2.0...v0.2.1)
 
 **Fixed bugs:**
