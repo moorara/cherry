@@ -12,6 +12,10 @@ import (
 	"github.com/moorara/cherry/internal/util"
 )
 
+const (
+	githubRepo = "moorara/cherry"
+)
+
 func (f *formula) pickRelease(releases []service.Release, assetName string) (string, string, error) {
 	for _, release := range releases {
 		if release.Assets != nil {
@@ -27,14 +31,9 @@ func (f *formula) pickRelease(releases []service.Release, assetName string) (str
 }
 
 func (f *formula) Update(ctx context.Context, binPath string) error {
-	repo, err := f.git.GetRepo()
-	if err != nil {
-		return err
-	}
-
 	f.Printf("⬇ Getting the list of Cherry releases ...")
 
-	releases, err := f.github.GetReleases(ctx, repo.Path())
+	releases, err := f.github.GetReleases(ctx, githubRepo)
 	if err != nil {
 		return err
 	}
