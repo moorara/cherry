@@ -14,14 +14,17 @@ func TestTestSetDefaults(t *testing.T) {
 		{
 			Test{},
 			Test{
+				CoverMode:  defaultCoverMode,
 				ReportPath: defaultReportPath,
 			},
 		},
 		{
 			Test{
+				CoverMode:  "atomic",
 				ReportPath: "report",
 			},
 			Test{
+				CoverMode:  "atomic",
 				ReportPath: "report",
 			},
 		},
@@ -44,6 +47,7 @@ func TestTestFlagSet(t *testing.T) {
 		},
 		{
 			test: Test{
+				CoverMode:  "set",
 				ReportPath: "coverage",
 			},
 			expectedName: "test",

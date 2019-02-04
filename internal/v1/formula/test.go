@@ -8,14 +8,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
 const (
-	atomicMode   = "atomic"
-	atomicHeader = "mode: atomic\n"
-	coverFile    = "cover.out"
-	reportFile   = "index.html"
+	coverFile  = "cover.out"
+	reportFile = "index.html"
 )
 
 func (f *formula) getPackages(ctx context.Context) ([]string, error) {
@@ -54,7 +53,7 @@ func (f *formula) testPackage(ctx context.Context, pkg, coverfile string) error 
 	defer os.Remove(tf.Name())
 
 	// Run go test with cover mode
-	cmd := exec.CommandContext(ctx, "go", "test", "-covermode", atomicMode, "-coverprofile", tf.Name(), pkg)
+	cmd := exec.CommandContext(ctx, "go", "test", "-covermode", f.spec.Test.CoverMode, "-coverprofile", tf.Name(), pkg)
 	cmd.Dir = f.workDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -66,10 +65,15 @@ func (f *formula) testPackage(ctx context.Context, pkg, coverfile string) error 
 		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
+	var items []string
+	sep := regexp.MustCompile("\\s+")
+
 	if strings.HasPrefix(testOutput, "ok") {
-		f.Infof("✅ %s", testOutput)
+		items = sep.Split(testOutput, 4)
+		f.Infof("✅  %-10s\t%-70s\t%-10s\t%-40s", items[0], items[1], items[2], items[3])
 	} else {
-		f.Warnf("⚠️  %s", testOutput)
+		items = sep.Split(testOutput, 3)
+		f.Warnf("⚠️   %-10s\t%-70s\t%-10s\t%-40s", items[0], items[1], "", items[2])
 	}
 
 	stdout.Reset()
@@ -114,7 +118,8 @@ func (f *formula) Cover(ctx context.Context) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(coverfile, []byte(atomicHeader), 0644)
+	header := fmt.Sprintf("mode: %s\n", f.spec.Test.CoverMode)
+	err = ioutil.WriteFile(coverfile, []byte(header), 0644)
 	if err != nil {
 		return err
 	}

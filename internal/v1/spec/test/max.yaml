@@ -4,6 +4,7 @@ language: go
 version_file: VERSION
 
 test:
+  covermode: set
   report_path: coverage
 
 build:

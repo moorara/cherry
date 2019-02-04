@@ -49,6 +49,7 @@ func TestRead(t *testing.T) {
 				Language:    "go",
 				VersionFile: "VERSION",
 				Test: Test{
+					CoverMode:  "set",
 					ReportPath: "coverage",
 				},
 				Build: Build{
@@ -95,6 +96,7 @@ func TestSpecSetDefaults(t *testing.T) {
 				Language:    defaultLanguage,
 				VersionFile: defaultVersionFile,
 				Test: Test{
+					CoverMode:  defaultCoverMode,
 					ReportPath: defaultReportPath,
 				},
 				Build: Build{
@@ -116,6 +118,7 @@ func TestSpecSetDefaults(t *testing.T) {
 				Language:    "go",
 				VersionFile: "version.yaml",
 				Test: Test{
+					CoverMode:  "atomic",
 					ReportPath: "report",
 				},
 				Build: Build{
@@ -137,6 +140,7 @@ func TestSpecSetDefaults(t *testing.T) {
 				Language:    "go",
 				VersionFile: "version.yaml",
 				Test: Test{
+					CoverMode:  "atomic",
 					ReportPath: "report",
 				},
 				Build: Build{
