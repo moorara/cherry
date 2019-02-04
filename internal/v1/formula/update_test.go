@@ -199,35 +199,9 @@ func TestUpdate(t *testing.T) {
 		expectedError  string
 	}{
 		{
-			name: "GitGetRepoFails",
-			formula: &formula{
-				ui: &mockUI{},
-				git: &mockGit{
-					GetRepoMocks: []GetRepoMock{
-						{
-							OutError: errors.New("git repo error"),
-						},
-					},
-				},
-			},
-			ctx:           context.Background(),
-			binPath:       "/dev/null",
-			expectedError: "git repo error",
-		},
-		{
 			name: "GithubGetReleases",
 			formula: &formula{
 				ui: &mockUI{},
-				git: &mockGit{
-					GetRepoMocks: []GetRepoMock{
-						{
-							OutRepo: &service.Repo{
-								Owner: "moorara",
-								Name:  "cherry",
-							},
-						},
-					},
-				},
 				github: &mockGithub{
 					GetReleasesMocks: []GetReleasesMock{
 						{
@@ -244,16 +218,6 @@ func TestUpdate(t *testing.T) {
 			name: "PickReleaseFails",
 			formula: &formula{
 				ui: &mockUI{},
-				git: &mockGit{
-					GetRepoMocks: []GetRepoMock{
-						{
-							OutRepo: &service.Repo{
-								Owner: "moorara",
-								Name:  "cherry",
-							},
-						},
-					},
-				},
 				github: &mockGithub{
 					GetReleasesMocks: []GetReleasesMock{
 						{
@@ -288,16 +252,6 @@ func TestUpdate(t *testing.T) {
 			name: "OpenFileFails",
 			formula: &formula{
 				ui: &mockUI{},
-				git: &mockGit{
-					GetRepoMocks: []GetRepoMock{
-						{
-							OutRepo: &service.Repo{
-								Owner: "moorara",
-								Name:  "cherry",
-							},
-						},
-					},
-				},
 				github: &mockGithub{
 					GetReleasesMocks: []GetReleasesMock{
 						{
@@ -332,16 +286,6 @@ func TestUpdate(t *testing.T) {
 			name: "NewRequestFails",
 			formula: &formula{
 				ui: &mockUI{},
-				git: &mockGit{
-					GetRepoMocks: []GetRepoMock{
-						{
-							OutRepo: &service.Repo{
-								Owner: "moorara",
-								Name:  "cherry",
-							},
-						},
-					},
-				},
 				github: &mockGithub{
 					GetReleasesMocks: []GetReleasesMock{
 						{
@@ -376,16 +320,6 @@ func TestUpdate(t *testing.T) {
 			name: "HTTPDoFails",
 			formula: &formula{
 				ui: &mockUI{},
-				git: &mockGit{
-					GetRepoMocks: []GetRepoMock{
-						{
-							OutRepo: &service.Repo{
-								Owner: "moorara",
-								Name:  "cherry",
-							},
-						},
-					},
-				},
 				github: &mockGithub{
 					GetReleasesMocks: []GetReleasesMock{
 						{
@@ -422,16 +356,6 @@ func TestUpdate(t *testing.T) {
 			mockBody:       "server internal error",
 			formula: &formula{
 				ui: &mockUI{},
-				git: &mockGit{
-					GetRepoMocks: []GetRepoMock{
-						{
-							OutRepo: &service.Repo{
-								Owner: "moorara",
-								Name:  "cherry",
-							},
-						},
-					},
-				},
 				github: &mockGithub{
 					GetReleasesMocks: []GetReleasesMock{
 						{
@@ -468,16 +392,6 @@ func TestUpdate(t *testing.T) {
 			mockBody:       "asset content",
 			formula: &formula{
 				ui: &mockUI{},
-				git: &mockGit{
-					GetRepoMocks: []GetRepoMock{
-						{
-							OutRepo: &service.Repo{
-								Owner: "moorara",
-								Name:  "cherry",
-							},
-						},
-					},
-				},
 				github: &mockGithub{
 					GetReleasesMocks: []GetReleasesMock{
 						{
