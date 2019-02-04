@@ -2,6 +2,9 @@ version: "1.0"
 
 language: go
 
+test:
+  covermode: atomic
+
 build:
   cross_compile: true
   binary_file: bin/cherry

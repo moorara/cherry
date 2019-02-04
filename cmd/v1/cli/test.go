@@ -29,12 +29,15 @@ const (
 
 	Flags:
 	
-		-report-path:  the path for coverage report  (default: coverage)
+		-covermode:    the covermode flag for go test command  (default: set)
+		-report-path:  the path for coverage report            (default: coverage)
 	
 	Examples:
 
 		cherry test
+		cherry test -covermode count
 		cherry test -report-path report
+		cherry test -covermode atomic -report-path report
 	`
 )
 
