@@ -1,5 +1,18 @@
 # Change Log
 
+## [v0.2.3](https://github.com/moorara/cherry/tree/v0.2.3) (2019-02-04)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.2.2...v0.2.3)
+
+**Implemented enhancements:**
+
+- Support different covermode [\#68](https://github.com/moorara/cherry/issues/68)
+- Format output of test command [\#66](https://github.com/moorara/cherry/issues/66)
+
+**Merged pull requests:**
+
+- Improve test command [\#69](https://github.com/moorara/cherry/pull/69) ([moorara](https://github.com/moorara))
+- Configure Renovate [\#59](https://github.com/moorara/cherry/pull/59) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [v0.2.2](https://github.com/moorara/cherry/tree/v0.2.2) (2019-01-28)
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.2.1...v0.2.2)
 
