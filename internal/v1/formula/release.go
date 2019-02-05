@@ -111,7 +111,7 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 	}
 
 	f.Printf("➡️  Creating/Updating change log ...")
-	changelogText, err := f.changelog.Generate(ctx, current.GitTag())
+	changelogText, err := f.changelog.Generate(ctx, repo, current.GitTag())
 	if err != nil {
 		return err
 	}

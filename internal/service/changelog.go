@@ -20,7 +20,7 @@ type (
 	// Changelog is the interface for change log generation
 	Changelog interface {
 		Filename() string
-		Generate(ctx context.Context, gitTag string) (string, error)
+		Generate(ctx context.Context, repo, tag string) (string, error)
 	}
 
 	changelog struct {
@@ -41,7 +41,7 @@ func (c *changelog) Filename() string {
 	return changelogFilename
 }
 
-func (c *changelog) Generate(ctx context.Context, gitTag string) (string, error) {
+func (c *changelog) Generate(ctx context.Context, repo, tag string) (string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
@@ -50,7 +50,8 @@ func (c *changelog) Generate(ctx context.Context, gitTag string) (string, error)
 		"--token", c.githubToken,
 		"--no-filter-by-milestone",
 		"--exclude-labels", "question,duplicate,invalid,wontfix",
-		"--future-release", gitTag,
+		"--future-release", tag,
+		repo,
 	)
 
 	cmd.Dir = c.workDir
@@ -67,7 +68,7 @@ func (c *changelog) Generate(ctx context.Context, gitTag string) (string, error)
 	defer file.Close()
 
 	// Regex for the start of current release
-	startRE, err := regexp.Compile(fmt.Sprintf(`^## \[%s\]`, gitTag))
+	startRE, err := regexp.Compile(fmt.Sprintf(`^## \[%s\]`, tag))
 	if err != nil {
 		return "", err
 	}

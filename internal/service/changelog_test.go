@@ -54,7 +54,8 @@ func TestChangelogGenerate(t *testing.T) {
 		workDir       string
 		githubToken   string
 		ctx           context.Context
-		gitTag        string
+		repo          string
+		tag           string
 		expectedError string
 	}{}
 
@@ -65,7 +66,7 @@ func TestChangelogGenerate(t *testing.T) {
 				githubToken: tc.githubToken,
 			}
 
-			_, err := changelog.Generate(tc.ctx, tc.gitTag)
+			_, err := changelog.Generate(tc.ctx, tc.repo, tc.tag)
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)
