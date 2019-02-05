@@ -1,5 +1,12 @@
 # Change Log
 
+## [v0.2.4](https://github.com/moorara/cherry/tree/v0.2.4) (2019-02-04)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.2.3...v0.2.4)
+
+**Merged pull requests:**
+
+- Fix issue with github-changelog-generator [\#70](https://github.com/moorara/cherry/pull/70) ([moorara](https://github.com/moorara))
+
 ## [v0.2.3](https://github.com/moorara/cherry/tree/v0.2.3) (2019-02-04)
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.2.2...v0.2.3)
 
