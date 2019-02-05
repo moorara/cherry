@@ -313,7 +313,8 @@ type (
 
 	GenerateMock struct {
 		InCtx     context.Context
-		InGitTag  string
+		InRepo    string
+		InTag     string
 		OutResult string
 		OutError  error
 	}
@@ -325,11 +326,12 @@ func (m *mockChangelog) Filename() string {
 	return mock.OutResult
 }
 
-func (m *mockChangelog) Generate(ctx context.Context, gitTag string) (string, error) {
+func (m *mockChangelog) Generate(ctx context.Context, repo, tag string) (string, error) {
 	mock := &m.GenerateMocks[m.GenerateCounter]
 	m.GenerateCounter++
 	mock.InCtx = ctx
-	mock.InGitTag = gitTag
+	mock.InRepo = repo
+	mock.InTag = tag
 	return mock.OutResult, mock.OutError
 }
 
