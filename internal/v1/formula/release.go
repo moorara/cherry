@@ -97,7 +97,7 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 		return err
 	}
 
-	f.Printf("➡️  Creating draft release %s ...", current.Version())
+	f.Printf("⬆️  Creating draft release %s ...", current.Version())
 	release, err := f.github.CreateRelease(ctx, repo, service.ReleaseInput{
 		Name:       current.Version(),
 		TagName:    current.GitTag(),
@@ -131,19 +131,37 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 
 	// Building and uploading artifacts
 	if f.spec.Release.Build {
-		f.Printf("➡️  Building artifacts for release %s ...", release.Name)
+		f.Printf("➡️  Building artifacts ...")
 		assets, err := f.CrossCompile(ctx)
 		if err != nil {
 			return err
 		}
 
+		f.Printf("➡️️  Uploading artifacts to release %s ...", release.Name)
+
+		done := make(chan error, len(assets))
+
 		for _, asset := range assets {
-			f.Printf("⬆️  Uploading %s to release %s ...", asset, release.Name)
-			err = f.github.UploadAssets(ctx, release, asset)
-			if err != nil {
-				return err
+			go func(asset string) {
+				defer os.Remove(asset)
+				err := f.github.UploadAssets(ctx, release, asset)
+				if err != nil {
+					done <- err
+				}
+				f.Printf("⬆️  Uploaded %s", asset)
+				done <- nil
+			}(asset)
+		}
+
+		errs := make([]error, 0)
+		for range assets {
+			if err := <-done; err != nil {
+				errs = append(errs, err)
 			}
-			os.Remove(asset)
+		}
+
+		if len(errs) > 0 {
+			return errs[0]
 		}
 	}
 
@@ -162,13 +180,13 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 		}
 	}()
 
-	f.Infof("⬆️  Pushing commit for release %s ...", release.Name)
+	f.Infof("⬆️  Pushing release commit %s ...", release.Name)
 	err = f.git.Push()
 	if err != nil {
 		return err
 	}
 
-	f.Infof("⬆️  Pushing tag for release %s ...", release.Name)
+	f.Infof("⬆️  Pushing release tag %s ...", release.Name)
 	err = f.git.PushTag(current.GitTag())
 	if err != nil {
 		return err
