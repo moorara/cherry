@@ -163,12 +163,16 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 	}()
 
 	f.Infof("⬆️  Pushing commit for release %s ...", release.Name)
-	err = f.git.Push(true)
+	err = f.git.Push()
 	if err != nil {
 		return err
 	}
 
-	// f.Printf("▶️  Preparing next version %s ...", next.PreRelease())
+	f.Infof("⬆️  Pushing tag for release %s ...", release.Name)
+	err = f.git.PushTag(current.GitTag())
+	if err != nil {
+		return err
+	}
 
 	err = f.vmanager.Update(next.PreRelease())
 	if err != nil {
@@ -182,7 +186,7 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 	}
 
 	f.Infof("⬆️  Pushing commit for next version %s ...", next.PreRelease())
-	err = f.git.Push(false)
+	err = f.git.Push()
 	if err != nil {
 		return err
 	}

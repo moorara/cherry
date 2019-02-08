@@ -18,7 +18,8 @@ type (
 		GetHEAD() (*Commit, error)
 		Commit(message string, files ...string) error
 		Tag(tag string) error
-		Push(withTags bool) error
+		Push() error
+		PushTag(tag string) error
 		Pull() error
 	}
 
@@ -197,7 +198,7 @@ func (g *git) Tag(tag string) error {
 	return nil
 }
 
-func (g *git) Push(withTags bool) error {
+func (g *git) Push() error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
@@ -210,18 +211,20 @@ func (g *git) Push(withTags bool) error {
 		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
-	stdout.Reset()
-	stderr.Reset()
+	return nil
+}
 
-	if withTags {
-		// git push --tags
-		cmd := exec.Command("git", "push", "--tags")
-		cmd.Dir = g.workDir
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("%s: %s", err.Error(), stderr.String())
-		}
+func (g *git) PushTag(tag string) error {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	// git push
+	cmd := exec.Command("git", "push", "origin", tag)
+	cmd.Dir = g.workDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
 	return nil

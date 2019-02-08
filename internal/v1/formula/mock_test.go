@@ -66,6 +66,8 @@ type (
 		TagMocks         []TagMock
 		PushCounter      int
 		PushMocks        []PushMock
+		PushTagCounter   int
+		PushTagMocks     []PushTagMock
 		PullMockCounter  int
 		PullMocks        []PullMock
 	}
@@ -102,8 +104,12 @@ type (
 	}
 
 	PushMock struct {
-		InWithTags bool
-		OutError   error
+		OutError error
+	}
+
+	PushTagMock struct {
+		InTag    string
+		OutError error
 	}
 
 	PullMock struct {
@@ -150,10 +156,16 @@ func (m *mockGit) Tag(tag string) error {
 	return mock.OutError
 }
 
-func (m *mockGit) Push(withTags bool) error {
+func (m *mockGit) Push() error {
 	mock := &m.PushMocks[m.PushCounter]
 	m.PushCounter++
-	mock.InWithTags = withTags
+	return mock.OutError
+}
+
+func (m *mockGit) PushTag(tag string) error {
+	mock := &m.PushTagMocks[m.PushTagCounter]
+	m.PushTagCounter++
+	mock.InTag = tag
 	return mock.OutError
 }
 

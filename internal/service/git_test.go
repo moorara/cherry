@@ -204,13 +204,11 @@ func TestGitPush(t *testing.T) {
 	tests := []struct {
 		name          string
 		workDir       string
-		withTags      bool
 		expectedError bool
 	}{
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			withTags:      true,
 			expectedError: true,
 		},
 	}
@@ -218,7 +216,36 @@ func TestGitPush(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			git := NewGit(tc.workDir)
-			err := git.Push(tc.withTags)
+			err := git.Push()
+
+			if tc.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGitPushTag(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		tag           string
+		expectedError bool
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			tag:           "v0.1.0",
+			expectedError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			git := NewGit(tc.workDir)
+			err := git.PushTag(tc.tag)
 
 			if tc.expectedError {
 				assert.Error(t, err)
