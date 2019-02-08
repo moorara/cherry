@@ -147,21 +147,18 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 				err := f.github.UploadAssets(ctx, release, asset)
 				if err != nil {
 					done <- err
+					return
 				}
 				f.Printf("⬆️  Uploaded %s", asset)
 				done <- nil
 			}(asset)
 		}
 
-		errs := make([]error, 0)
 		for range assets {
-			if err := <-done; err != nil {
-				errs = append(errs, err)
+			err := <-done
+			if err != nil {
+				return err
 			}
-		}
-
-		if len(errs) > 0 {
-			return errs[0]
 		}
 	}
 
