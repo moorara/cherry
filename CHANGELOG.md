@@ -1,6 +1,19 @@
 # Change Log
 
-## [v0.2.4](https://github.com/moorara/cherry/tree/v0.2.4) (2019-02-04)
+## [v0.2.5](https://github.com/moorara/cherry/tree/v0.2.5) (2019-02-08)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.2.4...v0.2.5)
+
+**Implemented enhancements:**
+
+- Upload build artifacts in parallel when releasing [\#72](https://github.com/moorara/cherry/issues/72)
+
+**Merged pull requests:**
+
+- Fix parallel upload issue [\#74](https://github.com/moorara/cherry/pull/74) ([moorara](https://github.com/moorara))
+- Support parallel upload [\#73](https://github.com/moorara/cherry/pull/73) ([moorara](https://github.com/moorara))
+- Fix push tag issue [\#71](https://github.com/moorara/cherry/pull/71) ([moorara](https://github.com/moorara))
+
+## [v0.2.4](https://github.com/moorara/cherry/tree/v0.2.4) (2019-02-05)
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.2.3...v0.2.4)
 
 **Merged pull requests:**
