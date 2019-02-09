@@ -20,7 +20,6 @@ func main() {
 	// Create logger
 	opts := log.Options{Name: config.Config.Name, Level: config.Config.LogLevel}
 	logger := log.NewJSONLogger(opts)
-	logger = logger.SyncLogger()
 	logger = logger.With(
 		config.Config.Name, map[string]string{
 			"version":   version.Version,
