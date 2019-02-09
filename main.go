@@ -6,7 +6,7 @@ import (
 	"github.com/mitchellh/cli"
 	"github.com/moorara/cherry/cmd/config"
 	"github.com/moorara/cherry/cmd/version"
-	"github.com/moorara/cherry/pkg/log"
+	"github.com/moorara/goto/log"
 
 	app "github.com/moorara/cherry/cmd/v1/cli"
 	util "github.com/moorara/cherry/pkg/cli"
