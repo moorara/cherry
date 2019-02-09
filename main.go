@@ -18,7 +18,8 @@ const (
 
 func main() {
 	// Create logger
-	logger := log.NewJSONLogger(config.Config.Name, config.Config.LogLevel)
+	opts := log.Options{Name: config.Config.Name, Level: config.Config.LogLevel}
+	logger := log.NewJSONLogger(opts)
 	logger = logger.SyncLogger()
 	logger = logger.With(
 		config.Config.Name, map[string]string{
