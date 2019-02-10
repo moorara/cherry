@@ -61,6 +61,7 @@ func TestRead(t *testing.T) {
 					Platforms:      []string{"linux-386", "linux-amd64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"},
 				},
 				Release: Release{
+					Model: "master",
 					Build: true,
 				},
 			},
@@ -108,6 +109,7 @@ func TestSpecSetDefaults(t *testing.T) {
 					Platforms:      defaultPlatforms,
 				},
 				Release: Release{
+					Model: defaultModel,
 					Build: defaultBuild,
 				},
 			},
@@ -130,6 +132,7 @@ func TestSpecSetDefaults(t *testing.T) {
 					Platforms:      []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
 				},
 				Release: Release{
+					Model: "branch",
 					Build: true,
 				},
 			},
@@ -152,6 +155,7 @@ func TestSpecSetDefaults(t *testing.T) {
 					Platforms:      []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
 				},
 				Release: Release{
+					Model: "branch",
 					Build: true,
 				},
 			},

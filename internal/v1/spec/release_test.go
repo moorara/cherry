@@ -14,14 +14,17 @@ func TestReleaseSetDefaults(t *testing.T) {
 		{
 			Release{},
 			Release{
+				Model: defaultModel,
 				Build: defaultBuild,
 			},
 		},
 		{
 			Release{
+				Model: "branch",
 				Build: true,
 			},
 			Release{
+				Model: "branch",
 				Build: true,
 			},
 		},
@@ -44,6 +47,7 @@ func TestReleaseFlagSet(t *testing.T) {
 		},
 		{
 			release: Release{
+				Model: "master",
 				Build: true,
 			},
 			expectedName: "release",

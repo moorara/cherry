@@ -32,6 +32,7 @@ const (
 		-minor:    create a minor version release                       (default: false)
 		-major:    create a major version release                       (default: false)
 		-comment:  add a comment for the release
+		-model     release model: master, branch                        (default: master)
 		-build:    build the artifacts and include them in the release  (default: false)
 	
 	Examples:
