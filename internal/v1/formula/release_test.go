@@ -368,7 +368,7 @@ func TestVersions(t *testing.T) {
 	}
 }
 
-func TestRelease(t *testing.T) {
+func TestReleaseFromMaster(t *testing.T) {
 	tests := []struct {
 		name          string
 		formula       *formula
@@ -381,8 +381,12 @@ func TestRelease(t *testing.T) {
 			name: "EnsureFails",
 			formula: &formula{
 				githubToken: "",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 			},
 			ctx:           context.Background(),
 			level:         PatchRelease,
@@ -393,8 +397,12 @@ func TestRelease(t *testing.T) {
 			name: "VersionsFails",
 			formula: &formula{
 				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
@@ -439,8 +447,12 @@ func TestRelease(t *testing.T) {
 			name: "CreateReleaseFails",
 			formula: &formula{
 				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
@@ -497,8 +509,12 @@ func TestRelease(t *testing.T) {
 			name: "ChangelogGenerateFails",
 			formula: &formula{
 				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
@@ -570,8 +586,12 @@ func TestRelease(t *testing.T) {
 			name: "GitCommitFails",
 			formula: &formula{
 				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
@@ -653,8 +673,12 @@ func TestRelease(t *testing.T) {
 			name: "GitTagFails",
 			formula: &formula{
 				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
@@ -744,6 +768,7 @@ func TestRelease(t *testing.T) {
 				spec: &spec.Spec{
 					VersionFile: "VERSION",
 					Release: spec.Release{
+						Model: "master",
 						Build: true,
 					},
 				},
@@ -834,8 +859,12 @@ func TestRelease(t *testing.T) {
 			name: "DisableBranchProtectionFails",
 			formula: &formula{
 				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
@@ -927,8 +956,12 @@ func TestRelease(t *testing.T) {
 			name: "GitPushFails",
 			formula: &formula{
 				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
@@ -1028,8 +1061,12 @@ func TestRelease(t *testing.T) {
 			name: "GitPushTagFails",
 			formula: &formula{
 				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
@@ -1134,8 +1171,12 @@ func TestRelease(t *testing.T) {
 			name: "NextVersionUpdateFails",
 			formula: &formula{
 				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
@@ -1243,8 +1284,12 @@ func TestRelease(t *testing.T) {
 			name: "NextVersionCommitFails",
 			formula: &formula{
 				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
@@ -1355,8 +1400,12 @@ func TestRelease(t *testing.T) {
 			name: "NextVersionGitPushFails",
 			formula: &formula{
 				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
@@ -1470,8 +1519,12 @@ func TestRelease(t *testing.T) {
 			name: "EditReleaseFails",
 			formula: &formula{
 				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
@@ -1590,8 +1643,12 @@ func TestRelease(t *testing.T) {
 			name: "EnableBranchProtectionFails",
 			formula: &formula{
 				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{
@@ -1718,8 +1775,182 @@ func TestRelease(t *testing.T) {
 			name: "Success",
 			formula: &formula{
 				githubToken: "github-token",
-				spec:        &spec.Spec{},
-				ui:          &mockUI{},
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
+				git: &mockGit{
+					GetRepoMocks: []GetRepoMock{
+						{
+							OutRepo: &service.Repo{
+								Owner: "moorara",
+								Name:  "cherry",
+							},
+						},
+					},
+					GetBranchMocks: []GetBranchMock{
+						{
+							OutBranch: &service.Branch{
+								Name: "master",
+							},
+						},
+					},
+					IsCleanMocks: []IsCleanMock{
+						{
+							OutResult: true,
+						},
+					},
+					PullMocks: []PullMock{
+						{
+							OutError: nil,
+						},
+					},
+					CommitMocks: []CommitMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+					TagMocks: []TagMock{
+						{
+							OutError: nil,
+						},
+					},
+					PushMocks: []PushMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+					PushTagMocks: []PushTagMock{
+						{
+							OutError: nil,
+						},
+					},
+				},
+				github: &mockGithub{
+					CreateReleaseMocks: []CreateReleaseMock{
+						{
+							OutRelease: &service.Release{
+								ID:         12345678,
+								Name:       "0.1.0",
+								TagName:    "v0.1.0",
+								Target:     "master",
+								Draft:      true,
+								Prerelease: false,
+								Body:       "",
+							},
+						},
+					},
+					BranchProtectionForAdminMocks: []BranchProtectionForAdminMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+					EditReleaseMocks: []EditReleaseMock{
+						{
+							OutRelease: &service.Release{
+								ID:         12345678,
+								Name:       "0.1.0",
+								TagName:    "v0.1.0",
+								Target:     "master",
+								Draft:      false,
+								Prerelease: false,
+								Body:       "release description\n\nchangelog text",
+							},
+						},
+					},
+				},
+				changelog: &mockChangelog{
+					FilenameMocks: []FilenameMock{
+						{
+							OutResult: "CHANGELOG.md",
+						},
+					},
+					GenerateMocks: []GenerateMock{
+						{
+							OutResult: "changelog text",
+						},
+					},
+				},
+				vmanager: &mockVersionManager{
+					ReadMocks: []ReadMock{
+						{
+							OutSemVer: service.SemVer{Major: 0, Minor: 1, Patch: 0},
+						},
+					},
+					UpdateMocks: []UpdateMock{
+						{
+							OutError: nil,
+						},
+						{
+							OutError: nil,
+						},
+					},
+				},
+			},
+			ctx:           context.Background(),
+			level:         PatchRelease,
+			comment:       "release description",
+			expectedError: "",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.formula.releaseFromMaster(tc.ctx, tc.level, tc.comment)
+
+			if tc.expectedError != "" {
+				assert.Contains(t, err.Error(), tc.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestRelease(t *testing.T) {
+	tests := []struct {
+		name          string
+		formula       *formula
+		ctx           context.Context
+		level         ReleaseLevel
+		comment       string
+		expectedError string
+	}{
+		{
+			name: "UnsupportedReleaseModel",
+			formula: &formula{
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "branch",
+					},
+				},
+			},
+			ctx:           context.Background(),
+			level:         PatchRelease,
+			comment:       "release description",
+			expectedError: "release model branch not supported",
+		},
+		{
+			name: "ReleaseFromMaster",
+			formula: &formula{
+				githubToken: "github-token",
+				spec: &spec.Spec{
+					Release: spec.Release{
+						Model: "master",
+					},
+				},
+				ui: &mockUI{},
 				git: &mockGit{
 					GetRepoMocks: []GetRepoMock{
 						{

@@ -86,7 +86,7 @@ func (f *formula) versions(level ReleaseLevel) (service.SemVer, service.SemVer, 
 	return current, next, nil
 }
 
-func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment string) error {
+func (f *formula) releaseFromMaster(ctx context.Context, level ReleaseLevel, comment string) error {
 	repo, branch, err := f.ensure()
 	if err != nil {
 		return err
@@ -221,4 +221,13 @@ func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment strin
 	}
 
 	return nil
+}
+
+func (f *formula) Release(ctx context.Context, level ReleaseLevel, comment string) error {
+	switch f.spec.Release.Model {
+	case "master":
+		return f.releaseFromMaster(ctx, level, comment)
+	default:
+		return fmt.Errorf("release model %s not supported", f.spec.Release.Model)
+	}
 }
