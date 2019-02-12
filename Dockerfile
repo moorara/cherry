@@ -10,7 +10,7 @@ RUN cherry build -cross-compile=false -binary-file=cherry
 # FINAL STAGE
 FROM golang:1.11-alpine
 RUN apk add --no-cache ca-certificates git
-RUN apk add --no-cache ruby && \
+RUN apk add --no-cache ruby ruby-json && \
     gem install rdoc --no-document && \
     gem install github_changelog_generator
 COPY --from=builder /workspace/cherry /usr/local/bin/
