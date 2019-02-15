@@ -20,4 +20,5 @@ build:
     - windows-amd64
 
 release:
+  model: master
   build: true
