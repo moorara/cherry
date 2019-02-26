@@ -2,7 +2,7 @@
 ##
 go-job: &go-job
   docker:
-    - image: golang:1.11
+    - image: golang:1.12
 
 docker-job: &docker-job
   docker:
