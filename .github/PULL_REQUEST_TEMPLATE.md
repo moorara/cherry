@@ -1,7 +1,4 @@
 <!--
-  Please make sure you have read the contributing guidelines.
-  https://github.com/moorara/cherry/blob/master/CONTRIBUTING.md
-
   If this pull request addresses an issue, make sure your description includes "Resolves #xx", "Fixes #xx", or "Closes #xx".
   https://help.github.com/articles/closing-issues-using-keywords
 
