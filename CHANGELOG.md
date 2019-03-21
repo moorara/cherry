@@ -1,5 +1,28 @@
 # Change Log
 
+## [v0.3.0](https://github.com/moorara/cherry/tree/v0.3.0) (2019-03-21)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.2.5...v0.3.0)
+
+**Fixed bugs:**
+
+- Use Annotated Tags [\#88](https://github.com/moorara/cherry/issues/88)
+
+**Merged pull requests:**
+
+- Remove unused metrics package [\#90](https://github.com/moorara/cherry/pull/90) ([moorara](https://github.com/moorara))
+- Use annotated tags for releasing [\#89](https://github.com/moorara/cherry/pull/89) ([moorara](https://github.com/moorara))
+- Update .github files [\#87](https://github.com/moorara/cherry/pull/87) ([moorara](https://github.com/moorara))
+- Update module moorara/goto to v0.2.5 [\#86](https://github.com/moorara/cherry/pull/86) ([renovate[bot]](https://github.com/apps/renovate))
+- Update golang Docker tag to v1.12 [\#85](https://github.com/moorara/cherry/pull/85) ([renovate[bot]](https://github.com/apps/renovate))
+- Add release model to examples [\#84](https://github.com/moorara/cherry/pull/84) ([moorara](https://github.com/moorara))
+- Update goto logger [\#83](https://github.com/moorara/cherry/pull/83) ([moorara](https://github.com/moorara))
+- Update module moorara/goto to v0.2.3 [\#82](https://github.com/moorara/cherry/pull/82) ([renovate[bot]](https://github.com/apps/renovate))
+- Fix Docker image [\#81](https://github.com/moorara/cherry/pull/81) ([moorara](https://github.com/moorara))
+- Add support for release models [\#80](https://github.com/moorara/cherry/pull/80) ([moorara](https://github.com/moorara))
+- Fix logger [\#78](https://github.com/moorara/cherry/pull/78) ([moorara](https://github.com/moorara))
+- Update logger [\#77](https://github.com/moorara/cherry/pull/77) ([moorara](https://github.com/moorara))
+- Switch to goto logger [\#76](https://github.com/moorara/cherry/pull/76) ([moorara](https://github.com/moorara))
+
 ## [v0.2.5](https://github.com/moorara/cherry/tree/v0.2.5) (2019-02-08)
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.2.4...v0.2.5)
 
