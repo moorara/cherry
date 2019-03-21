@@ -99,8 +99,9 @@ type (
 	}
 
 	TagMock struct {
-		InTag    string
-		OutError error
+		InTag        string
+		InAnnotation *service.Annotation
+		OutError     error
 	}
 
 	PushMock struct {
@@ -149,10 +150,11 @@ func (m *mockGit) Commit(message string, files ...string) error {
 	return mock.OutError
 }
 
-func (m *mockGit) Tag(tag string) error {
+func (m *mockGit) Tag(tag string, annotation *service.Annotation) error {
 	mock := &m.TagMocks[m.TagCounter]
 	m.TagCounter++
 	mock.InTag = tag
+	mock.InAnnotation = annotation
 	return mock.OutError
 }
 

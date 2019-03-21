@@ -17,7 +17,7 @@ type (
 		GetBranch() (*Branch, error)
 		GetHEAD() (*Commit, error)
 		Commit(message string, files ...string) error
-		Tag(tag string) error
+		Tag(tag string, annotation *Annotation) error
 		Push() error
 		PushTag(tag string) error
 		Pull() error
@@ -42,6 +42,11 @@ type (
 	Commit struct {
 		SHA      string
 		ShortSHA string
+	}
+
+	// Annotation is the model for a git tag annotation
+	Annotation struct {
+		Message string
 	}
 )
 
@@ -182,12 +187,18 @@ func (g *git) Commit(message string, files ...string) error {
 	return nil
 }
 
-func (g *git) Tag(tag string) error {
+func (g *git) Tag(tag string, annotation *Annotation) error {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
 	// git tag ...
-	cmd := exec.Command("git", "tag", tag)
+	var cmd *exec.Cmd
+	if annotation == nil {
+		cmd = exec.Command("git", "tag", tag)
+	} else {
+		cmd = exec.Command("git", "tag", "-a", tag, "-m", annotation.Message)
+	}
+
 	cmd.Dir = g.workDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

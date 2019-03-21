@@ -176,12 +176,21 @@ func TestGitTag(t *testing.T) {
 		name          string
 		workDir       string
 		tag           string
+		annotation    *Annotation
 		expectedError bool
 	}{
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
 			tag:           "test-tag",
+			annotation:    nil,
+			expectedError: true,
+		},
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			tag:           "test-tag",
+			annotation:    &Annotation{Message: "tag message"},
 			expectedError: true,
 		},
 	}
@@ -189,7 +198,7 @@ func TestGitTag(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			git := NewGit(tc.workDir)
-			err := git.Tag(tc.tag)
+			err := git.Tag(tc.tag, tc.annotation)
 
 			if tc.expectedError {
 				assert.Error(t, err)
