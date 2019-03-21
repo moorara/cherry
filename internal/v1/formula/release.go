@@ -124,7 +124,8 @@ func (f *formula) releaseFromMaster(ctx context.Context, level ReleaseLevel, com
 		return err
 	}
 
-	err = f.git.Tag(current.GitTag())
+	tagMessage := fmt.Sprintf("Version %s", current.Version())
+	err = f.git.Tag(current.GitTag(), &service.Annotation{Message: tagMessage})
 	if err != nil {
 		return err
 	}
