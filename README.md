@@ -1,5 +1,7 @@
 [![Build Status][circleci-image]][circleci-url]
 [![Go Report Card][goreport-image]][goreport-url]
+[![Test Coverage][coverage-image]][coverage-url]
+[![Maintainability][maintainability-image]][maintainability-url]
 
 # Cherry
 
@@ -78,6 +80,9 @@ It downloads the latest release for your system from GitHub and replaces the loc
 
 [circleci-url]: https://circleci.com/gh/moorara/cherry/tree/master
 [circleci-image]: https://circleci.com/gh/moorara/cherry/tree/master.svg?style=shield
-
 [goreport-url]: https://goreportcard.com/report/github.com/moorara/cherry
 [goreport-image]: https://goreportcard.com/badge/github.com/moorara/cherry
+[coverage-url]: https://codeclimate.com/github/moorara/cherry/test_coverage
+[coverage-image]: https://api.codeclimate.com/v1/badges/569a659577775c8af668/test_coverage
+[maintainability-url]: https://codeclimate.com/github/moorara/cherry/maintainability
+[maintainability-image]: https://api.codeclimate.com/v1/badges/569a659577775c8af668/maintainability
