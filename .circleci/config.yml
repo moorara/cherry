@@ -118,7 +118,7 @@ workflows:
       - unit-test
       - build-binary
       - build-docker
-      - push-docker::
+      - push-docker:
           context: dev
           requires:
             - build-docker
