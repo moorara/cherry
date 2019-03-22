@@ -1,5 +1,18 @@
 # Change Log
 
+## [v0.3.1](https://github.com/moorara/cherry/tree/v0.3.1) (2019-03-22)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.3.0...v0.3.1)
+
+**Fixed bugs:**
+
+- Fix go version bug [\#92](https://github.com/moorara/cherry/issues/92)
+
+**Merged pull requests:**
+
+- Fix typo in pipeline configuration [\#95](https://github.com/moorara/cherry/pull/95) ([moorara](https://github.com/moorara))
+- Add integration with Code Climate [\#94](https://github.com/moorara/cherry/pull/94) ([moorara](https://github.com/moorara))
+- Fix go version error [\#93](https://github.com/moorara/cherry/pull/93) ([moorara](https://github.com/moorara))
+
 ## [v0.3.0](https://github.com/moorara/cherry/tree/v0.3.0) (2019-03-21)
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.2.5...v0.3.0)
 
