@@ -23,9 +23,15 @@ install-cherry: &install-cherry
   name: Install Cherry
   command: curl -s https://raw.githubusercontent.com/moorara/cherry/master/scripts/install.sh | bash
 
+install-test-reporter: &install-test-reporter
+  name: Install Code Climate Test Reporter
+  command: |
+    curl -fsSL -o /usr/local/bin/test-reporter https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
+    chmod 755 /usr/local/bin/test-reporter
+
 login-docker: &login-docker
   name: Login to Docker Hub
-  command: docker login -u $DOCKER_USER -p $DOCKER_PASS
+  command: docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
 
 
 ## CircleCI Config
@@ -35,16 +41,26 @@ jobs:
 
   unit-test:
     <<: *go-job
+    # This is required since Code Climate test-reporter do not support go modules currently
+    working_directory: /go/src/github.com/moorara/cherry
+    environment:
+      GO111MODULE: "on"
     steps:
       - checkout
       - run: *go-modules
       - run: *install-cherry
+      - run: *install-test-reporter
       - run:
           name: Unit Tests
           command: go test -race ./...
       - run:
-          name: Test Coverage
-          command: cherry test
+          name: Generate Coverage Report
+          command: |
+            test-reporter before-build
+            cherry test
+            exit_code=$?
+            cp coverage/cover.out c.out
+            test-reporter after-build --id ${CODECLIMATE_REPORTER_ID} --exit-code $exit_code
       - store_artifacts:
           path: coverage/
 
@@ -102,7 +118,8 @@ workflows:
       - unit-test
       - build-binary
       - build-docker
-      - push-docker:
+      - push-docker::
+          context: dev
           requires:
             - build-docker
           filters:
