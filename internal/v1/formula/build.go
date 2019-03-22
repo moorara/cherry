@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
-	"runtime"
+	"regexp"
 	"strings"
 	"time"
 
@@ -26,6 +26,8 @@ type (
 )
 
 func (f *formula) getBuildInfo(ctx context.Context) (*buildInfo, error) {
+	var stdout, stderr bytes.Buffer
+
 	data, err := ioutil.ReadFile(filepath.Join(f.workDir, f.spec.VersionFile))
 	if err != nil {
 		return nil, err
@@ -42,6 +44,17 @@ func (f *formula) getBuildInfo(ctx context.Context) (*buildInfo, error) {
 		return nil, err
 	}
 
+	cmd := exec.Command("go", "version")
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("%s: %s", err.Error(), stderr.String())
+	}
+
+	// Get the version of Go compiler
+	re := regexp.MustCompile(`go\d+\.\d+(\.\d+)?`)
+	goVersion := re.FindString(stdout.String())
+
 	buildTool := f.spec.ToolName
 	if f.spec.ToolVersion != "" {
 		buildTool += "@" + f.spec.ToolVersion
@@ -51,7 +64,7 @@ func (f *formula) getBuildInfo(ctx context.Context) (*buildInfo, error) {
 		Version:   version,
 		Revision:  commit.ShortSHA,
 		Branch:    branch.Name,
-		GoVersion: runtime.Version(),
+		GoVersion: goVersion,
 		BuildTool: buildTool,
 		BuildTime: time.Now().UTC(),
 	}
