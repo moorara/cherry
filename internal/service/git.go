@@ -58,8 +58,7 @@ func NewGit(workDir string) Git {
 }
 
 func (g *git) IsClean() (bool, error) {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	var stdout, stderr bytes.Buffer
 
 	cmd := exec.Command("git", "status", "--porcelain")
 	cmd.Dir = g.workDir
@@ -73,8 +72,7 @@ func (g *git) IsClean() (bool, error) {
 }
 
 func (g *git) GetRepo() (*Repo, error) {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	var stdout, stderr bytes.Buffer
 
 	cmd := exec.Command("git", "remote", "-v")
 	cmd.Dir = g.workDir
@@ -118,8 +116,7 @@ func (g *git) GetRepo() (*Repo, error) {
 }
 
 func (g *git) GetBranch() (*Branch, error) {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	var stdout, stderr bytes.Buffer
 
 	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
 	cmd.Dir = g.workDir
@@ -138,8 +135,7 @@ func (g *git) GetBranch() (*Branch, error) {
 
 func (g *git) GetHEAD() (*Commit, error) {
 	var cmd *exec.Cmd
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	var stdout, stderr bytes.Buffer
 
 	cmd = exec.Command("git", "rev-parse", "HEAD")
 	cmd.Dir = g.workDir
@@ -159,8 +155,7 @@ func (g *git) GetHEAD() (*Commit, error) {
 }
 
 func (g *git) Commit(message string, files ...string) error {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	var stdout, stderr bytes.Buffer
 
 	// git add ...
 	args := append([]string{"add"}, files...)
@@ -188,8 +183,7 @@ func (g *git) Commit(message string, files ...string) error {
 }
 
 func (g *git) Tag(tag string, annotation *Annotation) error {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	var stdout, stderr bytes.Buffer
 
 	// git tag ...
 	var cmd *exec.Cmd
@@ -210,8 +204,7 @@ func (g *git) Tag(tag string, annotation *Annotation) error {
 }
 
 func (g *git) Push() error {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	var stdout, stderr bytes.Buffer
 
 	// git push
 	cmd := exec.Command("git", "push")
@@ -226,8 +219,7 @@ func (g *git) Push() error {
 }
 
 func (g *git) PushTag(tag string) error {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	var stdout, stderr bytes.Buffer
 
 	// git push
 	cmd := exec.Command("git", "push", "origin", tag)
@@ -242,8 +234,7 @@ func (g *git) PushTag(tag string) error {
 }
 
 func (g *git) Pull() error {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	var stdout, stderr bytes.Buffer
 
 	// git tag ...
 	cmd := exec.Command("git", "pull")
