@@ -7,6 +7,90 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestParseGitRepo(t *testing.T) {
+	tests := []struct {
+		name          string
+		output        string
+		expectedOwner string
+		expectedName  string
+		expectedError string
+	}{
+		{
+			name:          "Empty",
+			output:        ``,
+			expectedOwner: "",
+			expectedName:  "",
+			expectedError: "failed to get git repository url",
+		},
+		{
+			name: "Invalid",
+			output: `
+			origin	moorara/cherry (fetch)
+			origin	moorara/cherry (push)
+			`,
+			expectedOwner: "",
+			expectedName:  "",
+			expectedError: "failed to get git repository name",
+		},
+		{
+			name: "HTTPSSchema",
+			output: `
+			origin	https://github.com/moorara/cherry (fetch)
+			origin	https://github.com/moorara/cherry (push)
+			`,
+			expectedOwner: "moorara",
+			expectedName:  "cherry",
+			expectedError: "",
+		},
+		{
+			name: "HTTPSSchemaWithGit",
+			output: `
+			origin	https://github.com/moorara/cherry.git (fetch)
+			origin	https://github.com/moorara/cherry.git (push)
+			`,
+			expectedOwner: "moorara",
+			expectedName:  "cherry",
+			expectedError: "",
+		},
+		{
+			name: "SSHSchema",
+			output: `
+			origin	git@github.com:moorara/cherry (fetch)
+			origin	git@github.com:moorara/cherry (push)
+			`,
+			expectedOwner: "moorara",
+			expectedName:  "cherry",
+			expectedError: "",
+		},
+		{
+			name: "SSHSchemaWithGit",
+			output: `
+			origin	git@github.com:moorara/cherry.git (fetch)
+			origin	git@github.com:moorara/cherry.git (push)
+			`,
+			expectedOwner: "moorara",
+			expectedName:  "cherry",
+			expectedError: "",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			owner, name, err := parseGitRepo(tc.output)
+
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
+				assert.Empty(t, owner)
+				assert.Empty(t, name)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedOwner, owner)
+				assert.Equal(t, tc.expectedName, name)
+			}
+		})
+	}
+}
+
 func TestGitIsClean(t *testing.T) {
 	tests := []struct {
 		name          string

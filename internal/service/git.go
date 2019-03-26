@@ -50,6 +50,37 @@ type (
 	}
 )
 
+func parseGitRepo(output string) (string, string, error) {
+	// origin  git@github.com:USERNAME/REPOSITORY.git (push)     --> git@github.com:USERNAME/REPOSITORY.git
+	// origin  https://github.com/USERNAME/REPOSITORY.git (push) --> https://github.com/USERNAME/REPOSITORY.git
+	re := regexp.MustCompile(`origin[[:blank:]]+(.*)[[:blank:]]\(push\)`)
+	subs := re.FindStringSubmatch(output)
+	if len(subs) != 2 {
+		return "", "", errors.New("failed to get git repository url")
+	}
+
+	gitURL := subs[1]
+
+	// git@github.com:USERNAME/REPOSITORY.git     --> USERNAME/REPOSITORY.git
+	// https://github.com/USERNAME/REPOSITORY.git --> USERNAME/REPOSITORY.git
+	re = regexp.MustCompile(`(git@[^/]+:|https://[^/]+/)([^/]+/[^/]+)`)
+	subs = re.FindStringSubmatch(gitURL)
+	if len(subs) != 3 {
+		return "", "", errors.New("failed to get git repository name")
+	}
+
+	// USERNAME/REPOSITORY.git --> USERNAME/REPOSITORY
+	repo := subs[2]
+	repo = strings.TrimSuffix(repo, ".git")
+
+	// Split repo owner and name
+	subs = strings.Split(repo, "/")
+	owner := subs[0]
+	name := subs[1]
+
+	return owner, name, nil
+}
+
 // NewGit creates a new git client
 func NewGit(workDir string) Git {
 	return &git{
@@ -82,32 +113,10 @@ func (g *git) GetRepo() (*Repo, error) {
 		return nil, fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
-	// origin  git@github.com:USERNAME/REPOSITORY.git (push)     --> git@github.com:USERNAME/REPOSITORY.git
-	// origin  https://github.com/USERNAME/REPOSITORY.git (push) --> https://github.com/USERNAME/REPOSITORY.git
-	re := regexp.MustCompile(`origin[[:blank:]]+(.*)[[:blank:]]\(push\)`)
-	subs := re.FindStringSubmatch(string(stdout.String()))
-	if len(subs) != 2 {
-		return nil, errors.New("failed to get git repository url")
+	owner, name, err := parseGitRepo(stdout.String())
+	if err != nil {
+		return nil, err
 	}
-
-	gitURL := subs[1]
-
-	// git@github.com:USERNAME/REPOSITORY.git     --> USERNAME/REPOSITORY.git
-	// https://github.com/USERNAME/REPOSITORY.git --> USERNAME/REPOSITORY.git
-	re = regexp.MustCompile(`(git@[^/]+:|https://[^/]+/)([^/]+/[^/]+)`)
-	subs = re.FindStringSubmatch(gitURL)
-	if len(subs) != 3 {
-		return nil, errors.New("failed to get git repository name")
-	}
-
-	// USERNAME/REPOSITORY.git --> USERNAME/REPOSITORY
-	repo := subs[2]
-	repo = strings.TrimSuffix(repo, ".git")
-
-	// Split repo owner and name
-	subs = strings.Split(repo, "/")
-	owner := subs[0]
-	name := subs[1]
 
 	return &Repo{
 		Owner: owner,
@@ -126,7 +135,7 @@ func (g *git) GetBranch() (*Branch, error) {
 		return nil, fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
-	name := strings.Trim(string(stdout.String()), "\n")
+	name := strings.Trim(stdout.String(), "\n")
 
 	return &Branch{
 		Name: name,
@@ -145,7 +154,7 @@ func (g *git) GetHEAD() (*Commit, error) {
 		return nil, fmt.Errorf("%s: %s", err.Error(), stderr.String())
 	}
 
-	sha := strings.Trim(string(stdout.String()), "\n")
+	sha := strings.Trim(stdout.String(), "\n")
 	short := sha[:7]
 
 	return &Commit{
