@@ -14,8 +14,8 @@ Currently, Cherry only supports [Go](https://golang.org) applications and [GitHu
 
 You need to have the following tools installed and ready.
 
-  * [go](https://golang.org)
   * [git](https://git-scm.com)
+  * [go](https://golang.org)
   * [github_changelog_generator](https://github.com/github-changelog-generator/github-changelog-generator)
 
 For releasing GitHub repository you need a **personal access token** with **admin** access to your repo.
@@ -55,6 +55,7 @@ For each command you can then use `-help` flag too see the help text for the com
 `cherry release` can be used for releasing a **GitHub** repository.
 You can use `-patch`, `-minor`, or `-major` flags to release at different levels.
 You can also use `-comment` flag to include a description for your release.
+
 `CHERRY_GITHUB_TOKEN` environment variable should be set to a **personal access token** with **admin** permission to your repo.
 
 **`update`**
