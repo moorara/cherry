@@ -8,6 +8,6 @@ require (
 	github.com/mitchellh/cli v1.0.0
 	github.com/moorara/goto v0.2.5
 	github.com/stretchr/testify v1.3.0
-	golang.org/x/sys v0.0.0-20190520174656-ad400b127469 // indirect
+	golang.org/x/sys v0.0.0-20190520205700-c432e742b0af // indirect
 	gopkg.in/yaml.v2 v2.2.2
 )
