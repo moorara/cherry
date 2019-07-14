@@ -3,7 +3,7 @@ module github.com/moorara/cherry
 go 1.12
 
 require (
-	github.com/gorilla/mux v1.7.2
+	github.com/gorilla/mux v1.7.3
 	github.com/mitchellh/cli v1.0.0
 	github.com/moorara/goto v0.2.7
 	github.com/stretchr/testify v1.3.0
