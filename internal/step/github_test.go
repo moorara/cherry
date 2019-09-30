@@ -323,6 +323,193 @@ func TestGitHubBranchProtectionRevert(t *testing.T) {
 	}
 }
 
+func TestGitHubGetLatestReleaseDry(t *testing.T) {
+	tests := []struct {
+		name          string
+		mockResponses []mockHTTP
+		token         string
+		repo          string
+		expectedError string
+	}{
+		{
+			name:          "RequestError",
+			token:         "github-token",
+			repo:          "username/repo",
+			expectedError: `Get /repos/username/repo/releases/latest: unsupported protocol scheme ""`,
+		},
+		{
+			name: "BadStatusCode",
+			mockResponses: []mockHTTP{
+				{"GET", "/repos/{owner}/{repo}/releases/latest", 403, ``},
+			},
+			token:         "github-token",
+			repo:          "username/repo",
+			expectedError: `GET /repos/username/repo/releases/latest 403: `,
+		},
+		{
+			name: "Success",
+			mockResponses: []mockHTTP{
+				{
+					"GET", "/repos/{owner}/{repo}/releases/latest", 200, `{
+						"id": 1,
+						"tag_name": "v0.1.0",
+						"target_commitish": "master",
+						"name": "0.1.0",
+						"body": "comment",
+						"draft": false,
+						"prerelease": false
+					}`,
+				},
+			},
+			token: "github-token",
+			repo:  "username/repo",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := &GitHubGetLatestRelease{
+				Client: &http.Client{},
+				Ctx:    context.Background(),
+				Token:  tc.token,
+				Repo:   tc.repo,
+			}
+
+			if len(tc.mockResponses) > 0 {
+				h := createMockHTTPServer(tc.mockResponses...)
+				ts := httptest.NewServer(h)
+				defer ts.Close()
+
+				step.BaseURL = ts.URL
+			}
+
+			err := step.Dry()
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitHubGetLatestReleaseRun(t *testing.T) {
+	tests := []struct {
+		name                  string
+		mockResponses         []mockHTTP
+		token                 string
+		repo                  string
+		expectedError         string
+		expectedLatestRelease GitHubRelease
+	}{
+		{
+			name:          "RequestError",
+			token:         "github-token",
+			repo:          "username/repo",
+			expectedError: `Get /repos/username/repo/releases/latest: unsupported protocol scheme ""`,
+		},
+		{
+			name: "BadStatusCode",
+			mockResponses: []mockHTTP{
+				{"GET", "/repos/{owner}/{repo}/releases/latest", 403, ``},
+			},
+			token:         "github-token",
+			repo:          "username/repo",
+			expectedError: `GET /repos/username/repo/releases/latest 403: `,
+		},
+		{
+			name: "Success",
+			mockResponses: []mockHTTP{
+				{
+					"GET", "/repos/{owner}/{repo}/releases/latest", 200, `{
+						"id": 1,
+						"tag_name": "v0.1.0",
+						"target_commitish": "master",
+						"name": "0.1.0",
+						"body": "comment",
+						"draft": false,
+						"prerelease": false
+					}`,
+				},
+			},
+			token: "github-token",
+			repo:  "username/repo",
+			expectedLatestRelease: GitHubRelease{
+				ID:         1,
+				Name:       "0.1.0",
+				TagName:    "v0.1.0",
+				Target:     "master",
+				Draft:      false,
+				Prerelease: false,
+				Body:       "comment",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := &GitHubGetLatestRelease{
+				Client: &http.Client{},
+				Ctx:    context.Background(),
+				Token:  tc.token,
+				Repo:   tc.repo,
+			}
+
+			if len(tc.mockResponses) > 0 {
+				h := createMockHTTPServer(tc.mockResponses...)
+				ts := httptest.NewServer(h)
+				defer ts.Close()
+
+				step.BaseURL = ts.URL
+			}
+
+			err := step.Run()
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedLatestRelease, step.Result.LatestRelease)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitHubGetLatestReleaseRevert(t *testing.T) {
+	tests := []struct {
+		name          string
+		token         string
+		repo          string
+		expectedError string
+	}{
+		{
+			name:  "Success",
+			token: "github-token",
+			repo:  "username/repo",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := &GitHubGetLatestRelease{
+				Client: &http.Client{},
+				Ctx:    context.Background(),
+				Token:  tc.token,
+				Repo:   tc.repo,
+			}
+
+			err := step.Revert()
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
 func TestGitHubCreateReleaseDry(t *testing.T) {
 	tests := []struct {
 		name          string

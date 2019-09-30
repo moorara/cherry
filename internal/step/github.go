@@ -190,6 +190,80 @@ func (s *GitHubBranchProtection) Revert() error {
 	return nil
 }
 
+// GitHubGetLatestRelease gets the latest release.
+// See https://developer.github.com/v3/repos/releases/#get-the-latest-release
+type GitHubGetLatestRelease struct {
+	Client  *http.Client
+	Ctx     context.Context
+	BaseURL string
+	Token   string
+	Repo    string
+	Result  struct {
+		LatestRelease GitHubRelease
+	}
+}
+
+func (s *GitHubGetLatestRelease) makeRequest() (*GitHubRelease, error) {
+	method := "GET"
+	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
+
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
+	req.Header.Set("Accept", githubAcceptType)
+	req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
+	req.Header.Set("Content-Type", "application/json")
+
+	req = req.WithContext(s.Ctx)
+	res, err := s.Client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return nil, newHTTPError(res)
+	}
+
+	release := new(GitHubRelease)
+	err = json.NewDecoder(res.Body).Decode(release)
+	if err != nil {
+		return nil, err
+	}
+
+	return release, nil
+}
+
+// Dry is a dry run of the step.
+func (s *GitHubGetLatestRelease) Dry() error {
+	_, err := s.makeRequest()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Run executes the step.
+func (s *GitHubGetLatestRelease) Run() error {
+	release, err := s.makeRequest()
+	if err != nil {
+		return err
+	}
+
+	s.Result.LatestRelease = *release
+
+	return nil
+}
+
+// Revert reverts back an executed step.
+func (s *GitHubGetLatestRelease) Revert() error {
+	return nil
+}
+
 // GitHubCreateRelease creates a new GitHub release.
 // See https://developer.github.com/v3/repos/releases/#get-the-latest-release
 // See https://developer.github.com/v3/repos/releases/#create-a-release
