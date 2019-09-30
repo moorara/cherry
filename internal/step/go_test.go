@@ -10,6 +10,204 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGoVersionDry(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:    "Success",
+			workDir: "./test",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GoVersion{
+				WorkDir: tc.workDir,
+			}
+
+			err := step.Dry()
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGoVersionRun(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:    "Success",
+			workDir: "./test",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GoVersion{
+				WorkDir: tc.workDir,
+			}
+
+			err := step.Run()
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGoVersionRevert(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:    "Success",
+			workDir: "./test",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GoVersion{
+				WorkDir: tc.workDir,
+			}
+
+			err := step.Revert()
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGoListDry(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		pkg           string
+		expectedError string
+	}{
+		{
+			name:          "InvalidPackage",
+			workDir:       "./test",
+			pkg:           "./cmd",
+			expectedError: "exit status 1: build ./cmd: cannot find module for path ./cmd",
+		},
+		{
+			name:    "Success",
+			workDir: "./test",
+			pkg:     ".",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GoList{
+				WorkDir: tc.workDir,
+				Package: tc.pkg,
+			}
+
+			err := step.Dry()
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGoListRun(t *testing.T) {
+	tests := []struct {
+		name                string
+		workDir             string
+		pkg                 string
+		expectedError       string
+		expectedPackagePath string
+	}{
+		{
+			name:          "InvalidPackage",
+			workDir:       "./test",
+			pkg:           "./cmd",
+			expectedError: "exit status 1: build ./cmd: cannot find module for path ./cmd",
+		},
+		{
+			name:                "Success",
+			workDir:             "./test",
+			pkg:                 ".",
+			expectedPackagePath: "github.com/moorara/cherry/internal/step/test",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GoList{
+				WorkDir: tc.workDir,
+				Package: tc.pkg,
+			}
+
+			err := step.Run()
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedPackagePath, step.Result.PackagePath)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGoListRevert(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		pkg           string
+		expectedError string
+	}{
+		{
+			name:    "Success",
+			workDir: "./test",
+			pkg:     ".",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GoList{
+				WorkDir: tc.workDir,
+				Package: tc.pkg,
+			}
+
+			err := step.Revert()
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
 func TestGoBuildDry(t *testing.T) {
 	tests := []struct {
 		name          string

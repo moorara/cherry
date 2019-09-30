@@ -50,10 +50,13 @@ type GitStatus struct {
 
 // Dry is a dry run of the step.
 func (s *GitStatus) Dry() error {
+	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("git", "status")
 	cmd.Dir = s.WorkDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return err
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -62,13 +65,12 @@ func (s *GitStatus) Dry() error {
 // Run executes the step.
 func (s *GitStatus) Run() error {
 	var stdout, stderr bytes.Buffer
-
 	cmd := exec.Command("git", "status", "--porcelain")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	s.Result.IsClean = len(stdout.String()) == 0
@@ -92,10 +94,13 @@ type GitGetRepo struct {
 
 // Dry is a dry run of the step.
 func (s *GitGetRepo) Dry() error {
+	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("git", "remote")
 	cmd.Dir = s.WorkDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return err
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -105,13 +110,12 @@ func (s *GitGetRepo) Dry() error {
 func (s *GitGetRepo) Run() error {
 	var err error
 	var stdout, stderr bytes.Buffer
-
 	cmd := exec.Command("git", "remote", "-v")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	s.Result.Owner, s.Result.Name, err = parseGitURL(stdout.String())
@@ -137,10 +141,13 @@ type GitGetBranch struct {
 
 // Dry is a dry run of the step.
 func (s *GitGetBranch) Dry() error {
+	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
 	cmd.Dir = s.WorkDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return err
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -149,13 +156,12 @@ func (s *GitGetBranch) Dry() error {
 // Run executes the step.
 func (s *GitGetBranch) Run() error {
 	var stdout, stderr bytes.Buffer
-
 	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	s.Result.Name = strings.Trim(stdout.String(), "\n")
@@ -179,10 +185,13 @@ type GitGetHEAD struct {
 
 // Dry is a dry run of the step.
 func (s *GitGetHEAD) Dry() error {
+	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("git", "rev-parse", "HEAD")
 	cmd.Dir = s.WorkDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return err
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -190,15 +199,13 @@ func (s *GitGetHEAD) Dry() error {
 
 // Run executes the step.
 func (s *GitGetHEAD) Run() error {
-	var cmd *exec.Cmd
 	var stdout, stderr bytes.Buffer
-
-	cmd = exec.Command("git", "rev-parse", "HEAD")
+	cmd := exec.Command("git", "rev-parse", "HEAD")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	s.Result.SHA = strings.Trim(stdout.String(), "\n")
@@ -220,11 +227,14 @@ type GitAdd struct {
 
 // Dry is a dry run of the step.
 func (s *GitAdd) Dry() error {
+	var stdout, stderr bytes.Buffer
 	args := append([]string{"add", "--dry-run"}, s.Files...)
 	cmd := exec.Command("git", args...)
 	cmd.Dir = s.WorkDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return err
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -233,15 +243,13 @@ func (s *GitAdd) Dry() error {
 // Run executes the step.
 func (s *GitAdd) Run() error {
 	var stdout, stderr bytes.Buffer
-
-	// git add <files>
 	args := append([]string{"add"}, s.Files...)
 	cmd := exec.Command("git", args...)
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -258,7 +266,7 @@ func (s *GitAdd) Revert() error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -272,10 +280,13 @@ type GitCommit struct {
 
 // Dry is a dry run of the step.
 func (s *GitCommit) Dry() error {
+	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("git", "commit", "--dry-run", "-m", s.Message)
 	cmd.Dir = s.WorkDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return err
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -284,14 +295,12 @@ func (s *GitCommit) Dry() error {
 // Run executes the step.
 func (s *GitCommit) Run() error {
 	var stdout, stderr bytes.Buffer
-
-	// git commit -m <message>
 	cmd := exec.Command("git", "commit", "-m", s.Message)
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -307,7 +316,7 @@ func (s *GitCommit) Revert() error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -322,10 +331,13 @@ type GitTag struct {
 
 // Dry is a dry run of the step.
 func (s *GitTag) Dry() error {
+	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("git", "tag")
 	cmd.Dir = s.WorkDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return err
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -335,7 +347,6 @@ func (s *GitTag) Dry() error {
 func (s *GitTag) Run() error {
 	var stdout, stderr bytes.Buffer
 
-	// git tag [...] <tag>
 	var cmd *exec.Cmd
 	if s.Annotation == "" {
 		cmd = exec.Command("git", "tag", s.Tag)
@@ -347,7 +358,7 @@ func (s *GitTag) Run() error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -363,7 +374,7 @@ func (s *GitTag) Revert() error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -376,11 +387,13 @@ type GitPush struct {
 
 // Dry is a dry run of the step.
 func (s *GitPush) Dry() error {
-	// Really hard to test dry-run!
+	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("git", "remote", "get-url", "origin")
 	cmd.Dir = s.WorkDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return err
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -389,14 +402,12 @@ func (s *GitPush) Dry() error {
 // Run executes the step.
 func (s *GitPush) Run() error {
 	var stdout, stderr bytes.Buffer
-
-	// git push
 	cmd := exec.Command("git", "push")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -416,11 +427,13 @@ type GitPushTag struct {
 
 // Dry is a dry run of the step.
 func (s *GitPushTag) Dry() error {
-	// Really hard to test dry-run!
+	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("git", "remote", "get-url", "origin")
 	cmd.Dir = s.WorkDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return err
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -429,14 +442,12 @@ func (s *GitPushTag) Dry() error {
 // Run executes the step.
 func (s *GitPushTag) Run() error {
 	var stdout, stderr bytes.Buffer
-
-	// git push
 	cmd := exec.Command("git", "push", "origin", s.Tag)
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -455,11 +466,13 @@ type GitPull struct {
 
 // Dry is a dry run of the step.
 func (s *GitPull) Dry() error {
-	// Really hard to test dry-run!
+	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("git", "remote", "get-url", "origin")
 	cmd.Dir = s.WorkDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return err
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -468,14 +481,12 @@ func (s *GitPull) Dry() error {
 // Run executes the step.
 func (s *GitPull) Run() error {
 	var stdout, stderr bytes.Buffer
-
-	// git tag ...
 	cmd := exec.Command("git", "pull")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil

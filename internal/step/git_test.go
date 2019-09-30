@@ -101,8 +101,8 @@ func TestGitStatus(t *testing.T) {
 		{
 			name:     "Error",
 			workDir:  os.TempDir(),
-			dryError: "exit status 128",
-			runError: "exit status 128: fatal: not a git repository",
+			dryError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			runError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
 			name:     "Success",
@@ -124,7 +124,7 @@ func TestGitStatus(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.dryError)
+				assert.Equal(t, tc.dryError, err.Error())
 			}
 
 			// Test Run
@@ -134,7 +134,7 @@ func TestGitStatus(t *testing.T) {
 				// TODO: Test results (IsClean)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.runError)
+				assert.Equal(t, tc.runError, err.Error())
 			}
 
 			// Test Revert
@@ -154,8 +154,8 @@ func TestGitGetRepo(t *testing.T) {
 		{
 			name:     "Error",
 			workDir:  os.TempDir(),
-			dryError: "exit status 128",
-			runError: "exit status 128: fatal: not a git repository",
+			dryError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			runError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
 			name:     "Success",
@@ -177,7 +177,7 @@ func TestGitGetRepo(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.dryError)
+				assert.Equal(t, tc.dryError, err.Error())
 			}
 
 			// Test Run
@@ -188,7 +188,7 @@ func TestGitGetRepo(t *testing.T) {
 				assert.NotEmpty(t, step.Result.Name)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.runError)
+				assert.Equal(t, tc.runError, err.Error())
 			}
 
 			// Test Revert
@@ -208,8 +208,8 @@ func TestGitGetBranch(t *testing.T) {
 		{
 			name:     "Error",
 			workDir:  os.TempDir(),
-			dryError: "exit status 128",
-			runError: "exit status 128: fatal: not a git repository",
+			dryError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			runError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
 			name:     "Success",
@@ -231,7 +231,7 @@ func TestGitGetBranch(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.dryError)
+				assert.Equal(t, tc.dryError, err.Error())
 			}
 
 			// Test Run
@@ -241,7 +241,7 @@ func TestGitGetBranch(t *testing.T) {
 				assert.NotEmpty(t, step.Result.Name)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.runError)
+				assert.Equal(t, tc.runError, err.Error())
 			}
 
 			// Test Revert
@@ -261,8 +261,8 @@ func TestGitGetHEAD(t *testing.T) {
 		{
 			name:     "Error",
 			workDir:  os.TempDir(),
-			dryError: "exit status 128",
-			runError: "exit status 128: fatal: not a git repository",
+			dryError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			runError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
 			name:     "FullSHA",
@@ -290,7 +290,7 @@ func TestGitGetHEAD(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.dryError)
+				assert.Equal(t, tc.dryError, err.Error())
 			}
 
 			// Test Run
@@ -301,7 +301,7 @@ func TestGitGetHEAD(t *testing.T) {
 				assert.Len(t, step.Result.ShortSHA, 7)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.runError)
+				assert.Equal(t, tc.runError, err.Error())
 			}
 
 			// Test Revert
@@ -324,11 +324,10 @@ func TestGitAdd(t *testing.T) {
 			name:        "Error",
 			workDir:     os.TempDir(),
 			files:       []string{"."},
-			dryError:    "exit status 128",
-			runError:    "exit status 128: fatal: not a git repository",
-			revertError: "exit status 128: fatal: not a git repository",
+			dryError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			runError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			revertError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
-		// TODO: Test happy path
 	}
 
 	for _, tc := range tests {
@@ -344,7 +343,7 @@ func TestGitAdd(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.dryError)
+				assert.Equal(t, tc.dryError, err.Error())
 			}
 
 			// Test Run
@@ -353,7 +352,7 @@ func TestGitAdd(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.runError)
+				assert.Equal(t, tc.runError, err.Error())
 			}
 
 			// Test Revert
@@ -362,7 +361,7 @@ func TestGitAdd(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.revertError)
+				assert.Equal(t, tc.revertError, err.Error())
 			}
 		})
 	}
@@ -381,11 +380,10 @@ func TestGitCommit(t *testing.T) {
 			name:        "Error",
 			workDir:     os.TempDir(),
 			message:     "test message",
-			dryError:    "exit status 128",
-			runError:    "exit status 128: fatal: not a git repository",
-			revertError: "exit status 128: fatal: not a git repository",
+			dryError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			runError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			revertError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
-		// TODO: Test happy path
 	}
 
 	for _, tc := range tests {
@@ -401,7 +399,7 @@ func TestGitCommit(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.dryError)
+				assert.Equal(t, tc.dryError, err.Error())
 			}
 
 			// Test Run
@@ -410,7 +408,7 @@ func TestGitCommit(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.runError)
+				assert.Equal(t, tc.runError, err.Error())
 			}
 
 			// Test Revert
@@ -419,7 +417,7 @@ func TestGitCommit(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.revertError)
+				assert.Equal(t, tc.revertError, err.Error())
 			}
 		})
 	}
@@ -440,20 +438,19 @@ func TestGitTag(t *testing.T) {
 			workDir:     os.TempDir(),
 			tag:         "test-tag",
 			annotation:  "",
-			dryError:    "exit status 128",
-			runError:    "exit status 128: fatal: not a git repository",
-			revertError: "exit status 128: fatal: not a git repository",
+			dryError:    "exit status 128: fatal: not a git repository (or any of the parent directories): .git",
+			runError:    "exit status 128: fatal: not a git repository (or any of the parent directories): .git",
+			revertError: "exit status 128: fatal: not a git repository (or any of the parent directories): .git",
 		},
 		{
 			name:        "Error",
 			workDir:     os.TempDir(),
 			tag:         "test-tag",
 			annotation:  "annotation message",
-			dryError:    "exit status 128",
-			runError:    "exit status 128: fatal: not a git repository",
-			revertError: "exit status 128: fatal: not a git repository",
+			dryError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			runError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			revertError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
-		// TODO: Test happy path
 	}
 
 	for _, tc := range tests {
@@ -470,7 +467,7 @@ func TestGitTag(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.dryError)
+				assert.Equal(t, tc.dryError, err.Error())
 			}
 
 			// Test Run
@@ -479,7 +476,7 @@ func TestGitTag(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.runError)
+				assert.Equal(t, tc.runError, err.Error())
 			}
 
 			// Test Revert
@@ -488,7 +485,7 @@ func TestGitTag(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.revertError)
+				assert.Equal(t, tc.revertError, err.Error())
 			}
 		})
 	}
@@ -505,11 +502,10 @@ func TestGitPush(t *testing.T) {
 		{
 			name:        "Error",
 			workDir:     os.TempDir(),
-			dryError:    "exit status 128",
-			runError:    "exit status 128: fatal: not a git repository",
-			revertError: "cannot revert git push",
+			dryError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			runError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			revertError: `cannot revert git push`,
 		},
-		// TODO: Test happy path
 	}
 
 	for _, tc := range tests {
@@ -524,7 +520,7 @@ func TestGitPush(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.dryError)
+				assert.Equal(t, tc.dryError, err.Error())
 			}
 
 			// Test Run
@@ -533,7 +529,7 @@ func TestGitPush(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.runError)
+				assert.Equal(t, tc.runError, err.Error())
 			}
 
 			// Test Revert
@@ -542,7 +538,7 @@ func TestGitPush(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.revertError)
+				assert.Equal(t, tc.revertError, err.Error())
 			}
 		})
 	}
@@ -561,11 +557,10 @@ func TestGitPushTag(t *testing.T) {
 			name:        "Error",
 			workDir:     os.TempDir(),
 			tag:         "v0.1.0",
-			dryError:    "exit status 128",
-			runError:    "exit status 128: fatal: not a git repository",
-			revertError: "cannot revert git push",
+			dryError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			runError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			revertError: `cannot revert git push`,
 		},
-		// TODO: Test happy path
 	}
 
 	for _, tc := range tests {
@@ -581,7 +576,7 @@ func TestGitPushTag(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.dryError)
+				assert.Equal(t, tc.dryError, err.Error())
 			}
 
 			// Test Run
@@ -590,7 +585,7 @@ func TestGitPushTag(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.runError)
+				assert.Equal(t, tc.runError, err.Error())
 			}
 
 			// Test Revert
@@ -599,7 +594,7 @@ func TestGitPushTag(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.revertError)
+				assert.Equal(t, tc.revertError, err.Error())
 			}
 		})
 	}
@@ -616,11 +611,10 @@ func TestGitPull(t *testing.T) {
 		{
 			name:        "Error",
 			workDir:     os.TempDir(),
-			dryError:    "exit status 128",
-			runError:    "exit status 128: fatal: not a git repository",
-			revertError: "cannot revert git pull",
+			dryError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			runError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			revertError: `cannot revert git pull`,
 		},
-		// TODO: Test happy path
 	}
 
 	for _, tc := range tests {
@@ -635,7 +629,7 @@ func TestGitPull(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.dryError)
+				assert.Equal(t, tc.dryError, err.Error())
 			}
 
 			// Test Run
@@ -644,7 +638,7 @@ func TestGitPull(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.runError)
+				assert.Equal(t, tc.runError, err.Error())
 			}
 
 			// Test Revert
@@ -653,7 +647,7 @@ func TestGitPull(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tc.revertError)
+				assert.Equal(t, tc.revertError, err.Error())
 			}
 		})
 	}

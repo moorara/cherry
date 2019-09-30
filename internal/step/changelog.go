@@ -31,15 +31,18 @@ type ChangelogGenerate struct {
 
 // Dry is a dry run of the step
 func (s *ChangelogGenerate) Dry() error {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
+	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(s.Ctx, "github_changelog_generator", "--version")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s %s", err.Error(), stdout.String(), stderr.String())
+		return fmt.Errorf(
+			"%s: %s %s",
+			err.Error(),
+			strings.Trim(stdout.String(), "\n"),
+			strings.Trim(stderr.String(), "\n"),
+		)
 	}
 
 	return nil
@@ -47,8 +50,7 @@ func (s *ChangelogGenerate) Dry() error {
 
 // Run executes the step
 func (s *ChangelogGenerate) Run() error {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	var stdout, stderr bytes.Buffer
 
 	cmd := exec.CommandContext(s.Ctx,
 		"github_changelog_generator",
@@ -63,7 +65,12 @@ func (s *ChangelogGenerate) Run() error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s %s", err.Error(), stdout.String(), stderr.String())
+		return fmt.Errorf(
+			"%s: %s %s",
+			err.Error(),
+			strings.Trim(stdout.String(), "\n"),
+			strings.Trim(stderr.String(), "\n"),
+		)
 	}
 
 	file, err := os.Open(filepath.Join(s.WorkDir, changelogFilename))

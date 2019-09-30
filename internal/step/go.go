@@ -11,6 +11,93 @@ import (
 	"strings"
 )
 
+// GoVersion runs `go version` command.
+type GoVersion struct {
+	WorkDir string
+	Result  struct {
+		Version string
+	}
+}
+
+// Dry is a dry run of the step.
+func (s *GoVersion) Dry() error {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("go", "version")
+	cmd.Dir = s.WorkDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+	}
+
+	return nil
+}
+
+// Run executes the step.
+func (s *GoVersion) Run() error {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("go", "version")
+	cmd.Dir = s.WorkDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+	}
+
+	s.Result.Version = stdout.String()
+
+	return nil
+}
+
+// Revert reverts back an executed step.
+func (s *GoVersion) Revert() error {
+	return nil
+}
+
+// GoList runs `go list ...` command.
+type GoList struct {
+	WorkDir string
+	Package string
+	Result  struct {
+		PackagePath string
+	}
+}
+
+// Dry is a dry run of the step.
+func (s *GoList) Dry() error {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("go", "list", s.Package)
+	cmd.Dir = s.WorkDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+	}
+
+	return nil
+}
+
+// Run executes the step.
+func (s *GoList) Run() error {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("go", "list", s.Package)
+	cmd.Dir = s.WorkDir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+	}
+
+	s.Result.PackagePath = strings.Trim(stdout.String(), "\n")
+
+	return nil
+}
+
+// Revert reverts back an executed step.
+func (s *GoList) Revert() error {
+	return nil
+}
+
 // GoBuild runs `go build ...` command.
 type GoBuild struct {
 	WorkDir    string
@@ -38,15 +125,13 @@ func (s *GoBuild) build(binaryFile string) error {
 	}
 	args = append(args, s.MainFile)
 
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
+	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(s.Ctx, "go", args...)
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), stderr.String())
+		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	s.Result.Binaries = append(s.Result.Binaries, binaryFile)
