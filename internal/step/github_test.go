@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 
@@ -878,6 +877,7 @@ func TestGitHubUploadAssetsRun(t *testing.T) {
 		repo               string
 		releaseID          int
 		releaseUploadURL   string
+		assetFiles         []string
 		expectedErrorRegex string
 		expectedAssets     []GitHubAsset
 	}{
@@ -887,7 +887,8 @@ func TestGitHubUploadAssetsRun(t *testing.T) {
 			repo:               "username/repo",
 			releaseID:          2,
 			releaseUploadURL:   "/repos/username/repo/releases/2/assets{?name,label}",
-			expectedErrorRegex: `Post /repos/username/repo/releases/2/assets\?name=asset_(\d+): unsupported protocol scheme ""`,
+			assetFiles:         []string{"./test/asset"},
+			expectedErrorRegex: `Post /repos/username/repo/releases/2/assets?name=asset: unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -898,6 +899,7 @@ func TestGitHubUploadAssetsRun(t *testing.T) {
 			repo:               "username/repo",
 			releaseID:          2,
 			releaseUploadURL:   "https://uploads.github.com/repos/username/repo/releases/2/assets{?name,label}",
+			assetFiles:         []string{"./test/asset"},
 			expectedErrorRegex: `POST /repos/username/repo/releases/2/assets 403: `,
 		},
 		{
@@ -918,6 +920,7 @@ func TestGitHubUploadAssetsRun(t *testing.T) {
 			repo:             "username/repo",
 			releaseID:        2,
 			releaseUploadURL: "https://uploads.github.com/repos/username/repo/releases/2/assets{?name,label}",
+			assetFiles:       []string{"./test/asset"},
 			expectedAssets: []GitHubAsset{
 				{
 					ID:          1,
@@ -940,19 +943,8 @@ func TestGitHubUploadAssetsRun(t *testing.T) {
 				Repo:             tc.repo,
 				ReleaseID:        tc.releaseID,
 				ReleaseUploadURL: tc.releaseUploadURL,
+				AssetFiles:       tc.assetFiles,
 			}
-
-			// Create a temp file as asset file
-			tf, err := ioutil.TempFile("", "asset_")
-			assert.NoError(t, err)
-			defer os.Remove(tf.Name())
-
-			_, err = tf.WriteString("content")
-			assert.NoError(t, err)
-			err = tf.Close()
-			assert.NoError(t, err)
-
-			step.AssetFiles = []string{tf.Name()}
 
 			if len(tc.mockResponses) > 0 {
 				h := createMockHTTPServer(tc.mockResponses...)
@@ -963,12 +955,12 @@ func TestGitHubUploadAssetsRun(t *testing.T) {
 				step.ReleaseUploadURL = strings.Replace(step.ReleaseUploadURL, "https://uploads.github.com", ts.URL, 1)
 			}
 
-			err = step.Run()
+			err := step.Run()
 			if tc.expectedErrorRegex == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Regexp(t, tc.expectedErrorRegex, err.Error())
+				assert.Equal(t, tc.expectedErrorRegex, err.Error())
 			}
 		})
 	}
