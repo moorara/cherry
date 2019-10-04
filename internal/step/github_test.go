@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 
@@ -20,7 +21,7 @@ type mockHTTP struct {
 	ResponseBody string
 }
 
-func createMockHTTPServer(mocks ...mockHTTP) http.Handler {
+func createMockHTTPServer(mocks ...mockHTTP) *httptest.Server {
 	r := mux.NewRouter()
 	for _, m := range mocks {
 		r.Methods(m.Method).Path(m.Path).HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -29,7 +30,7 @@ func createMockHTTPServer(mocks ...mockHTTP) http.Handler {
 		})
 	}
 
-	return r
+	return httptest.NewServer(r)
 }
 
 func TestHTTPError(t *testing.T) {
@@ -143,8 +144,7 @@ func TestGitHubBranchProtectionDry(t *testing.T) {
 			}
 
 			if len(tc.mockResponses) > 0 {
-				h := createMockHTTPServer(tc.mockResponses...)
-				ts := httptest.NewServer(h)
+				ts := createMockHTTPServer(tc.mockResponses...)
 				defer ts.Close()
 
 				step.BaseURL = ts.URL
@@ -224,8 +224,7 @@ func TestGitHubBranchProtectionRun(t *testing.T) {
 			}
 
 			if len(tc.mockResponses) > 0 {
-				h := createMockHTTPServer(tc.mockResponses...)
-				ts := httptest.NewServer(h)
+				ts := createMockHTTPServer(tc.mockResponses...)
 				defer ts.Close()
 
 				step.BaseURL = ts.URL
@@ -305,8 +304,7 @@ func TestGitHubBranchProtectionRevert(t *testing.T) {
 			}
 
 			if len(tc.mockResponses) > 0 {
-				h := createMockHTTPServer(tc.mockResponses...)
-				ts := httptest.NewServer(h)
+				ts := createMockHTTPServer(tc.mockResponses...)
 				defer ts.Close()
 
 				step.BaseURL = ts.URL
@@ -376,8 +374,7 @@ func TestGitHubGetLatestReleaseDry(t *testing.T) {
 			}
 
 			if len(tc.mockResponses) > 0 {
-				h := createMockHTTPServer(tc.mockResponses...)
-				ts := httptest.NewServer(h)
+				ts := createMockHTTPServer(tc.mockResponses...)
 				defer ts.Close()
 
 				step.BaseURL = ts.URL
@@ -457,8 +454,7 @@ func TestGitHubGetLatestReleaseRun(t *testing.T) {
 			}
 
 			if len(tc.mockResponses) > 0 {
-				h := createMockHTTPServer(tc.mockResponses...)
-				ts := httptest.NewServer(h)
+				ts := createMockHTTPServer(tc.mockResponses...)
 				defer ts.Close()
 
 				step.BaseURL = ts.URL
@@ -563,8 +559,7 @@ func TestGitHubCreateReleaseDry(t *testing.T) {
 			}
 
 			if len(tc.mockResponses) > 0 {
-				h := createMockHTTPServer(tc.mockResponses...)
-				ts := httptest.NewServer(h)
+				ts := createMockHTTPServer(tc.mockResponses...)
 				defer ts.Close()
 
 				step.BaseURL = ts.URL
@@ -667,8 +662,7 @@ func TestGitHubCreateReleaseRun(t *testing.T) {
 			}
 
 			if len(tc.mockResponses) > 0 {
-				h := createMockHTTPServer(tc.mockResponses...)
-				ts := httptest.NewServer(h)
+				ts := createMockHTTPServer(tc.mockResponses...)
 				defer ts.Close()
 
 				step.BaseURL = ts.URL
@@ -741,8 +735,7 @@ func TestGitHubCreateReleaseRevert(t *testing.T) {
 			step.Result.Release = tc.release
 
 			if len(tc.mockResponses) > 0 {
-				h := createMockHTTPServer(tc.mockResponses...)
-				ts := httptest.NewServer(h)
+				ts := createMockHTTPServer(tc.mockResponses...)
 				defer ts.Close()
 
 				step.BaseURL = ts.URL
@@ -817,8 +810,7 @@ func TestGitHubEditReleaseDry(t *testing.T) {
 			}
 
 			if len(tc.mockResponses) > 0 {
-				h := createMockHTTPServer(tc.mockResponses...)
-				ts := httptest.NewServer(h)
+				ts := createMockHTTPServer(tc.mockResponses...)
 				defer ts.Close()
 
 				step.BaseURL = ts.URL
@@ -909,8 +901,7 @@ func TestGitHubEditReleaseRun(t *testing.T) {
 			}
 
 			if len(tc.mockResponses) > 0 {
-				h := createMockHTTPServer(tc.mockResponses...)
-				ts := httptest.NewServer(h)
+				ts := createMockHTTPServer(tc.mockResponses...)
 				defer ts.Close()
 
 				step.BaseURL = ts.URL
@@ -972,8 +963,7 @@ func TestGitHubEditReleaseRevert(t *testing.T) {
 			}
 
 			if len(tc.mockResponses) > 0 {
-				h := createMockHTTPServer(tc.mockResponses...)
-				ts := httptest.NewServer(h)
+				ts := createMockHTTPServer(tc.mockResponses...)
 				defer ts.Close()
 
 				step.BaseURL = ts.URL
@@ -1038,8 +1028,7 @@ func TestGitHubUploadAssetsDry(t *testing.T) {
 			}
 
 			if len(tc.mockResponses) > 0 {
-				h := createMockHTTPServer(tc.mockResponses...)
-				ts := httptest.NewServer(h)
+				ts := createMockHTTPServer(tc.mockResponses...)
 				defer ts.Close()
 
 				step.BaseURL = ts.URL
@@ -1134,8 +1123,7 @@ func TestGitHubUploadAssetsRun(t *testing.T) {
 			}
 
 			if len(tc.mockResponses) > 0 {
-				h := createMockHTTPServer(tc.mockResponses...)
-				ts := httptest.NewServer(h)
+				ts := createMockHTTPServer(tc.mockResponses...)
 				defer ts.Close()
 
 				step.BaseURL = ts.URL
@@ -1208,14 +1196,209 @@ func TestGitHubUploadAssetsRevert(t *testing.T) {
 			step.Result.Assets = tc.assets
 
 			if len(tc.mockResponses) > 0 {
-				h := createMockHTTPServer(tc.mockResponses...)
-				ts := httptest.NewServer(h)
+				ts := createMockHTTPServer(tc.mockResponses...)
 				defer ts.Close()
 
 				step.BaseURL = ts.URL
 			}
 
 			err := step.Revert()
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitHubDownloadAssetDry(t *testing.T) {
+	tests := []struct {
+		name          string
+		mockResponses []mockHTTP
+		token         string
+		repo          string
+		tag           string
+		assetName     string
+		expectedError string
+	}{
+		{
+			name:          "RequestError",
+			token:         "github-token",
+			repo:          "username/repo",
+			tag:           "v0.2.0",
+			assetName:     "cherry-linux-amd64",
+			expectedError: `Get /username/repo/releases/download/v0.2.0/cherry-linux-amd64: unsupported protocol scheme ""`,
+		},
+		{
+			name: "BadStatusCode",
+			mockResponses: []mockHTTP{
+				{"GET", "/{owner}/{repo}/releases/download/{tag}/{asset}", 403, ``},
+			},
+			token:         "github-token",
+			repo:          "username/repo",
+			tag:           "v0.2.0",
+			assetName:     "cherry-linux-amd64",
+			expectedError: `GET /username/repo/releases/download/v0.2.0/cherry-linux-amd64 403: `,
+		},
+		{
+			name: "Success",
+			mockResponses: []mockHTTP{
+				{"GET", "/{owner}/{repo}/releases/download/{tag}/{asset}", 200, `file content`},
+			},
+			token:     "github-token",
+			repo:      "username/repo",
+			tag:       "v0.2.0",
+			assetName: "cherry-linux-amd64",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := &GitHubDownloadAsset{
+				Client:    &http.Client{},
+				Ctx:       context.Background(),
+				Token:     tc.token,
+				Repo:      tc.repo,
+				Tag:       tc.tag,
+				AssetName: tc.assetName,
+			}
+
+			if len(tc.mockResponses) > 0 {
+				ts := createMockHTTPServer(tc.mockResponses...)
+				defer ts.Close()
+
+				step.BaseURL = ts.URL
+			}
+
+			err := step.Dry()
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitHubDownloadAssetRun(t *testing.T) {
+	tests := []struct {
+		name          string
+		mockResponses []mockHTTP
+		token         string
+		repo          string
+		tag           string
+		assetName     string
+		expectedError string
+		expectedSize  int64
+	}{
+		{
+			name:          "RequestError",
+			token:         "github-token",
+			repo:          "username/repo",
+			tag:           "v0.2.0",
+			assetName:     "cherry-linux-amd64",
+			expectedError: `Get /username/repo/releases/download/v0.2.0/cherry-linux-amd64: unsupported protocol scheme ""`,
+		},
+		{
+			name: "BadStatusCode",
+			mockResponses: []mockHTTP{
+				{"GET", "/{owner}/{repo}/releases/download/{tag}/{asset}", 403, ``},
+			},
+			token:         "github-token",
+			repo:          "username/repo",
+			tag:           "v0.2.0",
+			assetName:     "cherry-linux-amd64",
+			expectedError: `GET /username/repo/releases/download/v0.2.0/cherry-linux-amd64 403: `,
+		},
+		{
+			name: "Success",
+			mockResponses: []mockHTTP{
+				{"GET", "/{owner}/{repo}/releases/download/{tag}/{asset}", 200, `file content`},
+			},
+			token:        "github-token",
+			repo:         "username/repo",
+			tag:          "v0.2.0",
+			assetName:    "cherry-linux-amd64",
+			expectedSize: 12,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := &GitHubDownloadAsset{
+				Client:    &http.Client{},
+				Ctx:       context.Background(),
+				Token:     tc.token,
+				Repo:      tc.repo,
+				Tag:       tc.tag,
+				AssetName: tc.assetName,
+			}
+
+			if len(tc.mockResponses) > 0 {
+				ts := createMockHTTPServer(tc.mockResponses...)
+				defer ts.Close()
+
+				step.BaseURL = ts.URL
+			}
+
+			tf, err := ioutil.TempFile("", "cherry-test-")
+			assert.NoError(t, err)
+			tf.Close()
+			defer os.Remove(tf.Name())
+
+			step.Filepath = tf.Name()
+
+			err = step.Run()
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedSize, step.Result.Size)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitHubDownloadAssetRevert(t *testing.T) {
+	tests := []struct {
+		name          string
+		token         string
+		repo          string
+		tag           string
+		assetName     string
+		expectedError string
+	}{
+		{
+			name:      "Success",
+			token:     "github-token",
+			repo:      "username/repo",
+			tag:       "v0.2.0",
+			assetName: "cherry-linux-amd64",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := &GitHubDownloadAsset{
+				Client:    &http.Client{},
+				Ctx:       context.Background(),
+				Token:     tc.token,
+				Repo:      tc.repo,
+				Tag:       tc.tag,
+				AssetName: tc.assetName,
+			}
+
+			tf, err := ioutil.TempFile("", "cherry-test-")
+			assert.NoError(t, err)
+			tf.Close()
+
+			step.Filepath = tf.Name()
+
+			err = step.Revert()
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {

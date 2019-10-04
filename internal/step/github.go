@@ -95,8 +95,8 @@ func (e *httpError) Error() string {
 type GitHubBranchProtection struct {
 	Client  *http.Client
 	Ctx     context.Context
-	BaseURL string
 	Token   string
+	BaseURL string
 	Repo    string
 	Branch  string
 	Enabled bool
@@ -117,11 +117,12 @@ func (s *GitHubBranchProtection) makeRequest(method string) (map[string]interfac
 		return nil, err
 	}
 
+	req = req.WithContext(s.Ctx)
+
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 	req.Header.Set("Accept", githubAcceptType)
 	req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
 
-	req = req.WithContext(s.Ctx)
 	res, err := s.Client.Do(req)
 	if err != nil {
 		return nil, err
@@ -195,8 +196,8 @@ func (s *GitHubBranchProtection) Revert() error {
 type GitHubGetLatestRelease struct {
 	Client  *http.Client
 	Ctx     context.Context
-	BaseURL string
 	Token   string
+	BaseURL string
 	Repo    string
 	Result  struct {
 		LatestRelease GitHubRelease
@@ -212,12 +213,13 @@ func (s *GitHubGetLatestRelease) makeRequest() (*GitHubRelease, error) {
 		return nil, err
 	}
 
+	req = req.WithContext(s.Ctx)
+
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 	req.Header.Set("Accept", githubAcceptType)
 	req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
 	req.Header.Set("Content-Type", "application/json")
 
-	req = req.WithContext(s.Ctx)
 	res, err := s.Client.Do(req)
 	if err != nil {
 		return nil, err
@@ -271,8 +273,8 @@ func (s *GitHubGetLatestRelease) Revert() error {
 type GitHubCreateRelease struct {
 	Client      *http.Client
 	Ctx         context.Context
-	BaseURL     string
 	Token       string
+	BaseURL     string
 	Repo        string
 	ReleaseData GitHubReleaseData
 	Result      struct {
@@ -296,12 +298,13 @@ func (s *GitHubCreateRelease) makeRequest(method, url string, body io.Reader) (*
 		return nil, err
 	}
 
+	req = req.WithContext(s.Ctx)
+
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 	req.Header.Set("Accept", githubAcceptType)
 	req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
 	req.Header.Set("Content-Type", "application/json")
 
-	req = req.WithContext(s.Ctx)
 	res, err := s.Client.Do(req)
 	if err != nil {
 		return nil, err
@@ -375,8 +378,8 @@ func (s *GitHubCreateRelease) Revert() error {
 type GitHubEditRelease struct {
 	Client      *http.Client
 	Ctx         context.Context
-	BaseURL     string
 	Token       string
+	BaseURL     string
 	Repo        string
 	ReleaseID   int
 	ReleaseData GitHubReleaseData
@@ -399,12 +402,13 @@ func (s *GitHubEditRelease) makeRequest(method, url string, body io.Reader) (*Gi
 		return nil, err
 	}
 
+	req = req.WithContext(s.Ctx)
+
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 	req.Header.Set("Accept", githubAcceptType)
 	req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
 	req.Header.Set("Content-Type", "application/json")
 
-	req = req.WithContext(s.Ctx)
 	res, err := s.Client.Do(req)
 	if err != nil {
 		return nil, err
@@ -468,8 +472,8 @@ func (s *GitHubEditRelease) Revert() error {
 type GitHubUploadAssets struct {
 	Client           *http.Client
 	Ctx              context.Context
-	BaseURL          string
 	Token            string
+	BaseURL          string
 	Repo             string
 	ReleaseID        int
 	ReleaseUploadURL string
@@ -489,12 +493,13 @@ func (s *GitHubUploadAssets) Dry() error {
 		return err
 	}
 
+	req = req.WithContext(s.Ctx)
+
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 	req.Header.Set("Accept", githubAcceptType)
 	req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
 	req.Header.Set("Content-Type", "application/json")
 
-	req = req.WithContext(s.Ctx)
 	res, err := s.Client.Do(req)
 	if err != nil {
 		return err
@@ -531,13 +536,14 @@ func (s *GitHubUploadAssets) Run() error {
 			return err
 		}
 
+		req = req.WithContext(s.Ctx)
+
 		req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 		req.Header.Set("Accept", githubAcceptType)
 		req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
 		req.Header.Set("Content-Type", content.MIMEType)
 		req.ContentLength = content.Length
 
-		req = req.WithContext(s.Ctx)
 		res, err := s.Client.Do(req)
 		if err != nil {
 			return err
@@ -573,12 +579,13 @@ func (s *GitHubUploadAssets) Revert() error {
 			return err
 		}
 
+		req = req.WithContext(s.Ctx)
+
 		req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 		req.Header.Set("Accept", githubAcceptType)
 		req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
 		req.Header.Set("Content-Type", "application/json")
 
-		req = req.WithContext(s.Ctx)
 		res, err := s.Client.Do(req)
 		if err != nil {
 			return err
@@ -633,4 +640,84 @@ func getUploadContent(filepath string) (*uploadContent, error) {
 		Length:   stat.Size(),
 		MIMEType: mimeType,
 	}, nil
+}
+
+// GitHubDownloadAsset downloads an asset file and writes to a local file.
+type GitHubDownloadAsset struct {
+	Client    *http.Client
+	Ctx       context.Context
+	Token     string
+	BaseURL   string
+	Repo      string
+	Tag       string
+	AssetName string
+	Filepath  string
+	Result    struct {
+		Size int64
+	}
+}
+
+func (s *GitHubDownloadAsset) makeRequest() (io.ReadCloser, error) {
+	method := "GET"
+	url := fmt.Sprintf("%s/%s/releases/download/%s/%s", s.BaseURL, s.Repo, s.Tag, s.AssetName)
+
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(s.Ctx)
+
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
+	req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
+
+	res, err := s.Client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != 200 {
+		return nil, newHTTPError(res)
+	}
+
+	return res.Body, nil
+}
+
+// Dry is a dry run of the step.
+func (s *GitHubDownloadAsset) Dry() error {
+	body, err := s.makeRequest()
+	if err != nil {
+		return err
+	}
+	defer body.Close()
+
+	return nil
+}
+
+// Run executes the step.
+func (s *GitHubDownloadAsset) Run() error {
+	body, err := s.makeRequest()
+	if err != nil {
+		return err
+	}
+	defer body.Close()
+
+	file, err := os.OpenFile(s.Filepath, os.O_WRONLY, 0755)
+	if err != nil {
+		return err
+	}
+
+	size, err := io.Copy(file, body)
+	if err != nil {
+		return err
+	}
+
+	s.Result.Size = size
+
+	return nil
+}
+
+// Revert reverts back an executed step.
+func (s *GitHubDownloadAsset) Revert() error {
+	return os.Remove(s.Filepath)
 }
