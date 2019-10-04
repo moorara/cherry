@@ -11,6 +11,7 @@ import (
 func TestChangelogGenerateDry(t *testing.T) {
 	tests := []struct {
 		name          string
+		workDir       string
 		gitHubToken   string
 		repo          string
 		tag           string
@@ -18,6 +19,7 @@ func TestChangelogGenerateDry(t *testing.T) {
 	}{
 		{
 			name:        "Success",
+			workDir:     os.TempDir(),
 			gitHubToken: "github-token",
 			repo:        "username/repo",
 			tag:         "v0.1.0",
@@ -27,13 +29,15 @@ func TestChangelogGenerateDry(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			step := ChangelogGenerate{
-				Ctx:         context.Background(),
+				WorkDir:     tc.workDir,
 				GitHubToken: tc.gitHubToken,
 				Repo:        tc.repo,
 				Tag:         tc.tag,
 			}
 
-			err := step.Dry()
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -68,13 +72,14 @@ func TestChangelogGenerateRun(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := ChangelogGenerate{
 				WorkDir:     tc.workDir,
-				Ctx:         context.Background(),
 				GitHubToken: tc.gitHubToken,
 				Repo:        tc.repo,
 				Tag:         tc.tag,
 			}
 
-			err := step.Run()
+			ctx := context.Background()
+			err := step.Run(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedFilename, step.Result.Filename)
@@ -110,13 +115,14 @@ func TestChangelogGenerateRevert(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := ChangelogGenerate{
 				WorkDir:     tc.workDir,
-				Ctx:         context.Background(),
 				GitHubToken: tc.gitHubToken,
 				Repo:        tc.repo,
 				Tag:         tc.tag,
 			}
 
-			err := step.Revert()
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {

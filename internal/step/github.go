@@ -99,7 +99,6 @@ func (e *httpError) Error() string {
 // See https://developer.github.com/v3/repos/branches/#remove-admin-enforcement-of-protected-branch
 type GitHubBranchProtection struct {
 	Client  *http.Client
-	Ctx     context.Context
 	Token   string
 	BaseURL string
 	Repo    string
@@ -107,7 +106,7 @@ type GitHubBranchProtection struct {
 	Enabled bool
 }
 
-func (s *GitHubBranchProtection) makeRequest(method string) (map[string]interface{}, error) {
+func (s *GitHubBranchProtection) makeRequest(ctx context.Context, method string) (map[string]interface{}, error) {
 	var statusCode int
 	switch method {
 	case "GET", "POST":
@@ -122,7 +121,7 @@ func (s *GitHubBranchProtection) makeRequest(method string) (map[string]interfac
 		return nil, err
 	}
 
-	req = req.WithContext(s.Ctx)
+	req = req.WithContext(ctx)
 
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 	req.Header.Set("Accept", githubAcceptType)
@@ -153,8 +152,8 @@ func (s *GitHubBranchProtection) makeRequest(method string) (map[string]interfac
 }
 
 // Dry is a dry run of the step.
-func (s *GitHubBranchProtection) Dry() error {
-	_, err := s.makeRequest("GET")
+func (s *GitHubBranchProtection) Dry(ctx context.Context) error {
+	_, err := s.makeRequest(ctx, "GET")
 	if err != nil {
 		return err
 	}
@@ -163,7 +162,7 @@ func (s *GitHubBranchProtection) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitHubBranchProtection) Run() error {
+func (s *GitHubBranchProtection) Run(ctx context.Context) error {
 	var method string
 	if s.Enabled {
 		method = "POST"
@@ -171,7 +170,7 @@ func (s *GitHubBranchProtection) Run() error {
 		method = "DELETE"
 	}
 
-	_, err := s.makeRequest(method)
+	_, err := s.makeRequest(ctx, method)
 	if err != nil {
 		return err
 	}
@@ -180,7 +179,7 @@ func (s *GitHubBranchProtection) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitHubBranchProtection) Revert() error {
+func (s *GitHubBranchProtection) Revert(ctx context.Context) error {
 	var method string
 	if s.Enabled {
 		method = "DELETE"
@@ -188,7 +187,7 @@ func (s *GitHubBranchProtection) Revert() error {
 		method = "POST"
 	}
 
-	_, err := s.makeRequest(method)
+	_, err := s.makeRequest(ctx, method)
 	if err != nil {
 		return err
 	}
@@ -200,7 +199,6 @@ func (s *GitHubBranchProtection) Revert() error {
 // See https://developer.github.com/v3/repos/releases/#get-the-latest-release
 type GitHubGetLatestRelease struct {
 	Client  *http.Client
-	Ctx     context.Context
 	Token   string
 	BaseURL string
 	Repo    string
@@ -209,7 +207,7 @@ type GitHubGetLatestRelease struct {
 	}
 }
 
-func (s *GitHubGetLatestRelease) makeRequest() (*GitHubRelease, error) {
+func (s *GitHubGetLatestRelease) makeRequest(ctx context.Context) (*GitHubRelease, error) {
 	method := "GET"
 	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
 
@@ -218,7 +216,7 @@ func (s *GitHubGetLatestRelease) makeRequest() (*GitHubRelease, error) {
 		return nil, err
 	}
 
-	req = req.WithContext(s.Ctx)
+	req = req.WithContext(ctx)
 
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 	req.Header.Set("Accept", githubAcceptType)
@@ -245,8 +243,8 @@ func (s *GitHubGetLatestRelease) makeRequest() (*GitHubRelease, error) {
 }
 
 // Dry is a dry run of the step.
-func (s *GitHubGetLatestRelease) Dry() error {
-	_, err := s.makeRequest()
+func (s *GitHubGetLatestRelease) Dry(ctx context.Context) error {
+	_, err := s.makeRequest(ctx)
 	if err != nil {
 		return err
 	}
@@ -255,8 +253,8 @@ func (s *GitHubGetLatestRelease) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitHubGetLatestRelease) Run() error {
-	release, err := s.makeRequest()
+func (s *GitHubGetLatestRelease) Run(ctx context.Context) error {
+	release, err := s.makeRequest(ctx)
 	if err != nil {
 		return err
 	}
@@ -267,7 +265,7 @@ func (s *GitHubGetLatestRelease) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitHubGetLatestRelease) Revert() error {
+func (s *GitHubGetLatestRelease) Revert(ctx context.Context) error {
 	return nil
 }
 
@@ -277,7 +275,6 @@ func (s *GitHubGetLatestRelease) Revert() error {
 // See https://developer.github.com/v3/repos/releases/#delete-a-release
 type GitHubCreateRelease struct {
 	Client      *http.Client
-	Ctx         context.Context
 	Token       string
 	BaseURL     string
 	Repo        string
@@ -287,7 +284,7 @@ type GitHubCreateRelease struct {
 	}
 }
 
-func (s *GitHubCreateRelease) makeRequest(method, url string, body io.Reader) (*GitHubRelease, error) {
+func (s *GitHubCreateRelease) makeRequest(ctx context.Context, method, url string, body io.Reader) (*GitHubRelease, error) {
 	var statusCode int
 	switch method {
 	case "GET":
@@ -303,7 +300,7 @@ func (s *GitHubCreateRelease) makeRequest(method, url string, body io.Reader) (*
 		return nil, err
 	}
 
-	req = req.WithContext(s.Ctx)
+	req = req.WithContext(ctx)
 
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 	req.Header.Set("Accept", githubAcceptType)
@@ -334,11 +331,11 @@ func (s *GitHubCreateRelease) makeRequest(method, url string, body io.Reader) (*
 }
 
 // Dry is a dry run of the step.
-func (s *GitHubCreateRelease) Dry() error {
+func (s *GitHubCreateRelease) Dry(ctx context.Context) error {
 	method := "GET"
 	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
 
-	_, err := s.makeRequest(method, url, nil)
+	_, err := s.makeRequest(ctx, method, url, nil)
 	if err != nil {
 		return err
 	}
@@ -347,14 +344,14 @@ func (s *GitHubCreateRelease) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitHubCreateRelease) Run() error {
+func (s *GitHubCreateRelease) Run(ctx context.Context) error {
 	method := "POST"
 	url := fmt.Sprintf("%s/repos/%s/releases", s.BaseURL, s.Repo)
 
 	body := new(bytes.Buffer)
 	json.NewEncoder(body).Encode(s.ReleaseData)
 
-	release, err := s.makeRequest(method, url, body)
+	release, err := s.makeRequest(ctx, method, url, body)
 	if err != nil {
 		return err
 	}
@@ -365,11 +362,11 @@ func (s *GitHubCreateRelease) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitHubCreateRelease) Revert() error {
+func (s *GitHubCreateRelease) Revert(ctx context.Context) error {
 	method := "DELETE"
 	url := fmt.Sprintf("%s/repos/%s/releases/%d", s.BaseURL, s.Repo, s.Result.Release.ID)
 
-	_, err := s.makeRequest(method, url, nil)
+	_, err := s.makeRequest(ctx, method, url, nil)
 	if err != nil {
 		return err
 	}
@@ -382,7 +379,6 @@ func (s *GitHubCreateRelease) Revert() error {
 // See https://developer.github.com/v3/repos/releases/#edit-a-release
 type GitHubEditRelease struct {
 	Client      *http.Client
-	Ctx         context.Context
 	Token       string
 	BaseURL     string
 	Repo        string
@@ -393,7 +389,7 @@ type GitHubEditRelease struct {
 	}
 }
 
-func (s *GitHubEditRelease) makeRequest(method, url string, body io.Reader) (*GitHubRelease, error) {
+func (s *GitHubEditRelease) makeRequest(ctx context.Context, method, url string, body io.Reader) (*GitHubRelease, error) {
 	var statusCode int
 	switch method {
 	case "GET":
@@ -407,7 +403,7 @@ func (s *GitHubEditRelease) makeRequest(method, url string, body io.Reader) (*Gi
 		return nil, err
 	}
 
-	req = req.WithContext(s.Ctx)
+	req = req.WithContext(ctx)
 
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 	req.Header.Set("Accept", githubAcceptType)
@@ -434,11 +430,11 @@ func (s *GitHubEditRelease) makeRequest(method, url string, body io.Reader) (*Gi
 }
 
 // Dry is a dry run of the step.
-func (s *GitHubEditRelease) Dry() error {
+func (s *GitHubEditRelease) Dry(ctx context.Context) error {
 	method := "GET"
 	url := fmt.Sprintf("%s/repos/%s/releases/%d", s.BaseURL, s.Repo, s.ReleaseID)
 
-	_, err := s.makeRequest(method, url, nil)
+	_, err := s.makeRequest(ctx, method, url, nil)
 	if err != nil {
 		return err
 	}
@@ -447,14 +443,14 @@ func (s *GitHubEditRelease) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitHubEditRelease) Run() error {
+func (s *GitHubEditRelease) Run(ctx context.Context) error {
 	method := "PATCH"
 	url := fmt.Sprintf("%s/repos/%s/releases/%d", s.BaseURL, s.Repo, s.ReleaseID)
 
 	body := new(bytes.Buffer)
 	json.NewEncoder(body).Encode(s.ReleaseData)
 
-	release, err := s.makeRequest(method, url, body)
+	release, err := s.makeRequest(ctx, method, url, body)
 	if err != nil {
 		return err
 	}
@@ -465,7 +461,7 @@ func (s *GitHubEditRelease) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitHubEditRelease) Revert() error {
+func (s *GitHubEditRelease) Revert(ctx context.Context) error {
 	// TODO: how to revert an edited release?
 	return nil
 }
@@ -476,7 +472,6 @@ func (s *GitHubEditRelease) Revert() error {
 // See https://developer.github.com/v3/repos/releases/#delete-a-release-asset
 type GitHubUploadAssets struct {
 	Client           *http.Client
-	Ctx              context.Context
 	Token            string
 	BaseURL          string
 	Repo             string
@@ -489,7 +484,7 @@ type GitHubUploadAssets struct {
 }
 
 // Dry is a dry run of the step
-func (s *GitHubUploadAssets) Dry() error {
+func (s *GitHubUploadAssets) Dry(ctx context.Context) error {
 	method := "GET"
 	url := fmt.Sprintf("%s/repos/%s/releases/%d/assets", s.BaseURL, s.Repo, s.ReleaseID)
 
@@ -498,7 +493,7 @@ func (s *GitHubUploadAssets) Dry() error {
 		return err
 	}
 
-	req = req.WithContext(s.Ctx)
+	req = req.WithContext(ctx)
 
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 	req.Header.Set("Accept", githubAcceptType)
@@ -519,7 +514,7 @@ func (s *GitHubUploadAssets) Dry() error {
 }
 
 // Run executes the step
-func (s *GitHubUploadAssets) Run() error {
+func (s *GitHubUploadAssets) Run(ctx context.Context) error {
 	s.Result.Assets = make([]GitHubAsset, 0)
 
 	for _, asset := range s.AssetFiles {
@@ -541,7 +536,7 @@ func (s *GitHubUploadAssets) Run() error {
 			return err
 		}
 
-		req = req.WithContext(s.Ctx)
+		req = req.WithContext(ctx)
 
 		req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 		req.Header.Set("Accept", githubAcceptType)
@@ -574,7 +569,7 @@ func (s *GitHubUploadAssets) Run() error {
 }
 
 // Revert reverts back an executed step
-func (s *GitHubUploadAssets) Revert() error {
+func (s *GitHubUploadAssets) Revert(ctx context.Context) error {
 	for _, asset := range s.Result.Assets {
 		method := "DELETE"
 		url := fmt.Sprintf("%s/repos/%s/releases/assets/%d", s.BaseURL, s.Repo, asset.ID)
@@ -584,7 +579,7 @@ func (s *GitHubUploadAssets) Revert() error {
 			return err
 		}
 
-		req = req.WithContext(s.Ctx)
+		req = req.WithContext(ctx)
 
 		req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 		req.Header.Set("Accept", githubAcceptType)
@@ -650,7 +645,6 @@ func getUploadContent(filepath string) (*uploadContent, error) {
 // GitHubDownloadAsset downloads an asset file and writes to a local file.
 type GitHubDownloadAsset struct {
 	Client    *http.Client
-	Ctx       context.Context
 	Token     string
 	BaseURL   string
 	Repo      string
@@ -662,7 +656,7 @@ type GitHubDownloadAsset struct {
 	}
 }
 
-func (s *GitHubDownloadAsset) makeRequest() (io.ReadCloser, error) {
+func (s *GitHubDownloadAsset) makeRequest(ctx context.Context) (io.ReadCloser, error) {
 	method := "GET"
 	url := fmt.Sprintf("%s/%s/releases/download/%s/%s", s.BaseURL, s.Repo, s.Tag, s.AssetName)
 
@@ -671,7 +665,7 @@ func (s *GitHubDownloadAsset) makeRequest() (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	req = req.WithContext(s.Ctx)
+	req = req.WithContext(ctx)
 
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
 	req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
@@ -689,8 +683,8 @@ func (s *GitHubDownloadAsset) makeRequest() (io.ReadCloser, error) {
 }
 
 // Dry is a dry run of the step.
-func (s *GitHubDownloadAsset) Dry() error {
-	body, err := s.makeRequest()
+func (s *GitHubDownloadAsset) Dry(ctx context.Context) error {
+	body, err := s.makeRequest(ctx)
 	if err != nil {
 		return err
 	}
@@ -700,8 +694,8 @@ func (s *GitHubDownloadAsset) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitHubDownloadAsset) Run() error {
-	body, err := s.makeRequest()
+func (s *GitHubDownloadAsset) Run(ctx context.Context) error {
+	body, err := s.makeRequest(ctx)
 	if err != nil {
 		return err
 	}
@@ -723,6 +717,6 @@ func (s *GitHubDownloadAsset) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitHubDownloadAsset) Revert() error {
+func (s *GitHubDownloadAsset) Revert(ctx context.Context) error {
 	return os.Remove(s.Filepath)
 }

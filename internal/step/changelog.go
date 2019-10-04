@@ -19,7 +19,6 @@ const (
 // ChangelogGenerate runs `github_changelog_generator` Ruby gem!
 type ChangelogGenerate struct {
 	WorkDir     string
-	Ctx         context.Context
 	GitHubToken string
 	Repo        string
 	Tag         string
@@ -30,9 +29,9 @@ type ChangelogGenerate struct {
 }
 
 // Dry is a dry run of the step
-func (s *ChangelogGenerate) Dry() error {
+func (s *ChangelogGenerate) Dry(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.CommandContext(s.Ctx, "github_changelog_generator", "--version")
+	cmd := exec.CommandContext(ctx, "github_changelog_generator", "--version")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -49,10 +48,10 @@ func (s *ChangelogGenerate) Dry() error {
 }
 
 // Run executes the step
-func (s *ChangelogGenerate) Run() error {
+func (s *ChangelogGenerate) Run(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
 
-	cmd := exec.CommandContext(s.Ctx,
+	cmd := exec.CommandContext(ctx,
 		"github_changelog_generator",
 		"--token", s.GitHubToken,
 		"--no-filter-by-milestone",
@@ -120,7 +119,7 @@ func (s *ChangelogGenerate) Run() error {
 }
 
 // Revert reverts back an executed step
-func (s *ChangelogGenerate) Revert() error {
+func (s *ChangelogGenerate) Revert(ctx context.Context) error {
 	// TODO: how to revert?
 	return nil
 }

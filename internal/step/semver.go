@@ -1,6 +1,7 @@
 package step
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -68,7 +69,7 @@ func (s *SemVerRead) readVersion() (semver.SemVer, error) {
 }
 
 // Dry is a dry run of the step.
-func (s *SemVerRead) Dry() error {
+func (s *SemVerRead) Dry(ctx context.Context) error {
 	_, err := s.readVersion()
 	if err != nil {
 		return err
@@ -78,7 +79,7 @@ func (s *SemVerRead) Dry() error {
 }
 
 // Run executes the step.
-func (s *SemVerRead) Run() error {
+func (s *SemVerRead) Run(ctx context.Context) error {
 	version, err := s.readVersion()
 	if err != nil {
 		return err
@@ -90,7 +91,7 @@ func (s *SemVerRead) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *SemVerRead) Revert() error {
+func (s *SemVerRead) Revert(ctx context.Context) error {
 	return nil
 }
 
@@ -141,16 +142,16 @@ func (s *SemVerUpdate) writeVersion(dryRun bool) error {
 }
 
 // Dry is a dry run of the step.
-func (s *SemVerUpdate) Dry() error {
+func (s *SemVerUpdate) Dry(ctx context.Context) error {
 	return s.writeVersion(true)
 }
 
 // Run executes the step.
-func (s *SemVerUpdate) Run() error {
+func (s *SemVerUpdate) Run(ctx context.Context) error {
 	return s.writeVersion(false)
 }
 
 // Revert reverts back an executed step.
-func (s *SemVerUpdate) Revert() error {
+func (s *SemVerUpdate) Revert(ctx context.Context) error {
 	return nil
 }

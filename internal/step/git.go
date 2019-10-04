@@ -2,6 +2,7 @@ package step
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -49,9 +50,9 @@ type GitStatus struct {
 }
 
 // Dry is a dry run of the step.
-func (s *GitStatus) Dry() error {
+func (s *GitStatus) Dry(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "status")
+	cmd := exec.CommandContext(ctx, "git", "status")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -63,9 +64,9 @@ func (s *GitStatus) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitStatus) Run() error {
+func (s *GitStatus) Run(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "status", "--porcelain")
+	cmd := exec.CommandContext(ctx, "git", "status", "--porcelain")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -79,7 +80,7 @@ func (s *GitStatus) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitStatus) Revert() error {
+func (s *GitStatus) Revert(ctx context.Context) error {
 	return nil
 }
 
@@ -93,9 +94,9 @@ type GitGetRepo struct {
 }
 
 // Dry is a dry run of the step.
-func (s *GitGetRepo) Dry() error {
+func (s *GitGetRepo) Dry(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "remote")
+	cmd := exec.CommandContext(ctx, "git", "remote")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -107,10 +108,10 @@ func (s *GitGetRepo) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitGetRepo) Run() error {
+func (s *GitGetRepo) Run(ctx context.Context) error {
 	var err error
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "remote", "-v")
+	cmd := exec.CommandContext(ctx, "git", "remote", "-v")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -127,7 +128,7 @@ func (s *GitGetRepo) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitGetRepo) Revert() error {
+func (s *GitGetRepo) Revert(ctx context.Context) error {
 	return nil
 }
 
@@ -140,9 +141,9 @@ type GitGetBranch struct {
 }
 
 // Dry is a dry run of the step.
-func (s *GitGetBranch) Dry() error {
+func (s *GitGetBranch) Dry(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd := exec.CommandContext(ctx, "git", "rev-parse", "--abbrev-ref", "HEAD")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -154,9 +155,9 @@ func (s *GitGetBranch) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitGetBranch) Run() error {
+func (s *GitGetBranch) Run(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd := exec.CommandContext(ctx, "git", "rev-parse", "--abbrev-ref", "HEAD")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -170,7 +171,7 @@ func (s *GitGetBranch) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitGetBranch) Revert() error {
+func (s *GitGetBranch) Revert(ctx context.Context) error {
 	return nil
 }
 
@@ -184,9 +185,9 @@ type GitGetHEAD struct {
 }
 
 // Dry is a dry run of the step.
-func (s *GitGetHEAD) Dry() error {
+func (s *GitGetHEAD) Dry(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "rev-parse", "HEAD")
+	cmd := exec.CommandContext(ctx, "git", "rev-parse", "HEAD")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -198,9 +199,9 @@ func (s *GitGetHEAD) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitGetHEAD) Run() error {
+func (s *GitGetHEAD) Run(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "rev-parse", "HEAD")
+	cmd := exec.CommandContext(ctx, "git", "rev-parse", "HEAD")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -215,7 +216,7 @@ func (s *GitGetHEAD) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitGetHEAD) Revert() error {
+func (s *GitGetHEAD) Revert(ctx context.Context) error {
 	return nil
 }
 
@@ -226,10 +227,10 @@ type GitAdd struct {
 }
 
 // Dry is a dry run of the step.
-func (s *GitAdd) Dry() error {
+func (s *GitAdd) Dry(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
 	args := append([]string{"add", "--dry-run"}, s.Files...)
-	cmd := exec.Command("git", args...)
+	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -241,10 +242,10 @@ func (s *GitAdd) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitAdd) Run() error {
+func (s *GitAdd) Run(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
 	args := append([]string{"add"}, s.Files...)
-	cmd := exec.Command("git", args...)
+	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -256,12 +257,12 @@ func (s *GitAdd) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitAdd) Revert() error {
+func (s *GitAdd) Revert(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
 
 	// git reset <files>
 	args := append([]string{"reset"}, s.Files...)
-	cmd := exec.Command("git", args...)
+	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -279,9 +280,9 @@ type GitCommit struct {
 }
 
 // Dry is a dry run of the step.
-func (s *GitCommit) Dry() error {
+func (s *GitCommit) Dry(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "commit", "--dry-run", "-m", s.Message)
+	cmd := exec.CommandContext(ctx, "git", "commit", "--dry-run", "-m", s.Message)
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -293,9 +294,9 @@ func (s *GitCommit) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitCommit) Run() error {
+func (s *GitCommit) Run(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "commit", "-m", s.Message)
+	cmd := exec.CommandContext(ctx, "git", "commit", "-m", s.Message)
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -307,11 +308,11 @@ func (s *GitCommit) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitCommit) Revert() error {
+func (s *GitCommit) Revert(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
 
 	// git reset --soft HEAD~1
-	cmd := exec.Command("git", "reset", "--soft", "HEAD~1")
+	cmd := exec.CommandContext(ctx, "git", "reset", "--soft", "HEAD~1")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -330,9 +331,9 @@ type GitTag struct {
 }
 
 // Dry is a dry run of the step.
-func (s *GitTag) Dry() error {
+func (s *GitTag) Dry(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "tag")
+	cmd := exec.CommandContext(ctx, "git", "tag")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -344,14 +345,14 @@ func (s *GitTag) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitTag) Run() error {
+func (s *GitTag) Run(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
 
 	var cmd *exec.Cmd
 	if s.Annotation == "" {
-		cmd = exec.Command("git", "tag", s.Tag)
+		cmd = exec.CommandContext(ctx, "git", "tag", s.Tag)
 	} else {
-		cmd = exec.Command("git", "tag", "-a", s.Tag, "-m", s.Annotation)
+		cmd = exec.CommandContext(ctx, "git", "tag", "-a", s.Tag, "-m", s.Annotation)
 	}
 
 	cmd.Dir = s.WorkDir
@@ -365,11 +366,11 @@ func (s *GitTag) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitTag) Revert() error {
+func (s *GitTag) Revert(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
 
 	// git tag --delete <tag>
-	cmd := exec.Command("git", "tag", "--delete", s.Tag)
+	cmd := exec.CommandContext(ctx, "git", "tag", "--delete", s.Tag)
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -386,9 +387,9 @@ type GitPush struct {
 }
 
 // Dry is a dry run of the step.
-func (s *GitPush) Dry() error {
+func (s *GitPush) Dry(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "remote", "get-url", "origin")
+	cmd := exec.CommandContext(ctx, "git", "remote", "get-url", "origin")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -400,9 +401,9 @@ func (s *GitPush) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitPush) Run() error {
+func (s *GitPush) Run(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "push")
+	cmd := exec.CommandContext(ctx, "git", "push")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -414,7 +415,7 @@ func (s *GitPush) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitPush) Revert() error {
+func (s *GitPush) Revert(ctx context.Context) error {
 	// TODO: implement revert
 	return errors.New("cannot revert git push")
 }
@@ -426,9 +427,9 @@ type GitPushTag struct {
 }
 
 // Dry is a dry run of the step.
-func (s *GitPushTag) Dry() error {
+func (s *GitPushTag) Dry(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "remote", "get-url", "origin")
+	cmd := exec.CommandContext(ctx, "git", "remote", "get-url", "origin")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -440,9 +441,9 @@ func (s *GitPushTag) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitPushTag) Run() error {
+func (s *GitPushTag) Run(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "push", "origin", s.Tag)
+	cmd := exec.CommandContext(ctx, "git", "push", "origin", s.Tag)
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -454,7 +455,7 @@ func (s *GitPushTag) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitPushTag) Revert() error {
+func (s *GitPushTag) Revert(ctx context.Context) error {
 	// TODO: implement revert
 	return errors.New("cannot revert git push")
 }
@@ -465,9 +466,9 @@ type GitPull struct {
 }
 
 // Dry is a dry run of the step.
-func (s *GitPull) Dry() error {
+func (s *GitPull) Dry(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "remote", "get-url", "origin")
+	cmd := exec.CommandContext(ctx, "git", "remote", "get-url", "origin")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -479,9 +480,9 @@ func (s *GitPull) Dry() error {
 }
 
 // Run executes the step.
-func (s *GitPull) Run() error {
+func (s *GitPull) Run(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("git", "pull")
+	cmd := exec.CommandContext(ctx, "git", "pull")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -493,7 +494,7 @@ func (s *GitPull) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GitPull) Revert() error {
+func (s *GitPull) Revert(ctx context.Context) error {
 	// TODO: implement revert
 	return errors.New("cannot revert git pull")
 }

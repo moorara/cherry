@@ -137,7 +137,6 @@ func TestGitHubBranchProtectionDry(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubBranchProtection{
 				Client: &http.Client{},
-				Ctx:    context.Background(),
 				Token:  tc.token,
 				Repo:   tc.repo,
 				Branch: tc.branch,
@@ -150,7 +149,9 @@ func TestGitHubBranchProtectionDry(t *testing.T) {
 				step.BaseURL = ts.URL
 			}
 
-			err := step.Dry()
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -216,7 +217,6 @@ func TestGitHubBranchProtectionRun(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubBranchProtection{
 				Client:  &http.Client{},
-				Ctx:     context.Background(),
 				Token:   tc.token,
 				Repo:    tc.repo,
 				Branch:  tc.branch,
@@ -230,7 +230,9 @@ func TestGitHubBranchProtectionRun(t *testing.T) {
 				step.BaseURL = ts.URL
 			}
 
-			err := step.Run()
+			ctx := context.Background()
+			err := step.Run(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -296,7 +298,6 @@ func TestGitHubBranchProtectionRevert(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubBranchProtection{
 				Client:  &http.Client{},
-				Ctx:     context.Background(),
 				Token:   tc.token,
 				Repo:    tc.repo,
 				Branch:  tc.branch,
@@ -310,7 +311,9 @@ func TestGitHubBranchProtectionRevert(t *testing.T) {
 				step.BaseURL = ts.URL
 			}
 
-			err := step.Revert()
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -368,7 +371,6 @@ func TestGitHubGetLatestReleaseDry(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubGetLatestRelease{
 				Client: &http.Client{},
-				Ctx:    context.Background(),
 				Token:  tc.token,
 				Repo:   tc.repo,
 			}
@@ -380,7 +382,9 @@ func TestGitHubGetLatestReleaseDry(t *testing.T) {
 				step.BaseURL = ts.URL
 			}
 
-			err := step.Dry()
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -448,7 +452,6 @@ func TestGitHubGetLatestReleaseRun(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubGetLatestRelease{
 				Client: &http.Client{},
-				Ctx:    context.Background(),
 				Token:  tc.token,
 				Repo:   tc.repo,
 			}
@@ -460,7 +463,9 @@ func TestGitHubGetLatestReleaseRun(t *testing.T) {
 				step.BaseURL = ts.URL
 			}
 
-			err := step.Run()
+			ctx := context.Background()
+			err := step.Run(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedLatestRelease, step.Result.LatestRelease)
@@ -490,12 +495,13 @@ func TestGitHubGetLatestReleaseRevert(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubGetLatestRelease{
 				Client: &http.Client{},
-				Ctx:    context.Background(),
 				Token:  tc.token,
 				Repo:   tc.repo,
 			}
 
-			err := step.Revert()
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -553,7 +559,6 @@ func TestGitHubCreateReleaseDry(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubCreateRelease{
 				Client: &http.Client{},
-				Ctx:    context.Background(),
 				Token:  tc.token,
 				Repo:   tc.repo,
 			}
@@ -565,7 +570,9 @@ func TestGitHubCreateReleaseDry(t *testing.T) {
 				step.BaseURL = ts.URL
 			}
 
-			err := step.Dry()
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -655,7 +662,6 @@ func TestGitHubCreateReleaseRun(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubCreateRelease{
 				Client:      &http.Client{},
-				Ctx:         context.Background(),
 				Token:       tc.token,
 				Repo:        tc.repo,
 				ReleaseData: tc.releaseData,
@@ -668,7 +674,9 @@ func TestGitHubCreateReleaseRun(t *testing.T) {
 				step.BaseURL = ts.URL
 			}
 
-			err := step.Run()
+			ctx := context.Background()
+			err := step.Run(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedRelease, step.Result.Release)
@@ -727,7 +735,6 @@ func TestGitHubCreateReleaseRevert(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubCreateRelease{
 				Client: &http.Client{},
-				Ctx:    context.Background(),
 				Token:  tc.token,
 				Repo:   tc.repo,
 			}
@@ -741,7 +748,9 @@ func TestGitHubCreateReleaseRevert(t *testing.T) {
 				step.BaseURL = ts.URL
 			}
 
-			err := step.Revert()
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -803,7 +812,6 @@ func TestGitHubEditReleaseDry(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubEditRelease{
 				Client:    &http.Client{},
-				Ctx:       context.Background(),
 				Token:     tc.token,
 				Repo:      tc.repo,
 				ReleaseID: tc.releaseID,
@@ -816,7 +824,9 @@ func TestGitHubEditReleaseDry(t *testing.T) {
 				step.BaseURL = ts.URL
 			}
 
-			err := step.Dry()
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -893,7 +903,6 @@ func TestGitHubEditReleaseRun(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubEditRelease{
 				Client:      &http.Client{},
-				Ctx:         context.Background(),
 				Token:       tc.token,
 				Repo:        tc.repo,
 				ReleaseID:   tc.releaseID,
@@ -907,7 +916,9 @@ func TestGitHubEditReleaseRun(t *testing.T) {
 				step.BaseURL = ts.URL
 			}
 
-			err := step.Run()
+			ctx := context.Background()
+			err := step.Run(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedRelease, step.Result.Release)
@@ -956,7 +967,6 @@ func TestGitHubEditReleaseRevert(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubEditRelease{
 				Client:    &http.Client{},
-				Ctx:       context.Background(),
 				Token:     tc.token,
 				Repo:      tc.repo,
 				ReleaseID: tc.releaseID,
@@ -969,7 +979,9 @@ func TestGitHubEditReleaseRevert(t *testing.T) {
 				step.BaseURL = ts.URL
 			}
 
-			err := step.Revert()
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -1021,7 +1033,6 @@ func TestGitHubUploadAssetsDry(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubUploadAssets{
 				Client:    &http.Client{},
-				Ctx:       context.Background(),
 				Token:     tc.token,
 				Repo:      tc.repo,
 				ReleaseID: tc.releaseID,
@@ -1034,7 +1045,9 @@ func TestGitHubUploadAssetsDry(t *testing.T) {
 				step.BaseURL = ts.URL
 			}
 
-			err := step.Dry()
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -1114,7 +1127,6 @@ func TestGitHubUploadAssetsRun(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubUploadAssets{
 				Client:           &http.Client{},
-				Ctx:              context.Background(),
 				Token:            tc.token,
 				Repo:             tc.repo,
 				ReleaseID:        tc.releaseID,
@@ -1130,7 +1142,9 @@ func TestGitHubUploadAssetsRun(t *testing.T) {
 				step.ReleaseUploadURL = strings.Replace(step.ReleaseUploadURL, "https://uploads.github.com", ts.URL, 1)
 			}
 
-			err := step.Run()
+			ctx := context.Background()
+			err := step.Run(ctx)
+
 			if tc.expectedErrorRegex == "" {
 				assert.NoError(t, err)
 			} else {
@@ -1188,7 +1202,6 @@ func TestGitHubUploadAssetsRevert(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubUploadAssets{
 				Client: &http.Client{},
-				Ctx:    context.Background(),
 				Token:  tc.token,
 				Repo:   tc.repo,
 			}
@@ -1202,7 +1215,9 @@ func TestGitHubUploadAssetsRevert(t *testing.T) {
 				step.BaseURL = ts.URL
 			}
 
-			err := step.Revert()
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -1258,7 +1273,6 @@ func TestGitHubDownloadAssetDry(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubDownloadAsset{
 				Client:    &http.Client{},
-				Ctx:       context.Background(),
 				Token:     tc.token,
 				Repo:      tc.repo,
 				Tag:       tc.tag,
@@ -1272,7 +1286,9 @@ func TestGitHubDownloadAssetDry(t *testing.T) {
 				step.BaseURL = ts.URL
 			}
 
-			err := step.Dry()
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -1330,7 +1346,6 @@ func TestGitHubDownloadAssetRun(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubDownloadAsset{
 				Client:    &http.Client{},
-				Ctx:       context.Background(),
 				Token:     tc.token,
 				Repo:      tc.repo,
 				Tag:       tc.tag,
@@ -1351,7 +1366,9 @@ func TestGitHubDownloadAssetRun(t *testing.T) {
 
 			step.Filepath = tf.Name()
 
-			err = step.Run()
+			ctx := context.Background()
+			err = step.Run(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedSize, step.Result.Size)
@@ -1385,7 +1402,6 @@ func TestGitHubDownloadAssetRevert(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := &GitHubDownloadAsset{
 				Client:    &http.Client{},
-				Ctx:       context.Background(),
 				Token:     tc.token,
 				Repo:      tc.repo,
 				Tag:       tc.tag,
@@ -1398,7 +1414,9 @@ func TestGitHubDownloadAssetRevert(t *testing.T) {
 
 			step.Filepath = tf.Name()
 
-			err = step.Revert()
+			ctx := context.Background()
+			err = step.Revert(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {

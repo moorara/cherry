@@ -20,9 +20,9 @@ type GoVersion struct {
 }
 
 // Dry is a dry run of the step.
-func (s *GoVersion) Dry() error {
+func (s *GoVersion) Dry(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("go", "version")
+	cmd := exec.CommandContext(ctx, "go", "version")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -34,9 +34,9 @@ func (s *GoVersion) Dry() error {
 }
 
 // Run executes the step.
-func (s *GoVersion) Run() error {
+func (s *GoVersion) Run(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("go", "version")
+	cmd := exec.CommandContext(ctx, "go", "version")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -50,7 +50,7 @@ func (s *GoVersion) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GoVersion) Revert() error {
+func (s *GoVersion) Revert(ctx context.Context) error {
 	return nil
 }
 
@@ -64,9 +64,9 @@ type GoList struct {
 }
 
 // Dry is a dry run of the step.
-func (s *GoList) Dry() error {
+func (s *GoList) Dry(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("go", "list", s.Package)
+	cmd := exec.CommandContext(ctx, "go", "list", s.Package)
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -78,9 +78,9 @@ func (s *GoList) Dry() error {
 }
 
 // Run executes the step.
-func (s *GoList) Run() error {
+func (s *GoList) Run(ctx context.Context) error {
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("go", "list", s.Package)
+	cmd := exec.CommandContext(ctx, "go", "list", s.Package)
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -94,14 +94,13 @@ func (s *GoList) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GoList) Revert() error {
+func (s *GoList) Revert(ctx context.Context) error {
 	return nil
 }
 
 // GoBuild runs `go build ...` command.
 type GoBuild struct {
 	WorkDir    string
-	Ctx        context.Context
 	LDFlags    string
 	MainFile   string
 	BinaryFile string
@@ -111,7 +110,7 @@ type GoBuild struct {
 	}
 }
 
-func (s *GoBuild) build(binaryFile string) error {
+func (s *GoBuild) build(ctx context.Context, binaryFile string) error {
 	if s.MainFile == "" {
 		s.MainFile = "main.go"
 	}
@@ -126,7 +125,7 @@ func (s *GoBuild) build(binaryFile string) error {
 	args = append(args, s.MainFile)
 
 	var stdout, stderr bytes.Buffer
-	cmd := exec.CommandContext(s.Ctx, "go", args...)
+	cmd := exec.CommandContext(ctx, "go", args...)
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -140,7 +139,7 @@ func (s *GoBuild) build(binaryFile string) error {
 }
 
 // Dry is a dry run of the step.
-func (s *GoBuild) Dry() error {
+func (s *GoBuild) Dry(ctx context.Context) error {
 	s.Result.Binaries = []string{}
 
 	dir, err := ioutil.TempDir("", "cherry-")
@@ -150,7 +149,7 @@ func (s *GoBuild) Dry() error {
 	defer os.RemoveAll(dir)
 
 	binaryFile := filepath.Join(dir, s.BinaryFile)
-	err = s.build(binaryFile)
+	err = s.build(ctx, binaryFile)
 	if err != nil {
 		return err
 	}
@@ -159,11 +158,11 @@ func (s *GoBuild) Dry() error {
 }
 
 // Run executes the step.
-func (s *GoBuild) Run() error {
+func (s *GoBuild) Run(ctx context.Context) error {
 	s.Result.Binaries = []string{}
 
 	if len(s.Platforms) == 0 {
-		return s.build(s.BinaryFile)
+		return s.build(ctx, s.BinaryFile)
 	}
 
 	// Cross-Compile
@@ -183,7 +182,7 @@ func (s *GoBuild) Run() error {
 		}
 
 		binaryFile := fmt.Sprintf("%s-%s", s.BinaryFile, platform)
-		err := s.build(binaryFile)
+		err := s.build(ctx, binaryFile)
 		if err != nil {
 			return err
 		}
@@ -193,7 +192,7 @@ func (s *GoBuild) Run() error {
 }
 
 // Revert reverts back an executed step.
-func (s *GoBuild) Revert() error {
+func (s *GoBuild) Revert(ctx context.Context) error {
 	for _, binary := range s.Result.Binaries {
 		if err := os.Remove(binary); err != nil {
 			return err

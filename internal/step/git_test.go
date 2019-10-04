@@ -1,6 +1,7 @@
 package step
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -91,24 +92,20 @@ func TestParseGitURL(t *testing.T) {
 	}
 }
 
-func TestGitStatus(t *testing.T) {
+func TestGitStatusDry(t *testing.T) {
 	tests := []struct {
-		name     string
-		workDir  string
-		dryError string
-		runError string
+		name          string
+		workDir       string
+		expectedError string
 	}{
 		{
-			name:     "Error",
-			workDir:  os.TempDir(),
-			dryError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			runError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
-			name:     "Success",
-			workDir:  ".",
-			dryError: "",
-			runError: "",
+			name:    "Success",
+			workDir: ".",
 		},
 	}
 
@@ -118,50 +115,101 @@ func TestGitStatus(t *testing.T) {
 				WorkDir: tc.workDir,
 			}
 
-			// Test Dry
-			err := step.Dry()
-			if tc.dryError == "" {
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.dryError, err.Error())
+				assert.Equal(t, tc.expectedError, err.Error())
 			}
-
-			// Test Run
-			err = step.Run()
-			if tc.runError == "" {
-				assert.NoError(t, err)
-				// TODO: Test results (IsClean)
-			} else {
-				assert.Error(t, err)
-				assert.Equal(t, tc.runError, err.Error())
-			}
-
-			// Test Revert
-			err = step.Revert()
-			assert.NoError(t, err)
 		})
 	}
 }
 
-func TestGitGetRepo(t *testing.T) {
+func TestGitStatusRun(t *testing.T) {
 	tests := []struct {
-		name     string
-		workDir  string
-		dryError string
-		runError string
+		name          string
+		workDir       string
+		expectedError string
 	}{
 		{
-			name:     "Error",
-			workDir:  os.TempDir(),
-			dryError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			runError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
-			name:     "Success",
-			workDir:  ".",
-			dryError: "",
-			runError: "",
+			name:    "Success",
+			workDir: ".",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitStatus{
+				WorkDir: tc.workDir,
+			}
+
+			ctx := context.Background()
+			err := step.Run(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+				// TODO: Test results (IsClean)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitStatusRevert(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:    "Success",
+			workDir: ".",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitStatus{
+				WorkDir: tc.workDir,
+			}
+
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitGetRepoDry(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+		},
+		{
+			name:    "Success",
+			workDir: ".",
 		},
 	}
 
@@ -171,51 +219,102 @@ func TestGitGetRepo(t *testing.T) {
 				WorkDir: tc.workDir,
 			}
 
-			// Test Dry
-			err := step.Dry()
-			if tc.dryError == "" {
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.dryError, err.Error())
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitGetRepoRun(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+		},
+		{
+			name:    "Success",
+			workDir: ".",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitGetRepo{
+				WorkDir: tc.workDir,
 			}
 
-			// Test Run
-			err = step.Run()
-			if tc.runError == "" {
+			ctx := context.Background()
+			err := step.Run(ctx)
+
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 				assert.NotEmpty(t, step.Result.Owner)
 				assert.NotEmpty(t, step.Result.Name)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.runError, err.Error())
+				assert.Equal(t, tc.expectedError, err.Error())
 			}
-
-			// Test Revert
-			err = step.Revert()
-			assert.NoError(t, err)
 		})
 	}
 }
 
-func TestGitGetBranch(t *testing.T) {
+func TestGitGetRepoRevert(t *testing.T) {
 	tests := []struct {
-		name     string
-		workDir  string
-		dryError string
-		runError string
+		name          string
+		workDir       string
+		expectedError string
 	}{
 		{
-			name:     "Error",
-			workDir:  os.TempDir(),
-			dryError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			runError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			name:    "Success",
+			workDir: ".",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitGetRepo{
+				WorkDir: tc.workDir,
+			}
+
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitGetBranchDry(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
-			name:     "Success",
-			workDir:  ".",
-			dryError: "",
-			runError: "",
+			name:    "Success",
+			workDir: ".",
 		},
 	}
 
@@ -225,56 +324,105 @@ func TestGitGetBranch(t *testing.T) {
 				WorkDir: tc.workDir,
 			}
 
-			// Test Dry
-			err := step.Dry()
-			if tc.dryError == "" {
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.dryError, err.Error())
+				assert.Equal(t, tc.expectedError, err.Error())
 			}
-
-			// Test Run
-			err = step.Run()
-			if tc.runError == "" {
-				assert.NoError(t, err)
-				assert.NotEmpty(t, step.Result.Name)
-			} else {
-				assert.Error(t, err)
-				assert.Equal(t, tc.runError, err.Error())
-			}
-
-			// Test Revert
-			err = step.Revert()
-			assert.NoError(t, err)
 		})
 	}
 }
 
-func TestGitGetHEAD(t *testing.T) {
+func TestGitGetBranchRun(t *testing.T) {
 	tests := []struct {
-		name     string
-		workDir  string
-		dryError string
-		runError string
+		name          string
+		workDir       string
+		expectedError string
 	}{
 		{
-			name:     "Error",
-			workDir:  os.TempDir(),
-			dryError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			runError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
-			name:     "FullSHA",
-			workDir:  ".",
-			dryError: "",
-			runError: "",
+			name:    "Success",
+			workDir: ".",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitGetBranch{
+				WorkDir: tc.workDir,
+			}
+
+			ctx := context.Background()
+			err := step.Run(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+				assert.NotEmpty(t, step.Result.Name)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitGetBranchRevert(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:    "Success",
+			workDir: ".",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitGetBranch{
+				WorkDir: tc.workDir,
+			}
+
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitGetHEADDry(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
-			name:     "ShortSHA",
-			workDir:  ".",
-			dryError: "",
-			runError: "",
+			name:    "FullSHA",
+			workDir: ".",
+		},
+		{
+			name:    "ShortSHA",
+			workDir: ".",
 		},
 	}
 
@@ -284,49 +432,104 @@ func TestGitGetHEAD(t *testing.T) {
 				WorkDir: tc.workDir,
 			}
 
-			// Test Dry
-			err := step.Dry()
-			if tc.dryError == "" {
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.dryError, err.Error())
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitGetHEADRun(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+		},
+		{
+			name:    "FullSHA",
+			workDir: ".",
+		},
+		{
+			name:    "ShortSHA",
+			workDir: ".",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitGetHEAD{
+				WorkDir: tc.workDir,
 			}
 
-			// Test Run
-			err = step.Run()
-			if tc.runError == "" {
+			ctx := context.Background()
+			err := step.Run(ctx)
+
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 				assert.Len(t, step.Result.SHA, 40)
 				assert.Len(t, step.Result.ShortSHA, 7)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.runError, err.Error())
+				assert.Equal(t, tc.expectedError, err.Error())
 			}
-
-			// Test Revert
-			err = step.Revert()
-			assert.NoError(t, err)
 		})
 	}
 }
 
-func TestGitAdd(t *testing.T) {
+func TestGitGetHEADRevert(t *testing.T) {
 	tests := []struct {
-		name        string
-		workDir     string
-		files       []string
-		dryError    string
-		runError    string
-		revertError string
+		name          string
+		workDir       string
+		expectedError string
 	}{
 		{
-			name:        "Error",
-			workDir:     os.TempDir(),
-			files:       []string{"."},
-			dryError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			runError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			revertError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			name:    "Success",
+			workDir: ".",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitGetHEAD{
+				WorkDir: tc.workDir,
+			}
+
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitAddDry(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		files         []string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			files:         []string{"."},
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -337,52 +540,101 @@ func TestGitAdd(t *testing.T) {
 				Files:   tc.files,
 			}
 
-			// Test Dry
-			err := step.Dry()
-			if tc.dryError == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-				assert.Equal(t, tc.dryError, err.Error())
-			}
+			ctx := context.Background()
+			err := step.Dry(ctx)
 
-			// Test Run
-			err = step.Run()
-			if tc.runError == "" {
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.runError, err.Error())
-			}
-
-			// Test Revert
-			err = step.Revert()
-			if tc.revertError == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-				assert.Equal(t, tc.revertError, err.Error())
+				assert.Equal(t, tc.expectedError, err.Error())
 			}
 		})
 	}
 }
 
-func TestGitCommit(t *testing.T) {
+func TestGitAddRun(t *testing.T) {
 	tests := []struct {
-		name        string
-		workDir     string
-		message     string
-		dryError    string
-		runError    string
-		revertError string
+		name          string
+		workDir       string
+		files         []string
+		expectedError string
 	}{
 		{
-			name:        "Error",
-			workDir:     os.TempDir(),
-			message:     "test message",
-			dryError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			runError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			revertError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			name:          "Error",
+			workDir:       os.TempDir(),
+			files:         []string{"."},
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitAdd{
+				WorkDir: tc.workDir,
+				Files:   tc.files,
+			}
+
+			ctx := context.Background()
+			err := step.Run(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitAddRevert(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		files         []string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			files:         []string{"."},
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitAdd{
+				WorkDir: tc.workDir,
+				Files:   tc.files,
+			}
+
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitCommitDry(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		message       string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			message:       "test message",
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -393,63 +645,110 @@ func TestGitCommit(t *testing.T) {
 				Message: tc.message,
 			}
 
-			// Test Dry
-			err := step.Dry()
-			if tc.dryError == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-				assert.Equal(t, tc.dryError, err.Error())
-			}
+			ctx := context.Background()
+			err := step.Dry(ctx)
 
-			// Test Run
-			err = step.Run()
-			if tc.runError == "" {
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.runError, err.Error())
-			}
-
-			// Test Revert
-			err = step.Revert()
-			if tc.revertError == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-				assert.Equal(t, tc.revertError, err.Error())
+				assert.Equal(t, tc.expectedError, err.Error())
 			}
 		})
 	}
 }
 
-func TestGitTag(t *testing.T) {
+func TestGitCommitRun(t *testing.T) {
 	tests := []struct {
-		name        string
-		workDir     string
-		tag         string
-		annotation  string
-		dryError    string
-		runError    string
-		revertError string
+		name          string
+		workDir       string
+		message       string
+		expectedError string
 	}{
 		{
-			name:        "Error",
-			workDir:     os.TempDir(),
-			tag:         "test-tag",
-			annotation:  "",
-			dryError:    "exit status 128: fatal: not a git repository (or any of the parent directories): .git",
-			runError:    "exit status 128: fatal: not a git repository (or any of the parent directories): .git",
-			revertError: "exit status 128: fatal: not a git repository (or any of the parent directories): .git",
+			name:          "Error",
+			workDir:       os.TempDir(),
+			message:       "test message",
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitCommit{
+				WorkDir: tc.workDir,
+				Message: tc.message,
+			}
+
+			ctx := context.Background()
+			err := step.Run(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitCommitRevert(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		message       string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			message:       "test message",
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitCommit{
+				WorkDir: tc.workDir,
+				Message: tc.message,
+			}
+
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitTagDry(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		tag           string
+		annotation    string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			tag:           "test-tag",
+			annotation:    "",
+			expectedError: "exit status 128: fatal: not a git repository (or any of the parent directories): .git",
 		},
 		{
-			name:        "Error",
-			workDir:     os.TempDir(),
-			tag:         "test-tag",
-			annotation:  "annotation message",
-			dryError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			runError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			revertError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			name:          "Error",
+			workDir:       os.TempDir(),
+			tag:           "test-tag",
+			annotation:    "annotation message",
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -461,50 +760,119 @@ func TestGitTag(t *testing.T) {
 				Annotation: tc.annotation,
 			}
 
-			// Test Dry
-			err := step.Dry()
-			if tc.dryError == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-				assert.Equal(t, tc.dryError, err.Error())
-			}
+			ctx := context.Background()
+			err := step.Dry(ctx)
 
-			// Test Run
-			err = step.Run()
-			if tc.runError == "" {
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.runError, err.Error())
-			}
-
-			// Test Revert
-			err = step.Revert()
-			if tc.revertError == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-				assert.Equal(t, tc.revertError, err.Error())
+				assert.Equal(t, tc.expectedError, err.Error())
 			}
 		})
 	}
 }
 
-func TestGitPush(t *testing.T) {
+func TestGitTagRun(t *testing.T) {
 	tests := []struct {
-		name        string
-		workDir     string
-		dryError    string
-		runError    string
-		revertError string
+		name          string
+		workDir       string
+		tag           string
+		annotation    string
+		expectedError string
 	}{
 		{
-			name:        "Error",
-			workDir:     os.TempDir(),
-			dryError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			runError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			revertError: `cannot revert git push`,
+			name:          "Error",
+			workDir:       os.TempDir(),
+			tag:           "test-tag",
+			annotation:    "",
+			expectedError: "exit status 128: fatal: not a git repository (or any of the parent directories): .git",
+		},
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			tag:           "test-tag",
+			annotation:    "annotation message",
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitTag{
+				WorkDir:    tc.workDir,
+				Tag:        tc.tag,
+				Annotation: tc.annotation,
+			}
+
+			ctx := context.Background()
+			err := step.Run(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitTagRevert(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		tag           string
+		annotation    string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			tag:           "test-tag",
+			annotation:    "",
+			expectedError: "exit status 128: fatal: not a git repository (or any of the parent directories): .git",
+		},
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			tag:           "test-tag",
+			annotation:    "annotation message",
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitTag{
+				WorkDir:    tc.workDir,
+				Tag:        tc.tag,
+				Annotation: tc.annotation,
+			}
+
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitPushDry(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -514,52 +882,95 @@ func TestGitPush(t *testing.T) {
 				WorkDir: tc.workDir,
 			}
 
-			// Test Dry
-			err := step.Dry()
-			if tc.dryError == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-				assert.Equal(t, tc.dryError, err.Error())
-			}
+			ctx := context.Background()
+			err := step.Dry(ctx)
 
-			// Test Run
-			err = step.Run()
-			if tc.runError == "" {
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.runError, err.Error())
-			}
-
-			// Test Revert
-			err = step.Revert()
-			if tc.revertError == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-				assert.Equal(t, tc.revertError, err.Error())
+				assert.Equal(t, tc.expectedError, err.Error())
 			}
 		})
 	}
 }
 
-func TestGitPushTag(t *testing.T) {
+func TestGitPushRun(t *testing.T) {
 	tests := []struct {
-		name        string
-		workDir     string
-		tag         string
-		dryError    string
-		runError    string
-		revertError string
+		name          string
+		workDir       string
+		expectedError string
 	}{
 		{
-			name:        "Error",
-			workDir:     os.TempDir(),
-			tag:         "v0.1.0",
-			dryError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			runError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			revertError: `cannot revert git push`,
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitPush{
+				WorkDir: tc.workDir,
+			}
+
+			ctx := context.Background()
+			err := step.Run(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitPushRevert(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: `cannot revert git push`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitPush{
+				WorkDir: tc.workDir,
+			}
+
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitPushTagDry(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		tag           string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			tag:           "v0.1.0",
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -570,50 +981,99 @@ func TestGitPushTag(t *testing.T) {
 				Tag:     tc.tag,
 			}
 
-			// Test Dry
-			err := step.Dry()
-			if tc.dryError == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-				assert.Equal(t, tc.dryError, err.Error())
-			}
+			ctx := context.Background()
+			err := step.Dry(ctx)
 
-			// Test Run
-			err = step.Run()
-			if tc.runError == "" {
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.runError, err.Error())
-			}
-
-			// Test Revert
-			err = step.Revert()
-			if tc.revertError == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-				assert.Equal(t, tc.revertError, err.Error())
+				assert.Equal(t, tc.expectedError, err.Error())
 			}
 		})
 	}
 }
 
-func TestGitPull(t *testing.T) {
+func TestGitPushTagRun(t *testing.T) {
 	tests := []struct {
-		name        string
-		workDir     string
-		dryError    string
-		runError    string
-		revertError string
+		name          string
+		workDir       string
+		tag           string
+		expectedError string
 	}{
 		{
-			name:        "Error",
-			workDir:     os.TempDir(),
-			dryError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			runError:    `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
-			revertError: `cannot revert git pull`,
+			name:          "Error",
+			workDir:       os.TempDir(),
+			tag:           "v0.1.0",
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitPushTag{
+				WorkDir: tc.workDir,
+				Tag:     tc.tag,
+			}
+
+			ctx := context.Background()
+			err := step.Run(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitPushTagRevert(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		tag           string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			tag:           "v0.1.0",
+			expectedError: `cannot revert git push`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitPushTag{
+				WorkDir: tc.workDir,
+				Tag:     tc.tag,
+			}
+
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitPullDry(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -623,31 +1083,78 @@ func TestGitPull(t *testing.T) {
 				WorkDir: tc.workDir,
 			}
 
-			// Test Dry
-			err := step.Dry()
-			if tc.dryError == "" {
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.dryError, err.Error())
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitPullRun(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitPull{
+				WorkDir: tc.workDir,
 			}
 
-			// Test Run
-			err = step.Run()
-			if tc.runError == "" {
+			ctx := context.Background()
+			err := step.Run(ctx)
+
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.runError, err.Error())
+				assert.Equal(t, tc.expectedError, err.Error())
+			}
+		})
+	}
+}
+
+func TestGitPullRevert(t *testing.T) {
+	tests := []struct {
+		name          string
+		workDir       string
+		expectedError string
+	}{
+		{
+			name:          "Error",
+			workDir:       os.TempDir(),
+			expectedError: `cannot revert git pull`,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitPull{
+				WorkDir: tc.workDir,
 			}
 
-			// Test Revert
-			err = step.Revert()
-			if tc.revertError == "" {
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.revertError, err.Error())
+				assert.Equal(t, tc.expectedError, err.Error())
 			}
 		})
 	}

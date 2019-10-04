@@ -28,7 +28,9 @@ func TestGoVersionDry(t *testing.T) {
 				WorkDir: tc.workDir,
 			}
 
-			err := step.Dry()
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -57,7 +59,9 @@ func TestGoVersionRun(t *testing.T) {
 				WorkDir: tc.workDir,
 			}
 
-			err := step.Run()
+			ctx := context.Background()
+			err := step.Run(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -86,7 +90,9 @@ func TestGoVersionRevert(t *testing.T) {
 				WorkDir: tc.workDir,
 			}
 
-			err := step.Revert()
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -124,7 +130,9 @@ func TestGoListDry(t *testing.T) {
 				Package: tc.pkg,
 			}
 
-			err := step.Dry()
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -164,7 +172,9 @@ func TestGoListRun(t *testing.T) {
 				Package: tc.pkg,
 			}
 
-			err := step.Run()
+			ctx := context.Background()
+			err := step.Run(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedPackagePath, step.Result.PackagePath)
@@ -197,7 +207,9 @@ func TestGoListRevert(t *testing.T) {
 				Package: tc.pkg,
 			}
 
-			err := step.Revert()
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -232,14 +244,15 @@ func TestGoBuildDry(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := GoBuild{
 				WorkDir:    tc.workDir,
-				Ctx:        context.Background(),
 				LDFlags:    tc.ldflags,
 				MainFile:   tc.mainFile,
 				BinaryFile: tc.binaryFile,
 				Platforms:  tc.platforms,
 			}
 
-			err := step.Dry()
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -282,7 +295,6 @@ func TestGoBuildRun(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			step := GoBuild{
 				WorkDir:    tc.workDir,
-				Ctx:        context.Background(),
 				LDFlags:    tc.ldflags,
 				MainFile:   tc.mainFile,
 				BinaryFile: tc.binaryFile,
@@ -295,7 +307,9 @@ func TestGoBuildRun(t *testing.T) {
 
 			step.BinaryFile = filepath.Join(dir, step.BinaryFile)
 
-			err = step.Run()
+			ctx := context.Background()
+			err = step.Run(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -318,9 +332,7 @@ func TestGoBuildRevert(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			step := GoBuild{
-				Ctx: context.Background(),
-			}
+			step := GoBuild{}
 
 			tf, err := ioutil.TempFile("", "cherry-test-")
 			assert.NoError(t, err)
@@ -329,7 +341,9 @@ func TestGoBuildRevert(t *testing.T) {
 
 			step.Result.Binaries = []string{tf.Name()}
 
-			err = step.Revert()
+			ctx := context.Background()
+			err = step.Revert(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {

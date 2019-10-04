@@ -1,6 +1,7 @@
 package step
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -78,7 +79,9 @@ func TestSemVerReadDry(t *testing.T) {
 				Filename: tc.filename,
 			}
 
-			err := step.Dry()
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -168,7 +171,9 @@ func TestSemVerReadRun(t *testing.T) {
 				Filename: tc.filename,
 			}
 
-			err := step.Run()
+			ctx := context.Background()
+			err := step.Run(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedSemver, step.Result.Version)
@@ -206,7 +211,9 @@ func TestSemVerReadRevert(t *testing.T) {
 				Filename: tc.filename,
 			}
 
-			err := step.Revert()
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -261,7 +268,9 @@ func TestSemVerUpdateDry(t *testing.T) {
 				Version:  tc.version,
 			}
 
-			err := step.Dry()
+			ctx := context.Background()
+			err := step.Dry(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -316,7 +325,9 @@ func TestSemVerUpdateRun(t *testing.T) {
 				step.Filename = tc.mockFilename
 			}
 
-			err := step.Run()
+			ctx := context.Background()
+			err := step.Run(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -357,7 +368,9 @@ func TestSemVerUpdateRevert(t *testing.T) {
 				Version:  tc.version,
 			}
 
-			err := step.Revert()
+			ctx := context.Background()
+			err := step.Revert(ctx)
+
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
