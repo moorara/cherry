@@ -153,60 +153,6 @@ func TestReleaseFlagSet(t *testing.T) {
 	}
 }
 
-func TestTestSetDefaults(t *testing.T) {
-	tests := []struct {
-		test         Test
-		expectedTest Test
-	}{
-		{
-			Test{},
-			Test{
-				CoverMode:  defaultCoverMode,
-				ReportPath: defaultReportPath,
-			},
-		},
-		{
-			Test{
-				CoverMode:  "set",
-				ReportPath: "report",
-			},
-			Test{
-				CoverMode:  "set",
-				ReportPath: "report",
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		tc.test.SetDefaults()
-		assert.Equal(t, tc.expectedTest, tc.test)
-	}
-}
-
-func TestTestFlagSet(t *testing.T) {
-	tests := []struct {
-		test         Test
-		expectedName string
-	}{
-		{
-			test:         Test{},
-			expectedName: "test",
-		},
-		{
-			test: Test{
-				CoverMode:  "atomic",
-				ReportPath: "coverage",
-			},
-			expectedName: "test",
-		},
-	}
-
-	for _, tc := range tests {
-		fs := tc.test.FlagSet()
-		assert.Equal(t, tc.expectedName, fs.Name())
-	}
-}
-
 func TestSpecSetDefaults(t *testing.T) {
 	tests := []struct {
 		spec         Spec
@@ -219,10 +165,6 @@ func TestSpecSetDefaults(t *testing.T) {
 				ToolVersion: "",
 				Version:     defaultVersion,
 				Language:    defaultLanguage,
-				Test: Test{
-					CoverMode:  defaultCoverMode,
-					ReportPath: defaultReportPath,
-				},
 				Build: Build{
 					CrossCompile:   defaultCrossCompile,
 					MainFile:       defaultMainFile,
@@ -242,10 +184,6 @@ func TestSpecSetDefaults(t *testing.T) {
 				Version:     "2.0",
 				Language:    "go",
 				VersionFile: "version.yaml",
-				Test: Test{
-					CoverMode:  "atomic",
-					ReportPath: "report",
-				},
 				Build: Build{
 					CrossCompile:   true,
 					MainFile:       "cmd/main.go",
@@ -265,10 +203,6 @@ func TestSpecSetDefaults(t *testing.T) {
 				Version:     "2.0",
 				Language:    "go",
 				VersionFile: "version.yaml",
-				Test: Test{
-					CoverMode:  "atomic",
-					ReportPath: "report",
-				},
 				Build: Build{
 					CrossCompile:   true,
 					MainFile:       "cmd/main.go",
@@ -334,7 +268,6 @@ func TestRead(t *testing.T) {
 			expectedSpec: &Spec{
 				Version:  "1.0",
 				Language: "go",
-				Test:     Test{},
 				Build:    Build{},
 				Release: Release{
 					Build: true,
@@ -347,7 +280,6 @@ func TestRead(t *testing.T) {
 			expectedSpec: &Spec{
 				Version:  "1.0",
 				Language: "go",
-				Test:     Test{},
 				Build:    Build{},
 				Release: Release{
 					Build: true,
@@ -361,10 +293,6 @@ func TestRead(t *testing.T) {
 				Version:     "1.0",
 				Language:    "go",
 				VersionFile: "VERSION",
-				Test: Test{
-					CoverMode:  "atomic",
-					ReportPath: "coverage",
-				},
 				Build: Build{
 					CrossCompile:   true,
 					MainFile:       "main.go",
@@ -386,10 +314,6 @@ func TestRead(t *testing.T) {
 				Version:     "1.0",
 				Language:    "go",
 				VersionFile: "VERSION",
-				Test: Test{
-					CoverMode:  "atomic",
-					ReportPath: "coverage",
-				},
 				Build: Build{
 					CrossCompile:   true,
 					MainFile:       "main.go",

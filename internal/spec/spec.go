@@ -127,32 +127,6 @@ func (r *Release) FlagSet() *flag.FlagSet {
 	return fs
 }
 
-// Test has the specifications for test command.
-type Test struct {
-	CoverMode  string `json:"coverMode" yaml:"cover_mode"`
-	ReportPath string `json:"reportPath" yaml:"report_path"`
-}
-
-// SetDefaults sets default values for empty fields.
-func (t *Test) SetDefaults() {
-	if t.CoverMode == "" {
-		t.CoverMode = defaultCoverMode
-	}
-
-	if t.ReportPath == "" {
-		t.ReportPath = defaultReportPath
-	}
-}
-
-// FlagSet returns a flag set for input arguments for test command.
-func (t *Test) FlagSet() *flag.FlagSet {
-	fs := flag.NewFlagSet("test", flag.ContinueOnError)
-	fs.StringVar(&t.CoverMode, "covermode", t.CoverMode, "")
-	fs.StringVar(&t.ReportPath, "report-path", t.ReportPath, "")
-
-	return fs
-}
-
 // Spec has all the specifications for Cherry.
 type Spec struct {
 	ToolName    string `json:"-" yaml:"-"`
@@ -161,7 +135,6 @@ type Spec struct {
 	Version     string  `json:"version" yaml:"version"`
 	Language    string  `json:"language" yaml:"language"`
 	VersionFile string  `json:"versionFile" yaml:"version_file"`
-	Test        Test    `json:"test" yaml:"test"`
 	Build       Build   `json:"build" yaml:"build"`
 	Release     Release `json:"release" yaml:"release"`
 }
@@ -180,7 +153,6 @@ func (s *Spec) SetDefaults() {
 		s.Language = defaultLanguage
 	}
 
-	s.Test.SetDefaults()
 	s.Build.SetDefaults()
 	s.Release.SetDefaults()
 }
