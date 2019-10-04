@@ -1,4 +1,4 @@
-package cli
+package cui
 
 import (
 	"testing"
@@ -51,13 +51,13 @@ func TestNew(t *testing.T) {
 	ci := New()
 	assert.NotNil(t, ci)
 
-	cs, ok := ci.(*cli)
+	cs, ok := ci.(*cui)
 	assert.True(t, ok)
 	assert.NotNil(t, cs)
 	assert.NotNil(t, cs.ui)
 }
 
-func TestCLI(t *testing.T) {
+func TestCUI(t *testing.T) {
 	tests := []struct {
 		ui             *mockUI
 		format         string
@@ -75,7 +75,7 @@ func TestCLI(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		c := &cli{
+		c := &cui{
 			ui: tc.ui,
 		}
 
