@@ -14,13 +14,13 @@ func TestNewBuild(t *testing.T) {
 		name    string
 		ui      cui.CUI
 		workDir string
-		s       spec.Spec
+		s       *spec.Spec
 	}{
 		{
 			name:    "OK",
 			ui:      &mockCUI{},
 			workDir: "",
-			s: spec.Spec{
+			s: &spec.Spec{
 				ToolName:    "cherry",
 				ToolVersion: "test",
 				Build: spec.Build{

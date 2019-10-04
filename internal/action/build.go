@@ -13,7 +13,7 @@ import (
 // build is the action for build command.
 type build struct {
 	ui    cui.CUI
-	tool  string
+	spec  *spec.Spec
 	step1 *step.GoList
 	step2 *step.SemVerRead
 	step3 *step.GitGetHEAD
@@ -23,26 +23,10 @@ type build struct {
 }
 
 // NewBuild creates an instance of Build action.
-func NewBuild(ui cui.CUI, workDir string, s spec.Spec) Action {
-	tool := s.ToolName
-	if s.ToolVersion != "" {
-		tool += "@" + s.ToolVersion
-	}
-
-	step6 := &step.GoBuild{
-		WorkDir:    workDir,
-		LDFlags:    "TBD",
-		MainFile:   s.Build.MainFile,
-		BinaryFile: s.Build.BinaryFile,
-	}
-
-	if s.Build.CrossCompile {
-		step6.Platforms = s.Build.Platforms
-	}
-
+func NewBuild(ui cui.CUI, workDir string, s *spec.Spec) Action {
 	return &build{
 		ui:   ui,
-		tool: tool,
+		spec: s,
 		step1: &step.GoList{
 			WorkDir: workDir,
 			Package: s.Build.VersionPackage,
@@ -60,17 +44,27 @@ func NewBuild(ui cui.CUI, workDir string, s spec.Spec) Action {
 		step5: &step.GoVersion{
 			WorkDir: workDir,
 		},
-		step6: step6,
+		step6: &step.GoBuild{
+			WorkDir:    workDir,
+			LDFlags:    "TBD",
+			MainFile:   s.Build.MainFile,
+			BinaryFile: s.Build.BinaryFile,
+		},
 	}
 }
 
 func (b *build) getLDFlags() string {
+	buildTool := b.spec.ToolName
+	if b.spec.ToolVersion != "" {
+		buildTool += "@" + b.spec.ToolVersion
+	}
+
 	vPkg := b.step1.Result.PackagePath
 	versionFlag := fmt.Sprintf("-X %s.Version=%s", vPkg, b.step2.Result.Version.Version())
 	revisionFlag := fmt.Sprintf("-X %s.Revision=%s", vPkg, b.step3.Result.ShortSHA)
 	branchFlag := fmt.Sprintf("-X %s.Branch=%s", vPkg, b.step4.Result.Name)
 	goVersionFlag := fmt.Sprintf("-X %s.GoVersion=%s", vPkg, b.step5.Result.Version)
-	buildToolFlag := fmt.Sprintf("-X %s.BuildTool=%s", vPkg, b.tool)
+	buildToolFlag := fmt.Sprintf("-X %s.BuildTool=%s", vPkg, buildTool)
 	buildTimeFlag := fmt.Sprintf("-X %s.BuildTime=%s", vPkg, time.Now().UTC().Format(time.RFC3339Nano))
 	ldflags := fmt.Sprintf("%s %s %s %s %s %s", versionFlag, revisionFlag, branchFlag, goVersionFlag, buildToolFlag, buildTimeFlag)
 
@@ -103,6 +97,9 @@ func (b *build) Dry(ctx context.Context) error {
 	}
 
 	b.step6.LDFlags = b.getLDFlags()
+	if b.spec.Build.CrossCompile {
+		b.step6.Platforms = b.spec.Build.Platforms
+	}
 
 	if err := b.step6.Dry(ctx); err != nil {
 		return err
@@ -134,6 +131,9 @@ func (b *build) Run(ctx context.Context) error {
 	}
 
 	b.step6.LDFlags = b.getLDFlags()
+	if b.spec.Build.CrossCompile {
+		b.step6.Platforms = b.spec.Build.Platforms
+	}
 
 	if err := b.step6.Run(ctx); err != nil {
 		return err

@@ -41,15 +41,15 @@ const (
 // build is the build command.
 type build struct {
 	ui     cui.CUI
-	Build  spec.Build
+	Build  *spec.Build
 	action action.Action
 }
 
 // NewBuild creates a new build command.
-func NewBuild(ui cui.CUI, workDir string, s spec.Spec) (cli.Command, error) {
+func NewBuild(ui cui.CUI, workDir string, s *spec.Spec) (cli.Command, error) {
 	return &build{
 		ui:     ui,
-		Build:  s.Build,
+		Build:  &s.Build,
 		action: action.NewBuild(ui, workDir, s),
 	}, nil
 }
