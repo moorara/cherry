@@ -13,7 +13,7 @@ import (
 // build is the action for build command.
 type build struct {
 	ui    cui.CUI
-	spec  *spec.Spec
+	spec  *spec.Spec // This needs to be a pointer, so updates made by flag.Parse will be available here
 	step1 *step.GoList
 	step2 *step.SemVerRead
 	step3 *step.GitGetHEAD
@@ -148,27 +148,27 @@ func (b *build) Run(ctx context.Context) error {
 
 // Revert reverts back an executed action.
 func (b *build) Revert(ctx context.Context) error {
-	if err := b.step6.Run(ctx); err != nil {
+	if err := b.step6.Revert(ctx); err != nil {
 		return err
 	}
 
-	if err := b.step5.Run(ctx); err != nil {
+	if err := b.step5.Revert(ctx); err != nil {
 		return err
 	}
 
-	if err := b.step4.Run(ctx); err != nil {
+	if err := b.step4.Revert(ctx); err != nil {
 		return err
 	}
 
-	if err := b.step3.Run(ctx); err != nil {
+	if err := b.step3.Revert(ctx); err != nil {
 		return err
 	}
 
-	if err := b.step2.Run(ctx); err != nil {
+	if err := b.step2.Revert(ctx); err != nil {
 		return err
 	}
 
-	if err := b.step1.Run(ctx); err != nil {
+	if err := b.step1.Revert(ctx); err != nil {
 		return err
 	}
 

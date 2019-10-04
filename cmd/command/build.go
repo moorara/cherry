@@ -41,7 +41,7 @@ const (
 // build is the build command.
 type build struct {
 	ui     cui.CUI
-	Build  *spec.Build
+	Build  *spec.Build // This needs to be a pointer, so updates made by flag.Parse will be available to downstream consumers
 	action action.Action
 }
 
