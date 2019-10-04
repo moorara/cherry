@@ -3,7 +3,6 @@ package command
 import (
 	"bytes"
 	"context"
-	"flag"
 	"text/template"
 	"time"
 
@@ -26,10 +25,10 @@ const (
 
 	Flags:
 
-		-cross-compile:    build the binary for all platforms                (default: {{.Spec.Build.CrossCompile}})
-		-main-file:        path to main.go file                              (default: {{.Spec.Build.MainFile}})
-		-binary-file:      path for binary files                             (default: {{.Spec.Build.BinaryFile}})
-		-version-package:  relative path to package containing version info  (default: {{.Spec.Build.VersionPackage}})
+		-cross-compile:    build the binary for all platforms                (default: {{.Build.CrossCompile}})
+		-main-file:        path to main.go file                              (default: {{.Build.MainFile}})
+		-binary-file:      path for binary files                             (default: {{.Build.BinaryFile}})
+		-version-package:  relative path to package containing version info  (default: {{.Build.VersionPackage}})
 
 	Examples:
 
@@ -42,7 +41,7 @@ const (
 // build is the build command.
 type build struct {
 	ui     cui.CUI
-	fs     *flag.FlagSet
+	Build  spec.Build
 	action action.Action
 }
 
@@ -50,14 +49,14 @@ type build struct {
 func NewBuild(ui cui.CUI, workDir string, s spec.Spec) (cli.Command, error) {
 	return &build{
 		ui:     ui,
-		fs:     s.Build.FlagSet(),
+		Build:  s.Build,
 		action: action.NewBuild(ui, workDir, s),
 	}, nil
 }
 
 // Synopsis returns a short one-line synopsis of the command.
 func (c *build) Synopsis() string {
-	return updateSynopsis
+	return buildSynopsis
 }
 
 // Help returns a long help text including usage, description, and list of flags for the command.
@@ -71,11 +70,12 @@ func (c *build) Help() string {
 
 // Run runs the actual command with the given command-line arguments.
 func (c *build) Run(args []string) int {
-	c.fs.Usage = func() {
+	fs := c.Build.FlagSet()
+	fs.Usage = func() {
 		c.ui.Outputf(c.Help())
 	}
 
-	if err := c.fs.Parse(args); err != nil {
+	if err := fs.Parse(args); err != nil {
 		return buildFlagErr
 	}
 
