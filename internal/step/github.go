@@ -16,11 +16,14 @@ import (
 )
 
 const (
-	// GithubAPI is the BaseURL for GitHub steps
-	GithubAPI = "https://api.github.com"
-
 	githubAcceptType = "application/vnd.github.v3+json"
-	githubUserAgent  = "moorara/cherry"
+	githubUserAgent  = "cherry"
+
+	// GitHubURL is the BaseURL for GitHub.
+	GitHubURL = "https://github.com"
+
+	// GitHubAPIURL is the BaseURL for GitHub API.
+	GitHubAPIURL = "https://api.github.com"
 )
 
 type (
