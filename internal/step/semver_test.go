@@ -2,6 +2,7 @@ package step
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -10,6 +11,51 @@ import (
 	"github.com/moorara/cherry/internal/semver"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestSemVerReadMock(t *testing.T) {
+	tests := []struct {
+		name                string
+		mock                *mockStep
+		expectedDryError    error
+		expectedRunError    error
+		expectedRevertError error
+	}{
+		{
+			name: "OK",
+			mock: &mockStep{},
+		},
+		{
+			name: "OK",
+			mock: &mockStep{
+				DryOutError:    errors.New("dry error"),
+				RunOutError:    errors.New("run error"),
+				RevertOutError: errors.New("revert error"),
+			},
+			expectedDryError:    errors.New("dry error"),
+			expectedRunError:    errors.New("run error"),
+			expectedRevertError: errors.New("revert error"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := SemVerRead{
+				Mock: tc.mock,
+			}
+
+			ctx := context.Background()
+
+			err := step.Dry(ctx)
+			assert.Equal(t, tc.expectedDryError, err)
+
+			err = step.Run(ctx)
+			assert.Equal(t, tc.expectedRunError, err)
+
+			err = step.Revert(ctx)
+			assert.Equal(t, tc.expectedRevertError, err)
+		})
+	}
+}
 
 func TestSemVerReadDry(t *testing.T) {
 	tests := []struct {
@@ -220,6 +266,51 @@ func TestSemVerReadRevert(t *testing.T) {
 				assert.Error(t, err)
 				assert.Equal(t, tc.expectedError, err.Error())
 			}
+		})
+	}
+}
+
+func TestSemVerUpdateMock(t *testing.T) {
+	tests := []struct {
+		name                string
+		mock                *mockStep
+		expectedDryError    error
+		expectedRunError    error
+		expectedRevertError error
+	}{
+		{
+			name: "OK",
+			mock: &mockStep{},
+		},
+		{
+			name: "OK",
+			mock: &mockStep{
+				DryOutError:    errors.New("dry error"),
+				RunOutError:    errors.New("run error"),
+				RevertOutError: errors.New("revert error"),
+			},
+			expectedDryError:    errors.New("dry error"),
+			expectedRunError:    errors.New("run error"),
+			expectedRevertError: errors.New("revert error"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := SemVerUpdate{
+				Mock: tc.mock,
+			}
+
+			ctx := context.Background()
+
+			err := step.Dry(ctx)
+			assert.Equal(t, tc.expectedDryError, err)
+
+			err = step.Run(ctx)
+			assert.Equal(t, tc.expectedRunError, err)
+
+			err = step.Revert(ctx)
+			assert.Equal(t, tc.expectedRevertError, err)
 		})
 	}
 }

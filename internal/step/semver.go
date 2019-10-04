@@ -21,6 +21,7 @@ const (
 
 // SemVerRead reads version from version file.
 type SemVerRead struct {
+	Mock     Step
 	WorkDir  string
 	Filename string
 	Result   struct {
@@ -70,6 +71,10 @@ func (s *SemVerRead) readVersion() (semver.SemVer, error) {
 
 // Dry is a dry run of the step.
 func (s *SemVerRead) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	_, err := s.readVersion()
 	if err != nil {
 		return err
@@ -80,6 +85,10 @@ func (s *SemVerRead) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *SemVerRead) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	version, err := s.readVersion()
 	if err != nil {
 		return err
@@ -92,11 +101,16 @@ func (s *SemVerRead) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *SemVerRead) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	return nil
 }
 
 // SemVerUpdate writes a version to version file.
 type SemVerUpdate struct {
+	Mock     Step
 	WorkDir  string
 	Filename string
 	Version  string
@@ -143,15 +157,27 @@ func (s *SemVerUpdate) writeVersion(dryRun bool) error {
 
 // Dry is a dry run of the step.
 func (s *SemVerUpdate) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	return s.writeVersion(true)
 }
 
 // Run executes the step.
 func (s *SemVerUpdate) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	return s.writeVersion(false)
 }
 
 // Revert reverts back an executed step.
 func (s *SemVerUpdate) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	return nil
 }

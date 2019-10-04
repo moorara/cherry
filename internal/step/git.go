@@ -43,6 +43,7 @@ func parseGitURL(output string) (string, string, error) {
 
 // GitStatus runs `git status --porcelain` command.
 type GitStatus struct {
+	Mock    Step
 	WorkDir string
 	Result  struct {
 		IsClean bool
@@ -51,6 +52,10 @@ type GitStatus struct {
 
 // Dry is a dry run of the step.
 func (s *GitStatus) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "status")
 	cmd.Dir = s.WorkDir
@@ -65,6 +70,10 @@ func (s *GitStatus) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitStatus) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "status", "--porcelain")
 	cmd.Dir = s.WorkDir
@@ -81,11 +90,16 @@ func (s *GitStatus) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitStatus) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	return nil
 }
 
 // GitGetRepo runs `git remote -v` command.
 type GitGetRepo struct {
+	Mock    Step
 	WorkDir string
 	Result  struct {
 		Owner string
@@ -95,6 +109,10 @@ type GitGetRepo struct {
 
 // Dry is a dry run of the step.
 func (s *GitGetRepo) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "remote")
 	cmd.Dir = s.WorkDir
@@ -109,6 +127,10 @@ func (s *GitGetRepo) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitGetRepo) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	var err error
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "remote", "-v")
@@ -129,11 +151,16 @@ func (s *GitGetRepo) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitGetRepo) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	return nil
 }
 
 // GitGetBranch runs `git rev-parse --abbrev-ref HEAD` command.
 type GitGetBranch struct {
+	Mock    Step
 	WorkDir string
 	Result  struct {
 		Name string
@@ -142,6 +169,10 @@ type GitGetBranch struct {
 
 // Dry is a dry run of the step.
 func (s *GitGetBranch) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "rev-parse", "--abbrev-ref", "HEAD")
 	cmd.Dir = s.WorkDir
@@ -156,6 +187,10 @@ func (s *GitGetBranch) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitGetBranch) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "rev-parse", "--abbrev-ref", "HEAD")
 	cmd.Dir = s.WorkDir
@@ -172,11 +207,16 @@ func (s *GitGetBranch) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitGetBranch) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	return nil
 }
 
 // GitGetHEAD runs `git rev-parse HEAD` command.
 type GitGetHEAD struct {
+	Mock    Step
 	WorkDir string
 	Result  struct {
 		SHA      string
@@ -186,6 +226,10 @@ type GitGetHEAD struct {
 
 // Dry is a dry run of the step.
 func (s *GitGetHEAD) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "rev-parse", "HEAD")
 	cmd.Dir = s.WorkDir
@@ -200,6 +244,10 @@ func (s *GitGetHEAD) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitGetHEAD) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "rev-parse", "HEAD")
 	cmd.Dir = s.WorkDir
@@ -217,17 +265,26 @@ func (s *GitGetHEAD) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitGetHEAD) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	return nil
 }
 
 // GitAdd runs `git add <files>` command.
 type GitAdd struct {
+	Mock    Step
 	WorkDir string
 	Files   []string
 }
 
 // Dry is a dry run of the step.
 func (s *GitAdd) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	args := append([]string{"add", "--dry-run"}, s.Files...)
 	cmd := exec.CommandContext(ctx, "git", args...)
@@ -243,6 +300,10 @@ func (s *GitAdd) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitAdd) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	args := append([]string{"add"}, s.Files...)
 	cmd := exec.CommandContext(ctx, "git", args...)
@@ -258,6 +319,10 @@ func (s *GitAdd) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitAdd) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 
 	// git reset <files>
@@ -275,12 +340,17 @@ func (s *GitAdd) Revert(ctx context.Context) error {
 
 // GitCommit runs `git commit -m <message>` command.
 type GitCommit struct {
+	Mock    Step
 	WorkDir string
 	Message string
 }
 
 // Dry is a dry run of the step.
 func (s *GitCommit) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "commit", "--dry-run", "-m", s.Message)
 	cmd.Dir = s.WorkDir
@@ -295,6 +365,10 @@ func (s *GitCommit) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitCommit) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "commit", "-m", s.Message)
 	cmd.Dir = s.WorkDir
@@ -309,6 +383,10 @@ func (s *GitCommit) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitCommit) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 
 	// git reset --soft HEAD~1
@@ -325,6 +403,7 @@ func (s *GitCommit) Revert(ctx context.Context) error {
 
 // GitTag runs `git tag` or `git tag -a <tag> -m <message>` command.
 type GitTag struct {
+	Mock       Step
 	WorkDir    string
 	Tag        string
 	Annotation string
@@ -332,6 +411,10 @@ type GitTag struct {
 
 // Dry is a dry run of the step.
 func (s *GitTag) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "tag")
 	cmd.Dir = s.WorkDir
@@ -346,6 +429,10 @@ func (s *GitTag) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitTag) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 
 	var cmd *exec.Cmd
@@ -367,6 +454,10 @@ func (s *GitTag) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitTag) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 
 	// git tag --delete <tag>
@@ -383,11 +474,16 @@ func (s *GitTag) Revert(ctx context.Context) error {
 
 // GitPush runs `git push` command.
 type GitPush struct {
+	Mock    Step
 	WorkDir string
 }
 
 // Dry is a dry run of the step.
 func (s *GitPush) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "remote", "get-url", "origin")
 	cmd.Dir = s.WorkDir
@@ -402,6 +498,10 @@ func (s *GitPush) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitPush) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "push")
 	cmd.Dir = s.WorkDir
@@ -416,18 +516,27 @@ func (s *GitPush) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitPush) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	// TODO: implement revert
 	return errors.New("cannot revert git push")
 }
 
 // GitPushTag runs `git push origin <tag>` command.
 type GitPushTag struct {
+	Mock    Step
 	WorkDir string
 	Tag     string
 }
 
 // Dry is a dry run of the step.
 func (s *GitPushTag) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "remote", "get-url", "origin")
 	cmd.Dir = s.WorkDir
@@ -442,6 +551,10 @@ func (s *GitPushTag) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitPushTag) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "push", "origin", s.Tag)
 	cmd.Dir = s.WorkDir
@@ -456,17 +569,26 @@ func (s *GitPushTag) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitPushTag) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	// TODO: implement revert
 	return errors.New("cannot revert git push")
 }
 
 // GitPull runs `git pull` command.
 type GitPull struct {
+	Mock    Step
 	WorkDir string
 }
 
 // Dry is a dry run of the step.
 func (s *GitPull) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "remote", "get-url", "origin")
 	cmd.Dir = s.WorkDir
@@ -481,6 +603,10 @@ func (s *GitPull) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitPull) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "git", "pull")
 	cmd.Dir = s.WorkDir
@@ -495,6 +621,10 @@ func (s *GitPull) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitPull) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	// TODO: implement revert
 	return errors.New("cannot revert git pull")
 }

@@ -13,6 +13,7 @@ import (
 
 // GoVersion runs `go version` command.
 type GoVersion struct {
+	Mock    Step
 	WorkDir string
 	Result  struct {
 		Version string
@@ -21,6 +22,10 @@ type GoVersion struct {
 
 // Dry is a dry run of the step.
 func (s *GoVersion) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version")
 	cmd.Dir = s.WorkDir
@@ -35,6 +40,10 @@ func (s *GoVersion) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GoVersion) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "version")
 	cmd.Dir = s.WorkDir
@@ -51,11 +60,16 @@ func (s *GoVersion) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GoVersion) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	return nil
 }
 
 // GoList runs `go list ...` command.
 type GoList struct {
+	Mock    Step
 	WorkDir string
 	Package string
 	Result  struct {
@@ -65,6 +79,10 @@ type GoList struct {
 
 // Dry is a dry run of the step.
 func (s *GoList) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "list", s.Package)
 	cmd.Dir = s.WorkDir
@@ -79,6 +97,10 @@ func (s *GoList) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GoList) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", "list", s.Package)
 	cmd.Dir = s.WorkDir
@@ -95,11 +117,16 @@ func (s *GoList) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GoList) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	return nil
 }
 
 // GoBuild runs `go build ...` command.
 type GoBuild struct {
+	Mock       Step
 	WorkDir    string
 	LDFlags    string
 	MainFile   string
@@ -140,6 +167,10 @@ func (s *GoBuild) build(ctx context.Context, binaryFile string) error {
 
 // Dry is a dry run of the step.
 func (s *GoBuild) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	s.Result.Binaries = []string{}
 
 	dir, err := ioutil.TempDir("", "cherry-")
@@ -159,6 +190,10 @@ func (s *GoBuild) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GoBuild) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	s.Result.Binaries = []string{}
 
 	if len(s.Platforms) == 0 {
@@ -193,6 +228,10 @@ func (s *GoBuild) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GoBuild) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	for _, binary := range s.Result.Binaries {
 		if err := os.Remove(binary); err != nil {
 			return err

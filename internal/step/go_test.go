@@ -2,6 +2,7 @@ package step
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -9,6 +10,51 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestGoVersionMock(t *testing.T) {
+	tests := []struct {
+		name                string
+		mock                *mockStep
+		expectedDryError    error
+		expectedRunError    error
+		expectedRevertError error
+	}{
+		{
+			name: "OK",
+			mock: &mockStep{},
+		},
+		{
+			name: "OK",
+			mock: &mockStep{
+				DryOutError:    errors.New("dry error"),
+				RunOutError:    errors.New("run error"),
+				RevertOutError: errors.New("revert error"),
+			},
+			expectedDryError:    errors.New("dry error"),
+			expectedRunError:    errors.New("run error"),
+			expectedRevertError: errors.New("revert error"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GoVersion{
+				Mock: tc.mock,
+			}
+
+			ctx := context.Background()
+
+			err := step.Dry(ctx)
+			assert.Equal(t, tc.expectedDryError, err)
+
+			err = step.Run(ctx)
+			assert.Equal(t, tc.expectedRunError, err)
+
+			err = step.Revert(ctx)
+			assert.Equal(t, tc.expectedRevertError, err)
+		})
+	}
+}
 
 func TestGoVersionDry(t *testing.T) {
 	tests := []struct {
@@ -99,6 +145,51 @@ func TestGoVersionRevert(t *testing.T) {
 				assert.Error(t, err)
 				assert.Equal(t, tc.expectedError, err.Error())
 			}
+		})
+	}
+}
+
+func TestGoListMock(t *testing.T) {
+	tests := []struct {
+		name                string
+		mock                *mockStep
+		expectedDryError    error
+		expectedRunError    error
+		expectedRevertError error
+	}{
+		{
+			name: "OK",
+			mock: &mockStep{},
+		},
+		{
+			name: "OK",
+			mock: &mockStep{
+				DryOutError:    errors.New("dry error"),
+				RunOutError:    errors.New("run error"),
+				RevertOutError: errors.New("revert error"),
+			},
+			expectedDryError:    errors.New("dry error"),
+			expectedRunError:    errors.New("run error"),
+			expectedRevertError: errors.New("revert error"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GoList{
+				Mock: tc.mock,
+			}
+
+			ctx := context.Background()
+
+			err := step.Dry(ctx)
+			assert.Equal(t, tc.expectedDryError, err)
+
+			err = step.Run(ctx)
+			assert.Equal(t, tc.expectedRunError, err)
+
+			err = step.Revert(ctx)
+			assert.Equal(t, tc.expectedRevertError, err)
 		})
 	}
 }
@@ -216,6 +307,51 @@ func TestGoListRevert(t *testing.T) {
 				assert.Error(t, err)
 				assert.Equal(t, tc.expectedError, err.Error())
 			}
+		})
+	}
+}
+
+func TestGoBuildMock(t *testing.T) {
+	tests := []struct {
+		name                string
+		mock                *mockStep
+		expectedDryError    error
+		expectedRunError    error
+		expectedRevertError error
+	}{
+		{
+			name: "OK",
+			mock: &mockStep{},
+		},
+		{
+			name: "OK",
+			mock: &mockStep{
+				DryOutError:    errors.New("dry error"),
+				RunOutError:    errors.New("run error"),
+				RevertOutError: errors.New("revert error"),
+			},
+			expectedDryError:    errors.New("dry error"),
+			expectedRunError:    errors.New("run error"),
+			expectedRevertError: errors.New("revert error"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GoBuild{
+				Mock: tc.mock,
+			}
+
+			ctx := context.Background()
+
+			err := step.Dry(ctx)
+			assert.Equal(t, tc.expectedDryError, err)
+
+			err = step.Run(ctx)
+			assert.Equal(t, tc.expectedRunError, err)
+
+			err = step.Revert(ctx)
+			assert.Equal(t, tc.expectedRevertError, err)
 		})
 	}
 }

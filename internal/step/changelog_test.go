@@ -2,11 +2,57 @@ package step
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestChangelogGenerateMock(t *testing.T) {
+	tests := []struct {
+		name                string
+		mock                *mockStep
+		expectedDryError    error
+		expectedRunError    error
+		expectedRevertError error
+	}{
+		{
+			name: "OK",
+			mock: &mockStep{},
+		},
+		{
+			name: "OK",
+			mock: &mockStep{
+				DryOutError:    errors.New("dry error"),
+				RunOutError:    errors.New("run error"),
+				RevertOutError: errors.New("revert error"),
+			},
+			expectedDryError:    errors.New("dry error"),
+			expectedRunError:    errors.New("run error"),
+			expectedRevertError: errors.New("revert error"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := ChangelogGenerate{
+				Mock: tc.mock,
+			}
+
+			ctx := context.Background()
+
+			err := step.Dry(ctx)
+			assert.Equal(t, tc.expectedDryError, err)
+
+			err = step.Run(ctx)
+			assert.Equal(t, tc.expectedRunError, err)
+
+			err = step.Revert(ctx)
+			assert.Equal(t, tc.expectedRevertError, err)
+		})
+	}
+}
 
 func TestChangelogGenerateDry(t *testing.T) {
 	tests := []struct {

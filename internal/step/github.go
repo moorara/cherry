@@ -98,6 +98,7 @@ func (e *httpError) Error() string {
 // See https://developer.github.com/v3/repos/branches/#add-admin-enforcement-of-protected-branch
 // See https://developer.github.com/v3/repos/branches/#remove-admin-enforcement-of-protected-branch
 type GitHubBranchProtection struct {
+	Mock    Step
 	Client  *http.Client
 	Token   string
 	BaseURL string
@@ -153,6 +154,10 @@ func (s *GitHubBranchProtection) makeRequest(ctx context.Context, method string)
 
 // Dry is a dry run of the step.
 func (s *GitHubBranchProtection) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	_, err := s.makeRequest(ctx, "GET")
 	if err != nil {
 		return err
@@ -163,6 +168,10 @@ func (s *GitHubBranchProtection) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitHubBranchProtection) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	var method string
 	if s.Enabled {
 		method = "POST"
@@ -180,6 +189,10 @@ func (s *GitHubBranchProtection) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitHubBranchProtection) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	var method string
 	if s.Enabled {
 		method = "DELETE"
@@ -198,6 +211,7 @@ func (s *GitHubBranchProtection) Revert(ctx context.Context) error {
 // GitHubGetLatestRelease gets the latest release.
 // See https://developer.github.com/v3/repos/releases/#get-the-latest-release
 type GitHubGetLatestRelease struct {
+	Mock    Step
 	Client  *http.Client
 	Token   string
 	BaseURL string
@@ -244,6 +258,10 @@ func (s *GitHubGetLatestRelease) makeRequest(ctx context.Context) (*GitHubReleas
 
 // Dry is a dry run of the step.
 func (s *GitHubGetLatestRelease) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	_, err := s.makeRequest(ctx)
 	if err != nil {
 		return err
@@ -254,6 +272,10 @@ func (s *GitHubGetLatestRelease) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitHubGetLatestRelease) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	release, err := s.makeRequest(ctx)
 	if err != nil {
 		return err
@@ -266,6 +288,10 @@ func (s *GitHubGetLatestRelease) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitHubGetLatestRelease) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	return nil
 }
 
@@ -274,6 +300,7 @@ func (s *GitHubGetLatestRelease) Revert(ctx context.Context) error {
 // See https://developer.github.com/v3/repos/releases/#create-a-release
 // See https://developer.github.com/v3/repos/releases/#delete-a-release
 type GitHubCreateRelease struct {
+	Mock        Step
 	Client      *http.Client
 	Token       string
 	BaseURL     string
@@ -332,6 +359,10 @@ func (s *GitHubCreateRelease) makeRequest(ctx context.Context, method, url strin
 
 // Dry is a dry run of the step.
 func (s *GitHubCreateRelease) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	method := "GET"
 	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
 
@@ -345,6 +376,10 @@ func (s *GitHubCreateRelease) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitHubCreateRelease) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	method := "POST"
 	url := fmt.Sprintf("%s/repos/%s/releases", s.BaseURL, s.Repo)
 
@@ -363,6 +398,10 @@ func (s *GitHubCreateRelease) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitHubCreateRelease) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	method := "DELETE"
 	url := fmt.Sprintf("%s/repos/%s/releases/%d", s.BaseURL, s.Repo, s.Result.Release.ID)
 
@@ -378,6 +417,7 @@ func (s *GitHubCreateRelease) Revert(ctx context.Context) error {
 // See https://developer.github.com/v3/repos/releases/#get-a-single-release
 // See https://developer.github.com/v3/repos/releases/#edit-a-release
 type GitHubEditRelease struct {
+	Mock        Step
 	Client      *http.Client
 	Token       string
 	BaseURL     string
@@ -431,6 +471,10 @@ func (s *GitHubEditRelease) makeRequest(ctx context.Context, method, url string,
 
 // Dry is a dry run of the step.
 func (s *GitHubEditRelease) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	method := "GET"
 	url := fmt.Sprintf("%s/repos/%s/releases/%d", s.BaseURL, s.Repo, s.ReleaseID)
 
@@ -444,6 +488,10 @@ func (s *GitHubEditRelease) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitHubEditRelease) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	method := "PATCH"
 	url := fmt.Sprintf("%s/repos/%s/releases/%d", s.BaseURL, s.Repo, s.ReleaseID)
 
@@ -462,6 +510,10 @@ func (s *GitHubEditRelease) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitHubEditRelease) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	// TODO: how to revert an edited release?
 	return nil
 }
@@ -471,6 +523,7 @@ func (s *GitHubEditRelease) Revert(ctx context.Context) error {
 // See https://developer.github.com/v3/repos/releases/#upload-a-release-asset
 // See https://developer.github.com/v3/repos/releases/#delete-a-release-asset
 type GitHubUploadAssets struct {
+	Mock             Step
 	Client           *http.Client
 	Token            string
 	BaseURL          string
@@ -485,6 +538,10 @@ type GitHubUploadAssets struct {
 
 // Dry is a dry run of the step
 func (s *GitHubUploadAssets) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	method := "GET"
 	url := fmt.Sprintf("%s/repos/%s/releases/%d/assets", s.BaseURL, s.Repo, s.ReleaseID)
 
@@ -515,6 +572,10 @@ func (s *GitHubUploadAssets) Dry(ctx context.Context) error {
 
 // Run executes the step
 func (s *GitHubUploadAssets) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	s.Result.Assets = make([]GitHubAsset, 0)
 
 	for _, asset := range s.AssetFiles {
@@ -570,6 +631,10 @@ func (s *GitHubUploadAssets) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step
 func (s *GitHubUploadAssets) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	for _, asset := range s.Result.Assets {
 		method := "DELETE"
 		url := fmt.Sprintf("%s/repos/%s/releases/assets/%d", s.BaseURL, s.Repo, asset.ID)
@@ -644,6 +709,7 @@ func getUploadContent(filepath string) (*uploadContent, error) {
 
 // GitHubDownloadAsset downloads an asset file and writes to a local file.
 type GitHubDownloadAsset struct {
+	Mock      Step
 	Client    *http.Client
 	Token     string
 	BaseURL   string
@@ -684,6 +750,10 @@ func (s *GitHubDownloadAsset) makeRequest(ctx context.Context) (io.ReadCloser, e
 
 // Dry is a dry run of the step.
 func (s *GitHubDownloadAsset) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	body, err := s.makeRequest(ctx)
 	if err != nil {
 		return err
@@ -695,6 +765,10 @@ func (s *GitHubDownloadAsset) Dry(ctx context.Context) error {
 
 // Run executes the step.
 func (s *GitHubDownloadAsset) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	body, err := s.makeRequest(ctx)
 	if err != nil {
 		return err
@@ -718,5 +792,9 @@ func (s *GitHubDownloadAsset) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step.
 func (s *GitHubDownloadAsset) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	return os.Remove(s.Filepath)
 }

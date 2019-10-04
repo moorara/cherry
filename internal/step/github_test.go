@@ -2,6 +2,7 @@ package step
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -83,6 +84,51 @@ func TestHTTPError(t *testing.T) {
 			assert.Equal(t, tc.statusCode, err.StatusCode)
 			assert.Equal(t, tc.body, err.Message)
 			assert.Equal(t, tc.expectedError, err.Error())
+		})
+	}
+}
+
+func TestGitHubBranchProtectionMock(t *testing.T) {
+	tests := []struct {
+		name                string
+		mock                *mockStep
+		expectedDryError    error
+		expectedRunError    error
+		expectedRevertError error
+	}{
+		{
+			name: "OK",
+			mock: &mockStep{},
+		},
+		{
+			name: "OK",
+			mock: &mockStep{
+				DryOutError:    errors.New("dry error"),
+				RunOutError:    errors.New("run error"),
+				RevertOutError: errors.New("revert error"),
+			},
+			expectedDryError:    errors.New("dry error"),
+			expectedRunError:    errors.New("run error"),
+			expectedRevertError: errors.New("revert error"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitHubBranchProtection{
+				Mock: tc.mock,
+			}
+
+			ctx := context.Background()
+
+			err := step.Dry(ctx)
+			assert.Equal(t, tc.expectedDryError, err)
+
+			err = step.Run(ctx)
+			assert.Equal(t, tc.expectedRunError, err)
+
+			err = step.Revert(ctx)
+			assert.Equal(t, tc.expectedRevertError, err)
 		})
 	}
 }
@@ -324,6 +370,51 @@ func TestGitHubBranchProtectionRevert(t *testing.T) {
 	}
 }
 
+func TestGitHubGetLatestReleaseMock(t *testing.T) {
+	tests := []struct {
+		name                string
+		mock                *mockStep
+		expectedDryError    error
+		expectedRunError    error
+		expectedRevertError error
+	}{
+		{
+			name: "OK",
+			mock: &mockStep{},
+		},
+		{
+			name: "OK",
+			mock: &mockStep{
+				DryOutError:    errors.New("dry error"),
+				RunOutError:    errors.New("run error"),
+				RevertOutError: errors.New("revert error"),
+			},
+			expectedDryError:    errors.New("dry error"),
+			expectedRunError:    errors.New("run error"),
+			expectedRevertError: errors.New("revert error"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitHubGetLatestRelease{
+				Mock: tc.mock,
+			}
+
+			ctx := context.Background()
+
+			err := step.Dry(ctx)
+			assert.Equal(t, tc.expectedDryError, err)
+
+			err = step.Run(ctx)
+			assert.Equal(t, tc.expectedRunError, err)
+
+			err = step.Revert(ctx)
+			assert.Equal(t, tc.expectedRevertError, err)
+		})
+	}
+}
+
 func TestGitHubGetLatestReleaseDry(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -508,6 +599,51 @@ func TestGitHubGetLatestReleaseRevert(t *testing.T) {
 				assert.Error(t, err)
 				assert.Equal(t, tc.expectedError, err.Error())
 			}
+		})
+	}
+}
+
+func TestGitHubCreateReleaseMock(t *testing.T) {
+	tests := []struct {
+		name                string
+		mock                *mockStep
+		expectedDryError    error
+		expectedRunError    error
+		expectedRevertError error
+	}{
+		{
+			name: "OK",
+			mock: &mockStep{},
+		},
+		{
+			name: "OK",
+			mock: &mockStep{
+				DryOutError:    errors.New("dry error"),
+				RunOutError:    errors.New("run error"),
+				RevertOutError: errors.New("revert error"),
+			},
+			expectedDryError:    errors.New("dry error"),
+			expectedRunError:    errors.New("run error"),
+			expectedRevertError: errors.New("revert error"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitHubCreateRelease{
+				Mock: tc.mock,
+			}
+
+			ctx := context.Background()
+
+			err := step.Dry(ctx)
+			assert.Equal(t, tc.expectedDryError, err)
+
+			err = step.Run(ctx)
+			assert.Equal(t, tc.expectedRunError, err)
+
+			err = step.Revert(ctx)
+			assert.Equal(t, tc.expectedRevertError, err)
 		})
 	}
 }
@@ -761,6 +897,51 @@ func TestGitHubCreateReleaseRevert(t *testing.T) {
 	}
 }
 
+func TestGitHubEditReleaseMock(t *testing.T) {
+	tests := []struct {
+		name                string
+		mock                *mockStep
+		expectedDryError    error
+		expectedRunError    error
+		expectedRevertError error
+	}{
+		{
+			name: "OK",
+			mock: &mockStep{},
+		},
+		{
+			name: "OK",
+			mock: &mockStep{
+				DryOutError:    errors.New("dry error"),
+				RunOutError:    errors.New("run error"),
+				RevertOutError: errors.New("revert error"),
+			},
+			expectedDryError:    errors.New("dry error"),
+			expectedRunError:    errors.New("run error"),
+			expectedRevertError: errors.New("revert error"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitHubEditRelease{
+				Mock: tc.mock,
+			}
+
+			ctx := context.Background()
+
+			err := step.Dry(ctx)
+			assert.Equal(t, tc.expectedDryError, err)
+
+			err = step.Run(ctx)
+			assert.Equal(t, tc.expectedRunError, err)
+
+			err = step.Revert(ctx)
+			assert.Equal(t, tc.expectedRevertError, err)
+		})
+	}
+}
+
 func TestGitHubEditReleaseDry(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -988,6 +1169,51 @@ func TestGitHubEditReleaseRevert(t *testing.T) {
 				assert.Error(t, err)
 				assert.Equal(t, tc.expectedError, err.Error())
 			}
+		})
+	}
+}
+
+func TestGitHubUploadAssetsMock(t *testing.T) {
+	tests := []struct {
+		name                string
+		mock                *mockStep
+		expectedDryError    error
+		expectedRunError    error
+		expectedRevertError error
+	}{
+		{
+			name: "OK",
+			mock: &mockStep{},
+		},
+		{
+			name: "OK",
+			mock: &mockStep{
+				DryOutError:    errors.New("dry error"),
+				RunOutError:    errors.New("run error"),
+				RevertOutError: errors.New("revert error"),
+			},
+			expectedDryError:    errors.New("dry error"),
+			expectedRunError:    errors.New("run error"),
+			expectedRevertError: errors.New("revert error"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitHubUploadAssets{
+				Mock: tc.mock,
+			}
+
+			ctx := context.Background()
+
+			err := step.Dry(ctx)
+			assert.Equal(t, tc.expectedDryError, err)
+
+			err = step.Run(ctx)
+			assert.Equal(t, tc.expectedRunError, err)
+
+			err = step.Revert(ctx)
+			assert.Equal(t, tc.expectedRevertError, err)
 		})
 	}
 }
@@ -1224,6 +1450,51 @@ func TestGitHubUploadAssetsRevert(t *testing.T) {
 				assert.Error(t, err)
 				assert.Equal(t, tc.expectedError, err.Error())
 			}
+		})
+	}
+}
+
+func TestGitHubDownloadAssetMock(t *testing.T) {
+	tests := []struct {
+		name                string
+		mock                *mockStep
+		expectedDryError    error
+		expectedRunError    error
+		expectedRevertError error
+	}{
+		{
+			name: "OK",
+			mock: &mockStep{},
+		},
+		{
+			name: "OK",
+			mock: &mockStep{
+				DryOutError:    errors.New("dry error"),
+				RunOutError:    errors.New("run error"),
+				RevertOutError: errors.New("revert error"),
+			},
+			expectedDryError:    errors.New("dry error"),
+			expectedRunError:    errors.New("run error"),
+			expectedRevertError: errors.New("revert error"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			step := GitHubDownloadAsset{
+				Mock: tc.mock,
+			}
+
+			ctx := context.Background()
+
+			err := step.Dry(ctx)
+			assert.Equal(t, tc.expectedDryError, err)
+
+			err = step.Run(ctx)
+			assert.Equal(t, tc.expectedRunError, err)
+
+			err = step.Revert(ctx)
+			assert.Equal(t, tc.expectedRevertError, err)
 		})
 	}
 }

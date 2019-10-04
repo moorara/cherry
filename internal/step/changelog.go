@@ -18,6 +18,7 @@ const (
 
 // ChangelogGenerate runs `github_changelog_generator` Ruby gem!
 type ChangelogGenerate struct {
+	Mock        Step
 	WorkDir     string
 	GitHubToken string
 	Repo        string
@@ -30,6 +31,10 @@ type ChangelogGenerate struct {
 
 // Dry is a dry run of the step
 func (s *ChangelogGenerate) Dry(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Dry(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "github_changelog_generator", "--version")
 	cmd.Dir = s.WorkDir
@@ -49,6 +54,10 @@ func (s *ChangelogGenerate) Dry(ctx context.Context) error {
 
 // Run executes the step
 func (s *ChangelogGenerate) Run(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Run(ctx)
+	}
+
 	var stdout, stderr bytes.Buffer
 
 	cmd := exec.CommandContext(ctx,
@@ -120,6 +129,10 @@ func (s *ChangelogGenerate) Run(ctx context.Context) error {
 
 // Revert reverts back an executed step
 func (s *ChangelogGenerate) Revert(ctx context.Context) error {
+	if s.Mock != nil {
+		return s.Mock.Revert(ctx)
+	}
+
 	// TODO: how to revert?
 	return nil
 }
