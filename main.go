@@ -25,7 +25,7 @@ var config = struct {
 func main() {
 	ui := cui.New()
 
-	_, err := os.Getwd()
+	wd, err := os.Getwd()
 	if err != nil {
 		ui.Errorf("%s", err)
 		os.Exit(osErr)
@@ -57,6 +57,9 @@ func main() {
 	c := cli.NewCLI("cherry", version.String())
 	c.Args = os.Args[1:]
 	c.Commands = map[string]cli.CommandFactory{
+		"build": func() (cli.Command, error) {
+			return command.NewBuild(ui, wd, *s)
+		},
 		"update": func() (cli.Command, error) {
 			return command.NewUpdate(ui, config.GithubToken)
 		},
