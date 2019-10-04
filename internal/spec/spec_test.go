@@ -1,10 +1,33 @@
 package spec
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestError(t *testing.T) {
+	tests := []struct {
+		err          error
+		specNotFound bool
+	}{
+		{
+			err:          errors.New("spec file not found"),
+			specNotFound: true,
+		},
+	}
+
+	for _, tc := range tests {
+		e := &Error{
+			err:          tc.err,
+			SpecNotFound: tc.specNotFound,
+		}
+
+		assert.Equal(t, tc.err.Error(), e.Error())
+		assert.Equal(t, tc.err, e.Unwrap())
+	}
+}
 
 func TestBuildSetDefaults(t *testing.T) {
 	tests := []struct {
@@ -269,46 +292,46 @@ func TestSpecSetDefaults(t *testing.T) {
 	}
 }
 
-func TestReadSpec(t *testing.T) {
+func TestRead(t *testing.T) {
 	tests := []struct {
 		name          string
-		specFile      string
+		specFiles     []string
 		expectedSpec  *Spec
 		expectedError string
 	}{
 		{
 			name:          "BadFile",
-			specFile:      "test/null",
-			expectedError: "no such file or directory",
+			specFiles:     []string{"test/null"},
+			expectedError: "no spec file found",
 		},
 		{
 			name:          "UnknownFile",
-			specFile:      "test/unknown.hcl",
+			specFiles:     []string{"test/unknown.hcl"},
 			expectedError: "unknown spec file",
 		},
 		{
 			name:          "EmptyYAML",
-			specFile:      "test/empty.yaml",
+			specFiles:     []string{"test/empty.yaml"},
 			expectedError: "EOF",
 		},
 		{
 			name:          "EmptyJSON",
-			specFile:      "test/empty.json",
+			specFiles:     []string{"test/empty.json"},
 			expectedError: "EOF",
 		},
 		{
 			name:          "InvalidYAML",
-			specFile:      "test/invalid.yaml",
+			specFiles:     []string{"test/invalid.yaml"},
 			expectedError: "cannot unmarshal",
 		},
 		{
 			name:          "InvalidJSON",
-			specFile:      "test/invalid.json",
+			specFiles:     []string{"test/invalid.json"},
 			expectedError: "invalid character",
 		},
 		{
-			name:     "MinimumYAML",
-			specFile: "test/min.yaml",
+			name:      "MinimumYAML",
+			specFiles: []string{"test/min.yaml"},
 			expectedSpec: &Spec{
 				Version:  "1.0",
 				Language: "go",
@@ -320,8 +343,8 @@ func TestReadSpec(t *testing.T) {
 			},
 		},
 		{
-			name:     "MinimumJSON",
-			specFile: "test/min.json",
+			name:      "MinimumJSON",
+			specFiles: []string{"test/min.json"},
 			expectedSpec: &Spec{
 				Version:  "1.0",
 				Language: "go",
@@ -333,8 +356,8 @@ func TestReadSpec(t *testing.T) {
 			},
 		},
 		{
-			name:     "MaximumYAML",
-			specFile: "test/max.yaml",
+			name:      "MaximumYAML",
+			specFiles: []string{"test/max.yaml"},
 			expectedSpec: &Spec{
 				Version:     "1.0",
 				Language:    "go",
@@ -358,8 +381,8 @@ func TestReadSpec(t *testing.T) {
 			},
 		},
 		{
-			name:     "MaximumJSON",
-			specFile: "test/max.json",
+			name:      "MaximumJSON",
+			specFiles: []string{"test/max.json"},
 			expectedSpec: &Spec{
 				Version:     "1.0",
 				Language:    "go",
@@ -386,8 +409,8 @@ func TestReadSpec(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			specFiles = []string{tc.specFile}
-			spec, err := ReadSpec()
+			specFiles = tc.specFiles
+			spec, err := Read()
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)
@@ -401,7 +424,7 @@ func TestReadSpec(t *testing.T) {
 
 	t.Run("NoFile", func(t *testing.T) {
 		specFiles = []string{}
-		spec, err := ReadSpec()
+		spec, err := Read()
 
 		assert.Equal(t, "no spec file found", err.Error())
 		assert.Nil(t, spec)

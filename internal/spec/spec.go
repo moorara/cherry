@@ -24,7 +24,7 @@ const (
 	defaultToolName    = "cherry"
 	defaultVersion     = "1.0"
 	defaultLanguage    = "go"
-	defaultVersionFile = "VERSION"
+	defaultVersionFile = ""
 )
 
 var (
@@ -33,6 +33,21 @@ var (
 	defaultGoVersions = []string{"1.13"}
 	defaultPlatforms  = []string{"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"}
 )
+
+// Error is the custom error type for spec package.
+type Error struct {
+	err          error
+	SpecNotFound bool
+}
+
+func (e *Error) Error() string {
+	return e.err.Error()
+}
+
+// Unwrap returns the next error in the error chain.
+func (e *Error) Unwrap() error {
+	return e.err
+}
 
 // Build has the specifications for build command.
 type Build struct {
@@ -175,14 +190,17 @@ func (s *Spec) SetDefaults() {
 	s.Release.SetDefaults()
 }
 
-// ReadSpec reads and returns specifications from a file.
-func ReadSpec() (*Spec, error) {
+// Read reads and returns specifications from a file.
+func Read() (*Spec, error) {
 	for _, file := range specFiles {
 		ext := filepath.Ext(file)
 		path := filepath.Clean(file)
 
 		f, err := os.Open(path)
 		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
 			return nil, err
 		}
 		defer f.Close()
@@ -204,5 +222,8 @@ func ReadSpec() (*Spec, error) {
 		return spec, nil
 	}
 
-	return nil, errors.New("no spec file found")
+	return nil, &Error{
+		err:          errors.New("no spec file found"),
+		SpecNotFound: true,
+	}
 }
