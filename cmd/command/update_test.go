@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/mitchellh/cli"
 	"github.com/moorara/cherry/pkg/cui"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,14 +34,14 @@ func TestNewUpdate(t *testing.T) {
 }
 
 func TestUpdateSynopsis(t *testing.T) {
-	cmd := &Update{}
+	cmd := &update{}
 	synopsis := cmd.Synopsis()
 
 	assert.Equal(t, updateSynopsis, synopsis)
 }
 
 func TestUpdateHelp(t *testing.T) {
-	cmd := &Update{}
+	cmd := &update{}
 	help := cmd.Help()
 
 	assert.Equal(t, updateHelp, help)
@@ -49,14 +50,14 @@ func TestUpdateHelp(t *testing.T) {
 func TestUpdateRun(t *testing.T) {
 	tests := []struct {
 		name         string
-		cmd          *Update
+		cmd          cli.Command
 		args         []string
 		expectedExit int
 	}{
 
 		{
 			name: "InvalidFlags",
-			cmd: &Update{
+			cmd: &update{
 				ui: &mockCUI{},
 			},
 			args:         []string{"-unknown"},
@@ -64,7 +65,7 @@ func TestUpdateRun(t *testing.T) {
 		},
 		{
 			name: "ActionFails",
-			cmd: &Update{
+			cmd: &update{
 				ui: &mockCUI{},
 				action: &mockAction{
 					RunOutError: errors.New("error on run: action"),
@@ -75,7 +76,7 @@ func TestUpdateRun(t *testing.T) {
 		},
 		{
 			name: "Success",
-			cmd: &Update{
+			cmd: &update{
 				ui:     &mockCUI{},
 				action: &mockAction{},
 			},

@@ -26,7 +26,7 @@ func TestNewUpdate(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			action := NewUpdate(tc.ui, tc.githubToken)
-			assert.Equal(t, tc.ui, action.ui)
+			assert.NotNil(t, action)
 		})
 	}
 }
@@ -34,13 +34,13 @@ func TestNewUpdate(t *testing.T) {
 func TestUpdateDry(t *testing.T) {
 	tests := []struct {
 		name          string
-		action        *Update
+		action        Action
 		ctx           context.Context
 		expectedError error
 	}{
 		{
 			name: "Step1Fails",
-			action: &Update{
+			action: &update{
 				ui: &mockCUI{},
 				step1: &step.GitHubGetLatestRelease{
 					Mock: &mockStep{
@@ -52,7 +52,7 @@ func TestUpdateDry(t *testing.T) {
 		},
 		{
 			name: "Step2Fails",
-			action: &Update{
+			action: &update{
 				ui: &mockCUI{},
 				step1: &step.GitHubGetLatestRelease{
 					Mock: &mockStep{},
@@ -67,7 +67,7 @@ func TestUpdateDry(t *testing.T) {
 		},
 		{
 			name: "Success",
-			action: &Update{
+			action: &update{
 				ui: &mockCUI{},
 				step1: &step.GitHubGetLatestRelease{
 					Mock: &mockStep{},
@@ -91,13 +91,13 @@ func TestUpdateDry(t *testing.T) {
 func TestUpdateRun(t *testing.T) {
 	tests := []struct {
 		name          string
-		action        *Update
+		action        Action
 		ctx           context.Context
 		expectedError error
 	}{
 		{
 			name: "Step1Fails",
-			action: &Update{
+			action: &update{
 				ui: &mockCUI{},
 				step1: &step.GitHubGetLatestRelease{
 					Mock: &mockStep{
@@ -109,7 +109,7 @@ func TestUpdateRun(t *testing.T) {
 		},
 		{
 			name: "Step2Fails",
-			action: &Update{
+			action: &update{
 				ui: &mockCUI{},
 				step1: &step.GitHubGetLatestRelease{
 					Mock: &mockStep{},
@@ -124,7 +124,7 @@ func TestUpdateRun(t *testing.T) {
 		},
 		{
 			name: "Success",
-			action: &Update{
+			action: &update{
 				ui: &mockCUI{},
 				step1: &step.GitHubGetLatestRelease{
 					Mock: &mockStep{},
@@ -148,29 +148,14 @@ func TestUpdateRun(t *testing.T) {
 func TestUpdateRevert(t *testing.T) {
 	tests := []struct {
 		name          string
-		action        *Update
+		action        Action
 		ctx           context.Context
 		expectedError error
 	}{
 		{
-			name: "Step1Fails",
-			action: &Update{
-				ui: &mockCUI{},
-				step1: &step.GitHubGetLatestRelease{
-					Mock: &mockStep{
-						RevertOutError: errors.New("error on revert: step1"),
-					},
-				},
-			},
-			expectedError: errors.New("error on revert: step1"),
-		},
-		{
 			name: "Step2Fails",
-			action: &Update{
+			action: &update{
 				ui: &mockCUI{},
-				step1: &step.GitHubGetLatestRelease{
-					Mock: &mockStep{},
-				},
 				step2: &step.GitHubDownloadAsset{
 					Mock: &mockStep{
 						RevertOutError: errors.New("error on revert: step2"),
@@ -180,8 +165,23 @@ func TestUpdateRevert(t *testing.T) {
 			expectedError: errors.New("error on revert: step2"),
 		},
 		{
+			name: "Step1Fails",
+			action: &update{
+				ui: &mockCUI{},
+				step2: &step.GitHubDownloadAsset{
+					Mock: &mockStep{},
+				},
+				step1: &step.GitHubGetLatestRelease{
+					Mock: &mockStep{
+						RevertOutError: errors.New("error on revert: step1"),
+					},
+				},
+			},
+			expectedError: errors.New("error on revert: step1"),
+		},
+		{
 			name: "Success",
-			action: &Update{
+			action: &update{
 				ui: &mockCUI{},
 				step1: &step.GitHubGetLatestRelease{
 					Mock: &mockStep{},

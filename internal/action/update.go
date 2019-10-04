@@ -14,21 +14,21 @@ import (
 
 const repo = "moorara/cherry"
 
-// Update is the action for update command.
-type Update struct {
+// update is the action for update command.
+type update struct {
 	ui    cui.CUI
 	step1 *step.GitHubGetLatestRelease
 	step2 *step.GitHubDownloadAsset
 }
 
 // NewUpdate creates an instance of Update action.
-func NewUpdate(ui cui.CUI, githubToken string) *Update {
+func NewUpdate(ui cui.CUI, githubToken string) Action {
 	transport := &http.Transport{}
 	client := &http.Client{
 		Transport: transport,
 	}
 
-	return &Update{
+	return &update{
 		ui: ui,
 		step1: &step.GitHubGetLatestRelease{
 			Client:  client,
@@ -49,23 +49,22 @@ func NewUpdate(ui cui.CUI, githubToken string) *Update {
 }
 
 // Dry is a dry run of the action.
-func (u *Update) Dry(ctx context.Context) error {
+func (u *update) Dry(ctx context.Context) error {
 	binPath, err := exec.LookPath(os.Args[0])
 	if err != nil {
 		return err
 	}
 
 	// Running Dry does not set .Result.LatestRelease.TagName
-	err = u.step1.Run(ctx)
-	if err != nil {
+	if err = u.step1.Run(ctx); err != nil {
 		return err
 	}
 
 	u.step2.Tag = u.step1.Result.LatestRelease.TagName
 	u.step2.AssetName = fmt.Sprintf("cherry-%s-%s", runtime.GOOS, runtime.GOARCH)
 	u.step2.Filepath = binPath
-	err = u.step2.Dry(ctx)
-	if err != nil {
+
+	if err = u.step2.Dry(ctx); err != nil {
 		return err
 	}
 
@@ -73,7 +72,7 @@ func (u *Update) Dry(ctx context.Context) error {
 }
 
 // Run executes the action.
-func (u *Update) Run(ctx context.Context) error {
+func (u *update) Run(ctx context.Context) error {
 	binPath, err := exec.LookPath(os.Args[0])
 	if err != nil {
 		return err
@@ -81,8 +80,7 @@ func (u *Update) Run(ctx context.Context) error {
 
 	u.ui.Outputf("⬇ Getting the latest release of Cherry ...")
 
-	err = u.step1.Run(ctx)
-	if err != nil {
+	if err = u.step1.Run(ctx); err != nil {
 		return err
 	}
 
@@ -91,8 +89,8 @@ func (u *Update) Run(ctx context.Context) error {
 	u.step2.Tag = u.step1.Result.LatestRelease.TagName
 	u.step2.AssetName = fmt.Sprintf("cherry-%s-%s", runtime.GOOS, runtime.GOARCH)
 	u.step2.Filepath = binPath
-	err = u.step2.Run(ctx)
-	if err != nil {
+
+	if err = u.step2.Run(ctx); err != nil {
 		return err
 	}
 
@@ -102,12 +100,12 @@ func (u *Update) Run(ctx context.Context) error {
 }
 
 // Revert reverts back an executed action.
-func (u *Update) Revert(ctx context.Context) error {
-	if err := u.step1.Revert(ctx); err != nil {
+func (u *update) Revert(ctx context.Context) error {
+	if err := u.step2.Revert(ctx); err != nil {
 		return err
 	}
 
-	if err := u.step2.Revert(ctx); err != nil {
+	if err := u.step1.Revert(ctx); err != nil {
 		return err
 	}
 

@@ -219,7 +219,6 @@ func TestSpecSetDefaults(t *testing.T) {
 				ToolVersion: "",
 				Version:     defaultVersion,
 				Language:    defaultLanguage,
-				VersionFile: defaultVersionFile,
 				Test: Test{
 					CoverMode:  defaultCoverMode,
 					ReportPath: defaultReportPath,

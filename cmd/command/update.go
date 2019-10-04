@@ -5,6 +5,7 @@ import (
 	"flag"
 	"time"
 
+	"github.com/mitchellh/cli"
 	"github.com/moorara/cherry/internal/action"
 	"github.com/moorara/cherry/pkg/cui"
 )
@@ -25,47 +26,45 @@ const (
 	`
 )
 
-// Update is the update command.
-type Update struct {
+// update is the update command.
+type update struct {
 	ui     cui.CUI
 	action action.Action
 }
 
 // NewUpdate creates a new update command.
-func NewUpdate(ui cui.CUI, githubToken string) (*Update, error) {
-	return &Update{
+func NewUpdate(ui cui.CUI, githubToken string) (cli.Command, error) {
+	return &update{
 		ui:     ui,
 		action: action.NewUpdate(ui, githubToken),
 	}, nil
 }
 
 // Synopsis returns a short one-line synopsis of the command.
-func (c *Update) Synopsis() string {
+func (c *update) Synopsis() string {
 	return updateSynopsis
 }
 
 // Help returns a long help text including usage, description, and list of flags for the command.
-func (c *Update) Help() string {
+func (c *update) Help() string {
 	return updateHelp
 }
 
 // Run runs the actual command with the given command-line arguments.
-func (c *Update) Run(args []string) int {
+func (c *update) Run(args []string) int {
 	fs := flag.NewFlagSet("update", flag.ContinueOnError)
 	fs.Usage = func() {
 		c.ui.Outputf(c.Help())
 	}
 
-	err := fs.Parse(args)
-	if err != nil {
+	if err := fs.Parse(args); err != nil {
 		return updateFlagErr
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), updateTimeout)
 	defer cancel()
 
-	err = c.action.Run(ctx)
-	if err != nil {
+	if err := c.action.Run(ctx); err != nil {
 		c.ui.Errorf("%s", err)
 		return updateErr
 	}

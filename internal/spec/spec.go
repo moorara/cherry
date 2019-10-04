@@ -21,10 +21,9 @@ const (
 	defaultCoverMode  = "atomic"
 	defaultReportPath = "coverage"
 
-	defaultToolName    = "cherry"
-	defaultVersion     = "1.0"
-	defaultLanguage    = "go"
-	defaultVersionFile = ""
+	defaultToolName = "cherry"
+	defaultVersion  = "1.0"
+	defaultLanguage = "go"
 )
 
 var (
@@ -179,10 +178,6 @@ func (s *Spec) SetDefaults() {
 
 	if s.Language == "" {
 		s.Language = defaultLanguage
-	}
-
-	if s.VersionFile == "" {
-		s.VersionFile = defaultVersionFile
 	}
 
 	s.Test.SetDefaults()

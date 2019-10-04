@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -53,7 +54,11 @@ func (s *GoVersion) Run(ctx context.Context) error {
 		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
-	s.Result.Version = stdout.String()
+	// Get the version of Go compiler
+	re := regexp.MustCompile(`go\d+\.\d+(\.\d+)?`)
+	goVersion := re.FindString(stdout.String())
+
+	s.Result.Version = goVersion
 
 	return nil
 }
