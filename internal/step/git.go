@@ -104,6 +104,7 @@ type GitGetRepo struct {
 	Result  struct {
 		Owner string
 		Name  string
+		Repo  string
 	}
 }
 
@@ -141,10 +142,14 @@ func (s *GitGetRepo) Run(ctx context.Context) error {
 		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
-	s.Result.Owner, s.Result.Name, err = parseGitURL(stdout.String())
+	owner, name, err := parseGitURL(stdout.String())
 	if err != nil {
 		return err
 	}
+
+	s.Result.Owner = owner
+	s.Result.Name = name
+	s.Result.Repo = owner + "/" + name
 
 	return nil
 }
