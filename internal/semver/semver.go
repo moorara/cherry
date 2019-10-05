@@ -1,6 +1,7 @@
 package semver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -18,6 +19,27 @@ const (
 	// Major is the major number in a semantic version.
 	Major
 )
+
+// contextKey is the type for the keys added to context.
+type contextKey string
+
+const segmentKey = contextKey("ReleaseSegment")
+
+// ContextWithSegment adds a segment to a context.
+func ContextWithSegment(ctx context.Context, segment Segment) context.Context {
+	return context.WithValue(ctx, segmentKey, segment)
+}
+
+// SegmentFromContext retrieves a segment from a context.
+// If no segment found on context, a default segment (patch) will be returned.
+func SegmentFromContext(ctx context.Context) Segment {
+	segment, ok := ctx.Value(segmentKey).(Segment)
+	if ok {
+		return segment
+	}
+
+	return Patch
+}
 
 // SemVer represents a semantic versioning
 type SemVer struct {
