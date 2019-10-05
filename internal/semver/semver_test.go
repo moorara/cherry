@@ -1,54 +1,10 @@
 package semver
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
-
-func TestConext(t *testing.T) {
-	tests := []struct {
-		name            string
-		segment         Segment
-		expectedSegment Segment
-	}{
-		{
-			name:            "Patch",
-			segment:         Patch,
-			expectedSegment: Patch,
-		},
-		{
-			name:            "Minor",
-			segment:         Minor,
-			expectedSegment: Minor,
-		},
-		{
-			name:            "Major",
-			segment:         Major,
-			expectedSegment: Major,
-		},
-		{
-			name:            "Default",
-			segment:         Segment(-1),
-			expectedSegment: Patch,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
-
-			if tc.segment >= 0 {
-				ctx = ContextWithSegment(ctx, tc.segment)
-			}
-
-			segment := SegmentFromContext(ctx)
-
-			assert.Equal(t, tc.expectedSegment, segment)
-		})
-	}
-}
 
 func TestParse(t *testing.T) {
 	tests := []struct {

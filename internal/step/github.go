@@ -578,52 +578,67 @@ func (s *GitHubUploadAssets) Run(ctx context.Context) error {
 
 	s.Result.Assets = make([]GitHubAsset, 0)
 
-	for _, asset := range s.AssetFiles {
-		assetPath := filepath.Clean(asset)
-		assetName := filepath.Base(assetPath)
+	doneCh := make(chan error, len(s.AssetFiles))
 
-		method := "POST"
-		re := regexp.MustCompile(`\{\?[0-9A-Za-z_,]+\}`)
-		url := re.ReplaceAllLiteralString(s.ReleaseUploadURL, "")
-		url = fmt.Sprintf("%s?name=%s", url, netURL.QueryEscape(assetName))
+	for _, file := range s.AssetFiles {
+		go func(file string) {
+			assetPath := filepath.Clean(file)
+			assetName := filepath.Base(assetPath)
 
-		content, err := getUploadContent(assetPath)
-		if err != nil {
+			method := "POST"
+			re := regexp.MustCompile(`\{\?[0-9A-Za-z_,]+\}`)
+			url := re.ReplaceAllLiteralString(s.ReleaseUploadURL, "")
+			url = fmt.Sprintf("%s?name=%s", url, netURL.QueryEscape(assetName))
+
+			content, err := getUploadContent(assetPath)
+			if err != nil {
+				doneCh <- err
+				return
+			}
+			defer content.Body.Close()
+
+			req, err := http.NewRequest(method, url, content.Body)
+			if err != nil {
+				doneCh <- err
+				return
+			}
+
+			req = req.WithContext(ctx)
+
+			req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
+			req.Header.Set("Accept", githubAcceptType)
+			req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
+			req.Header.Set("Content-Type", content.MIMEType)
+			req.ContentLength = content.Length
+
+			res, err := s.Client.Do(req)
+			if err != nil {
+				doneCh <- err
+				return
+			}
+			defer res.Body.Close()
+
+			if res.StatusCode != 201 {
+				doneCh <- newHTTPError(res)
+				return
+			}
+
+			asset := GitHubAsset{}
+			err = json.NewDecoder(res.Body).Decode(&asset)
+			if err != nil {
+				doneCh <- err
+				return
+			}
+
+			s.Result.Assets = append(s.Result.Assets, asset)
+			doneCh <- nil
+		}(file)
+	}
+
+	for range s.AssetFiles {
+		if err := <-doneCh; err != nil {
 			return err
 		}
-
-		req, err := http.NewRequest(method, url, content.Body)
-		if err != nil {
-			return err
-		}
-
-		req = req.WithContext(ctx)
-
-		req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
-		req.Header.Set("Accept", githubAcceptType)
-		req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
-		req.Header.Set("Content-Type", content.MIMEType)
-		req.ContentLength = content.Length
-
-		res, err := s.Client.Do(req)
-		if err != nil {
-			return err
-		}
-
-		if res.StatusCode != 201 {
-			return newHTTPError(res)
-		}
-
-		asset := GitHubAsset{}
-		err = json.NewDecoder(res.Body).Decode(&asset)
-		if err != nil {
-			return err
-		}
-
-		s.Result.Assets = append(s.Result.Assets, asset)
-
-		content.Body.Close()
-		res.Body.Close()
 	}
 
 	return nil
