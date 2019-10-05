@@ -49,6 +49,7 @@ func NewBuild(ui cui.CUI, workDir string, s *spec.Spec) Action {
 			LDFlags:    "TBD",
 			MainFile:   s.Build.MainFile,
 			BinaryFile: s.Build.BinaryFile,
+			Platforms:  nil, // TBD
 		},
 	}
 }

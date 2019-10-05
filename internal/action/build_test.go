@@ -21,7 +21,7 @@ func TestNewBuild(t *testing.T) {
 		{
 			name:    "OK",
 			ui:      &mockCUI{},
-			workDir: "",
+			workDir: ".",
 			s: &spec.Spec{
 				ToolName:    "cherry",
 				ToolVersion: "test",
