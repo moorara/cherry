@@ -60,6 +60,9 @@ func main() {
 		"build": func() (cli.Command, error) {
 			return command.NewBuild(ui, wd, s)
 		},
+		"release": func() (cli.Command, error) {
+			return command.NewRelease(ui, wd, config.GithubToken, s)
+		},
 		"update": func() (cli.Command, error) {
 			return command.NewUpdate(ui, config.GithubToken)
 		},
