@@ -140,11 +140,12 @@ func TestSemVerReadDry(t *testing.T) {
 
 func TestSemVerReadRun(t *testing.T) {
 	tests := []struct {
-		name           string
-		workDir        string
-		filename       string
-		expectedError  string
-		expectedSemver semver.SemVer
+		name             string
+		workDir          string
+		filename         string
+		expectedError    string
+		expectedFilename string
+		expectedSemver   semver.SemVer
 	}{
 		{
 			name:          "NoVersionFile",
@@ -189,9 +190,10 @@ func TestSemVerReadRun(t *testing.T) {
 			expectedError: `invalid major version: strconv.ParseUint: parsing "x": invalid syntax`,
 		},
 		{
-			name:     "TextFileSuccess",
-			workDir:  "./test",
-			filename: "VERSION",
+			name:             "TextFileSuccess",
+			workDir:          "./test",
+			filename:         "VERSION",
+			expectedFilename: "VERSION",
 			expectedSemver: semver.SemVer{
 				Major: 0,
 				Minor: 1,
@@ -199,9 +201,10 @@ func TestSemVerReadRun(t *testing.T) {
 			},
 		},
 		{
-			name:     "JSONFileSuccess",
-			workDir:  "./test",
-			filename: "package.json",
+			name:             "JSONFileSuccess",
+			workDir:          "./test",
+			filename:         "package.json",
+			expectedFilename: "package.json",
 			expectedSemver: semver.SemVer{
 				Major: 0,
 				Minor: 1,
@@ -222,6 +225,7 @@ func TestSemVerReadRun(t *testing.T) {
 
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedFilename, step.Result.Filename)
 				assert.Equal(t, tc.expectedSemver, step.Result.Version)
 			} else {
 				assert.Error(t, err)
@@ -374,10 +378,11 @@ func TestSemVerUpdateDry(t *testing.T) {
 
 func TestSemVerUpdateRun(t *testing.T) {
 	tests := []struct {
-		name          string
-		mockFilename  string
-		version       string
-		expectedError string
+		name             string
+		mockFilename     string
+		version          string
+		expectedFilename string
+		expectedError    string
 	}{
 		{
 			name:          "NoVersionFile",
@@ -385,14 +390,16 @@ func TestSemVerUpdateRun(t *testing.T) {
 			expectedError: `no version file`,
 		},
 		{
-			name:         "TextFileSuccess",
-			mockFilename: "VERSION",
-			version:      "0.2.0",
+			name:             "TextFileSuccess",
+			mockFilename:     "VERSION",
+			version:          "0.2.0",
+			expectedFilename: "VERSION",
 		},
 		{
-			name:         "JSONFileSuccess",
-			mockFilename: "package.json",
-			version:      "0.2.0",
+			name:             "JSONFileSuccess",
+			mockFilename:     "package.json",
+			version:          "0.2.0",
+			expectedFilename: "package.json",
 		},
 	}
 
@@ -421,6 +428,7 @@ func TestSemVerUpdateRun(t *testing.T) {
 
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedFilename, step.Result.Filename)
 			} else {
 				assert.Error(t, err)
 				assert.Equal(t, tc.expectedError, err.Error())
