@@ -149,28 +149,12 @@ func (b *build) Run(ctx context.Context) error {
 
 // Revert reverts back an executed action.
 func (b *build) Revert(ctx context.Context) error {
-	if err := b.step6.Revert(ctx); err != nil {
-		return err
-	}
+	steps := []step.Step{b.step6, b.step5, b.step4, b.step3, b.step2, b.step1}
 
-	if err := b.step5.Revert(ctx); err != nil {
-		return err
-	}
-
-	if err := b.step4.Revert(ctx); err != nil {
-		return err
-	}
-
-	if err := b.step3.Revert(ctx); err != nil {
-		return err
-	}
-
-	if err := b.step2.Revert(ctx); err != nil {
-		return err
-	}
-
-	if err := b.step1.Revert(ctx); err != nil {
-		return err
+	for _, s := range steps {
+		if err := s.Revert(ctx); err != nil {
+			return err
+		}
 	}
 
 	return nil

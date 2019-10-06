@@ -176,14 +176,13 @@ func (s *GoBuild) Dry(ctx context.Context) error {
 		return s.Mock.Dry(ctx)
 	}
 
-	s.Result.Binaries = []string{}
-
 	dir, err := ioutil.TempDir("", "cherry-")
 	if err != nil {
 		return err
 	}
 	defer os.RemoveAll(dir)
 
+	s.Result.Binaries = []string{}
 	binaryFile := filepath.Join(dir, s.BinaryFile)
 	err = s.build(ctx, binaryFile)
 	if err != nil {

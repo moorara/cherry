@@ -48,6 +48,7 @@ func TestUpdateDry(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on run: step1"),
 		},
 		{
@@ -63,6 +64,7 @@ func TestUpdateDry(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on dry: step2"),
 		},
 		{
@@ -76,6 +78,7 @@ func TestUpdateDry(t *testing.T) {
 					Mock: &mockStep{},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: nil,
 		},
 	}
@@ -105,6 +108,7 @@ func TestUpdateRun(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on run: step1"),
 		},
 		{
@@ -120,6 +124,7 @@ func TestUpdateRun(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on run: step2"),
 		},
 		{
@@ -133,6 +138,7 @@ func TestUpdateRun(t *testing.T) {
 					Mock: &mockStep{},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: nil,
 		},
 	}
@@ -162,6 +168,7 @@ func TestUpdateRevert(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on revert: step2"),
 		},
 		{
@@ -177,6 +184,7 @@ func TestUpdateRevert(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on revert: step1"),
 		},
 		{
@@ -190,6 +198,7 @@ func TestUpdateRevert(t *testing.T) {
 					Mock: &mockStep{},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: nil,
 		},
 	}

@@ -27,8 +27,13 @@ func TestNewUpdate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cmd, err := NewUpdate(tc.ui, tc.githubToken)
 
-			assert.NotNil(t, cmd)
-			assert.Equal(t, tc.expectedError, err)
+			if tc.expectedError == nil {
+				assert.NotNil(t, cmd)
+				assert.NoError(t, err)
+			} else {
+				assert.Nil(t, cmd)
+				assert.Equal(t, tc.expectedError, err)
+			}
 		})
 	}
 }

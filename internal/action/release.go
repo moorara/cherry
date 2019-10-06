@@ -244,15 +244,10 @@ func (r *release) getLDFlags() string {
 
 // Dry is a dry run of the action.
 func (r *release) Dry(ctx context.Context) error {
-	return nil
-}
-
-// Run executes the action.
-func (r *release) Run(ctx context.Context) error {
 	// Retrive input arguments from context
-	segment, comment := ReleaseArgsFromContext(ctx)
+	segment, _ := ReleaseArgsFromContext(ctx)
 
-	// Get repo
+	// Get repo name
 	if err := r.step1.Run(ctx); err != nil {
 		return err
 	}
@@ -263,7 +258,173 @@ func (r *release) Run(ctx context.Context) error {
 	}
 
 	if r.step2.Result.Name != "master" {
-		return errors.New("release from master branch")
+		return errors.New("release has to be done from master branch")
+	}
+
+	// Get git status
+	if err := r.step3.Run(ctx); err != nil {
+		return err
+	}
+
+	if !r.step3.Result.IsClean {
+		return errors.New("working directory is not clean and has uncommitted changes")
+	}
+
+	// Dry -- Pulling master branch
+	if err := r.step4.Dry(ctx); err != nil {
+		return err
+	}
+
+	// Read the version
+	if err := r.step5.Run(ctx); err != nil {
+		return err
+	}
+
+	// Release the version
+	curr, next := r.step5.Result.Version.Release(segment)
+
+	// Dry -- Update the version file with the current version
+	r.step6.Version = curr.Version()
+	if err := r.step6.Dry(ctx); err != nil {
+		return err
+	}
+
+	// Dry -- Create a draft release
+	r.step7.Repo = r.step1.Result.Repo
+	if err := r.step7.Dry(ctx); err != nil {
+		return err
+	}
+
+	// Dry -- Create/Update change log
+	r.step8.Repo = r.step1.Result.Repo
+	r.step8.Tag = curr.GitTag()
+	if err := r.step8.Dry(ctx); err != nil {
+		return err
+	}
+
+	// Dry -- Add unstaged to files to staging
+	r.step9.Files = []string{r.step6.Result.Filename, r.step8.Result.Filename}
+	if err := r.step9.Dry(ctx); err != nil {
+		return err
+	}
+
+	// Dry -- Create a commit for current version
+	r.step10.Message = fmt.Sprintf("Releasing %s", curr.Version())
+	if err := r.step10.Dry(ctx); err != nil {
+		return err
+	}
+
+	// Dry -- Create a tag for current version
+	if err := r.step11.Dry(ctx); err != nil {
+		return err
+	}
+
+	if r.spec.Release.Build {
+		// Find package version path
+		if err := r.step12.Run(ctx); err != nil {
+			return err
+		}
+
+		// Get commit SHA hashes
+		if err := r.step13.Run(ctx); err != nil {
+			return err
+		}
+
+		// Get Go version
+		if err := r.step14.Run(ctx); err != nil {
+			return err
+		}
+
+		// Dry -- Cross-compile and build artifacts
+		r.step15.LDFlags = r.getLDFlags()
+		if err := r.step15.Dry(ctx); err != nil {
+			return err
+		}
+
+		// Dry -- Upload build artifacts to release
+		r.step16.Repo = r.step1.Result.Repo
+		r.step16.ReleaseID = r.step7.Result.Release.ID
+		if err := r.step16.Dry(ctx); err != nil {
+			return err
+		}
+	}
+
+	// Dry -- Temporarily disable the master branch protection
+	r.step17.Repo = r.step1.Result.Repo
+	r.step17.Branch = r.step2.Result.Name
+	if err := r.step17.Dry(ctx); err != nil {
+		return err
+	}
+
+	// Dry -- Make sure we re-enable the master branch protection
+	defer func() {
+		r.step18.Repo = r.step1.Result.Repo
+		r.step18.Branch = r.step2.Result.Name
+		if err := r.step18.Dry(ctx); err != nil {
+			// Skip
+		}
+	}()
+
+	// Dry -- Push the commit for current release
+	if err := r.step19.Dry(ctx); err != nil {
+		return err
+	}
+
+	// Dry -- Push the tag for current release
+	if err := r.step20.Dry(ctx); err != nil {
+		return err
+	}
+
+	// Dry -- Update the version file with the next version
+	r.step21.Version = next.PreRelease()
+	if err := r.step21.Dry(ctx); err != nil {
+		return err
+	}
+
+	// Dry -- Add unstaged to files to staging
+	r.step22.Files = []string{r.step21.Result.Filename}
+	if err := r.step22.Dry(ctx); err != nil {
+		return err
+	}
+
+	//  Dry -- Create a commit for next version
+	r.step23.Message = fmt.Sprintf("Beginning %s [skip ci]", next.PreRelease())
+	if err := r.step23.Dry(ctx); err != nil {
+		return err
+	}
+
+	// Dry -- Push the commit for next release
+	if err := r.step24.Dry(ctx); err != nil {
+		return err
+	}
+
+	// Dry -- Edit the draft release and make it ready
+	r.step25.Repo = r.step1.Result.Repo
+	r.step25.ReleaseID = r.step7.Result.Release.ID
+	if err := r.step25.Dry(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Run executes the action.
+func (r *release) Run(ctx context.Context) error {
+	// Retrive input arguments from context
+	segment, comment := ReleaseArgsFromContext(ctx)
+
+	// Get repo name
+	if err := r.step1.Run(ctx); err != nil {
+		return err
+	}
+
+	// Get branch name
+	if err := r.step2.Run(ctx); err != nil {
+		return err
+	}
+
+	if r.step2.Result.Name != "master" {
+		return errors.New("release has to be done from master branch")
 	}
 
 	// Get git status
@@ -310,7 +471,7 @@ func (r *release) Run(ctx context.Context) error {
 
 	r.ui.Outputf("➡️  Creating/Updating change log ...")
 
-	// Create/Udate change log
+	// Create/Update change log
 	r.step8.Repo = r.step1.Result.Repo
 	r.step8.Tag = curr.GitTag()
 	if err := r.step8.Run(ctx); err != nil {
@@ -397,7 +558,7 @@ func (r *release) Run(ctx context.Context) error {
 
 	// Push the commit for current release
 	if err := r.step19.Run(ctx); err != nil {
-		r.ui.Errorf("Error: %s", err)
+		return err
 	}
 
 	r.ui.Infof("⬆️  Pushing release tag %s ...", r.step7.Result.Release.Name)
@@ -405,7 +566,7 @@ func (r *release) Run(ctx context.Context) error {
 	// Push the tag for current release
 	r.step20.Tag = curr.GitTag()
 	if err := r.step20.Run(ctx); err != nil {
-		r.ui.Errorf("Error: %s", err)
+		return err
 	}
 
 	// Update the version file with the next version
@@ -430,7 +591,7 @@ func (r *release) Run(ctx context.Context) error {
 
 	// Push the commit for next release
 	if err := r.step24.Run(ctx); err != nil {
-		r.ui.Errorf("Error: %s", err)
+		return err
 	}
 
 	r.ui.Infof("⬆️  Publishing release %s ...", r.step7.Result.Release.Name)
@@ -443,7 +604,7 @@ func (r *release) Run(ctx context.Context) error {
 	r.step25.ReleaseData.Target = r.step2.Result.Name
 	r.step25.ReleaseData.Body = fmt.Sprintf("%s\n\n%s", comment, r.step8.Result.Changelog)
 	if err := r.step25.Run(ctx); err != nil {
-		r.ui.Errorf("Error: %s", err)
+		return err
 	}
 
 	return nil
@@ -451,5 +612,19 @@ func (r *release) Run(ctx context.Context) error {
 
 // Revert reverts back an executed action.
 func (r *release) Revert(ctx context.Context) error {
+	steps := []step.Step{
+		r.step25, r.step24, r.step23, r.step22, r.step21,
+		r.step20, r.step19, r.step18, r.step17, r.step16,
+		r.step15, r.step14, r.step13, r.step12, r.step11,
+		r.step10, r.step9, r.step8, r.step7, r.step6,
+		r.step5, r.step4, r.step3, r.step2, r.step1,
+	}
+
+	for _, s := range steps {
+		if err := s.Revert(ctx); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

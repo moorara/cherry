@@ -45,6 +45,14 @@ func TestNewBuild(t *testing.T) {
 }
 
 func TestBuildDry(t *testing.T) {
+	s := &spec.Spec{
+		ToolName:    "cherry",
+		ToolVersion: "test",
+		Build: spec.Build{
+			CrossCompile: true,
+		},
+	}
+
 	tests := []struct {
 		name          string
 		action        Action
@@ -55,20 +63,21 @@ func TestBuildDry(t *testing.T) {
 			name: "Step1Fails",
 			action: &build{
 				ui:   &mockCUI{},
-				spec: &spec.Spec{},
+				spec: s,
 				step1: &step.GoList{
 					Mock: &mockStep{
 						RunOutError: errors.New("error on run: step1"),
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on run: step1"),
 		},
 		{
 			name: "Step2Fails",
 			action: &build{
 				ui:   &mockCUI{},
-				spec: &spec.Spec{},
+				spec: s,
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -78,13 +87,14 @@ func TestBuildDry(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on run: step2"),
 		},
 		{
 			name: "Step3Fails",
 			action: &build{
 				ui:   &mockCUI{},
-				spec: &spec.Spec{},
+				spec: s,
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -97,13 +107,14 @@ func TestBuildDry(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on run: step3"),
 		},
 		{
 			name: "Step4Fails",
 			action: &build{
 				ui:   &mockCUI{},
-				spec: &spec.Spec{},
+				spec: s,
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -119,13 +130,14 @@ func TestBuildDry(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on run: step4"),
 		},
 		{
 			name: "Step5Fails",
 			action: &build{
 				ui:   &mockCUI{},
-				spec: &spec.Spec{},
+				spec: s,
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -144,13 +156,14 @@ func TestBuildDry(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on run: step5"),
 		},
 		{
 			name: "Step6Fails",
 			action: &build{
 				ui:   &mockCUI{},
-				spec: &spec.Spec{},
+				spec: s,
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -172,13 +185,14 @@ func TestBuildDry(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on dry: step6"),
 		},
 		{
 			name: "Success",
 			action: &build{
 				ui:   &mockCUI{},
-				spec: &spec.Spec{},
+				spec: s,
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -198,6 +212,7 @@ func TestBuildDry(t *testing.T) {
 					Mock: &mockStep{},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: nil,
 		},
 	}
@@ -211,6 +226,17 @@ func TestBuildDry(t *testing.T) {
 }
 
 func TestBuildRun(t *testing.T) {
+	s := &spec.Spec{
+		ToolName:    "cherry",
+		ToolVersion: "test",
+		Build: spec.Build{
+			CrossCompile: true,
+		},
+	}
+
+	step6OK := &step.GoBuild{Mock: &mockStep{}}
+	step6OK.Result.Binaries = []string{"bin/app"}
+
 	tests := []struct {
 		name          string
 		action        Action
@@ -221,20 +247,21 @@ func TestBuildRun(t *testing.T) {
 			name: "Step1Fails",
 			action: &build{
 				ui:   &mockCUI{},
-				spec: &spec.Spec{},
+				spec: s,
 				step1: &step.GoList{
 					Mock: &mockStep{
 						RunOutError: errors.New("error on run: step1"),
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on run: step1"),
 		},
 		{
 			name: "Step2Fails",
 			action: &build{
 				ui:   &mockCUI{},
-				spec: &spec.Spec{},
+				spec: s,
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -244,13 +271,14 @@ func TestBuildRun(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on run: step2"),
 		},
 		{
 			name: "Step3Fails",
 			action: &build{
 				ui:   &mockCUI{},
-				spec: &spec.Spec{},
+				spec: s,
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -263,13 +291,14 @@ func TestBuildRun(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on run: step3"),
 		},
 		{
 			name: "Step4Fails",
 			action: &build{
 				ui:   &mockCUI{},
-				spec: &spec.Spec{},
+				spec: s,
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -285,13 +314,14 @@ func TestBuildRun(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on run: step4"),
 		},
 		{
 			name: "Step5Fails",
 			action: &build{
 				ui:   &mockCUI{},
-				spec: &spec.Spec{},
+				spec: s,
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -310,13 +340,14 @@ func TestBuildRun(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on run: step5"),
 		},
 		{
 			name: "Step6Fails",
 			action: &build{
 				ui:   &mockCUI{},
-				spec: &spec.Spec{},
+				spec: s,
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -338,13 +369,14 @@ func TestBuildRun(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on run: step6"),
 		},
 		{
 			name: "Success",
 			action: &build{
 				ui:   &mockCUI{},
-				spec: &spec.Spec{},
+				spec: s,
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -360,10 +392,9 @@ func TestBuildRun(t *testing.T) {
 				step5: &step.GoVersion{
 					Mock: &mockStep{},
 				},
-				step6: &step.GoBuild{
-					Mock: &mockStep{},
-				},
+				step6: step6OK,
 			},
+			ctx:           context.Background(),
 			expectedError: nil,
 		},
 	}
@@ -393,6 +424,7 @@ func TestBuildRevert(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on revert: step6"),
 		},
 		{
@@ -408,6 +440,7 @@ func TestBuildRevert(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on revert: step5"),
 		},
 		{
@@ -426,6 +459,7 @@ func TestBuildRevert(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on revert: step4"),
 		},
 		{
@@ -447,6 +481,7 @@ func TestBuildRevert(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on revert: step3"),
 		},
 		{
@@ -471,6 +506,7 @@ func TestBuildRevert(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on revert: step2"),
 		},
 		{
@@ -498,6 +534,7 @@ func TestBuildRevert(t *testing.T) {
 					},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: errors.New("error on revert: step1"),
 		},
 		{
@@ -523,6 +560,7 @@ func TestBuildRevert(t *testing.T) {
 					Mock: &mockStep{},
 				},
 			},
+			ctx:           context.Background(),
 			expectedError: nil,
 		},
 	}

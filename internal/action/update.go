@@ -101,12 +101,12 @@ func (u *update) Run(ctx context.Context) error {
 
 // Revert reverts back an executed action.
 func (u *update) Revert(ctx context.Context) error {
-	if err := u.step2.Revert(ctx); err != nil {
-		return err
-	}
+	steps := []step.Step{u.step2, u.step1}
 
-	if err := u.step1.Revert(ctx); err != nil {
-		return err
+	for _, s := range steps {
+		if err := s.Revert(ctx); err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -17,23 +17,28 @@ func TestNewBuild(t *testing.T) {
 		name          string
 		ui            cui.CUI
 		workDir       string
-		s             *spec.Spec
+		spec          *spec.Spec
 		expectedError error
 	}{
 		{
 			name:    "OK",
 			ui:      &mockCUI{},
 			workDir: ".",
-			s:       &spec.Spec{},
+			spec:    &spec.Spec{},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cmd, err := NewBuild(tc.ui, tc.workDir, tc.s)
+			cmd, err := NewBuild(tc.ui, tc.workDir, tc.spec)
 
-			assert.NotNil(t, cmd)
-			assert.Equal(t, tc.expectedError, err)
+			if tc.expectedError == nil {
+				assert.NotNil(t, cmd)
+				assert.NoError(t, err)
+			} else {
+				assert.Nil(t, cmd)
+				assert.Equal(t, tc.expectedError, err)
+			}
 		})
 	}
 }
