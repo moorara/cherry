@@ -63,7 +63,7 @@ func (c *build) Synopsis() string {
 func (c *build) Help() string {
 	var buf bytes.Buffer
 	t := template.Must(template.New("help").Parse(buildHelp))
-	t.Execute(&buf, c)
+	_ = t.Execute(&buf, c)
 
 	return buf.String()
 }

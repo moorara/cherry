@@ -74,7 +74,7 @@ func TestBuildHelp(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			tmpl := template.Must(template.New("help").Parse(buildHelp))
-			tmpl.Execute(&buf, tc.cmd)
+			_ = tmpl.Execute(&buf, tc.cmd)
 			expectedHelp := buf.String()
 
 			help := tc.cmd.Help()

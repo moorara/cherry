@@ -11,19 +11,12 @@ import (
 )
 
 const (
-	defaultCrossCompile   = false
+	defaultToolName       = "cherry"
+	defaultVersion        = "1.0"
+	defaultLanguage       = "go"
 	defaultMainFile       = "main.go"
 	defaultVersionPackage = "./cmd/version"
-
-	defaultModel = "master"
-	defaultBuild = false
-
-	defaultCoverMode  = "atomic"
-	defaultReportPath = "coverage"
-
-	defaultToolName = "cherry"
-	defaultVersion  = "1.0"
-	defaultLanguage = "go"
+	defaultModel          = "master"
 )
 
 var (
@@ -63,10 +56,6 @@ func (b *Build) SetDefaults() {
 	defaultBinaryFile := "bin/app"
 	if wd, err := os.Getwd(); err == nil {
 		defaultBinaryFile = "bin/" + filepath.Base(wd)
-	}
-
-	if b.CrossCompile == false {
-		b.CrossCompile = defaultCrossCompile
 	}
 
 	if b.MainFile == "" {
@@ -111,10 +100,6 @@ type Release struct {
 func (r *Release) SetDefaults() {
 	if r.Model == "" {
 		r.Model = defaultModel
-	}
-
-	if r.Build == false {
-		r.Build = defaultBuild
 	}
 }
 
