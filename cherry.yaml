@@ -1,0 +1,9 @@
+version: "1.0"
+
+language: go
+
+build:
+  cross_compile: true
+
+release:
+  build: true
