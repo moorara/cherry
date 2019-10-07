@@ -13,7 +13,6 @@ import (
 // build is the action for build command.
 type build struct {
 	ui    cui.CUI
-	spec  *spec.Spec // This needs to be a pointer, so updates made by flag.Parse will be available here
 	step1 *step.GoList
 	step2 *step.SemVerRead
 	step3 *step.GitGetHEAD
@@ -23,10 +22,9 @@ type build struct {
 }
 
 // NewBuild creates an instance of Build action.
-func NewBuild(ui cui.CUI, workDir string, s *spec.Spec) Action {
+func NewBuild(ui cui.CUI, workDir string, s spec.Spec) Action {
 	return &build{
-		ui:   ui,
-		spec: s,
+		ui: ui,
 		step1: &step.GoList{
 			WorkDir: workDir,
 			Package: s.Build.VersionPackage,
@@ -54,10 +52,10 @@ func NewBuild(ui cui.CUI, workDir string, s *spec.Spec) Action {
 	}
 }
 
-func (b *build) getLDFlags() string {
-	buildTool := b.spec.ToolName
-	if b.spec.ToolVersion != "" {
-		buildTool += "@" + b.spec.ToolVersion
+func (b *build) getLDFlags(s spec.Spec) string {
+	buildTool := s.ToolName
+	if s.ToolVersion != "" {
+		buildTool += "@" + s.ToolVersion
 	}
 
 	vPkg := b.step1.Result.PackagePath
@@ -74,6 +72,8 @@ func (b *build) getLDFlags() string {
 
 // Dry is a dry run of the action.
 func (b *build) Dry(ctx context.Context) error {
+	s := SpecFromContext(ctx)
+
 	// Step 1 to 5 do NOT have hany side effect
 	// Thier results are required by getLDFlags()
 
@@ -97,9 +97,9 @@ func (b *build) Dry(ctx context.Context) error {
 		return err
 	}
 
-	b.step6.LDFlags = b.getLDFlags()
-	if b.spec.Build.CrossCompile {
-		b.step6.Platforms = b.spec.Build.Platforms
+	b.step6.LDFlags = b.getLDFlags(s)
+	if s.Build.CrossCompile {
+		b.step6.Platforms = s.Build.Platforms
 	}
 
 	if err := b.step6.Dry(ctx); err != nil {
@@ -111,6 +111,8 @@ func (b *build) Dry(ctx context.Context) error {
 
 // Run executes the action.
 func (b *build) Run(ctx context.Context) error {
+	s := SpecFromContext(ctx)
+
 	if err := b.step1.Run(ctx); err != nil {
 		return err
 	}
@@ -131,9 +133,9 @@ func (b *build) Run(ctx context.Context) error {
 		return err
 	}
 
-	b.step6.LDFlags = b.getLDFlags()
-	if b.spec.Build.CrossCompile {
-		b.step6.Platforms = b.spec.Build.Platforms
+	b.step6.LDFlags = b.getLDFlags(s)
+	if s.Build.CrossCompile {
+		b.step6.Platforms = s.Build.Platforms
 	}
 
 	if err := b.step6.Run(ctx); err != nil {

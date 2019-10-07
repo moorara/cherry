@@ -58,10 +58,10 @@ func main() {
 	c.Args = os.Args[1:]
 	c.Commands = map[string]cli.CommandFactory{
 		"build": func() (cli.Command, error) {
-			return command.NewBuild(ui, wd, s)
+			return command.NewBuild(ui, wd, *s)
 		},
 		"release": func() (cli.Command, error) {
-			return command.NewRelease(ui, wd, config.GithubToken, s)
+			return command.NewRelease(ui, wd, config.GithubToken, *s)
 		},
 		"update": func() (cli.Command, error) {
 			return command.NewUpdate(ui, config.GithubToken)

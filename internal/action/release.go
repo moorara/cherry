@@ -13,25 +13,22 @@ import (
 	"github.com/moorara/cherry/pkg/semver"
 )
 
-// contextKey is the type for the keys added to context.
-type contextKey string
-
 const (
 	segmentKey = contextKey("ReleaseSegment")
 	commentKey = contextKey("ReleaseComment")
 )
 
-// ContextForRelease adds input arguments of Release action to a context.
-func ContextForRelease(ctx context.Context, segment semver.Segment, comment string) context.Context {
+// ContextWithReleaseParams returns a new context that has input parameters for Release action.
+func ContextWithReleaseParams(ctx context.Context, segment semver.Segment, comment string) context.Context {
 	ctx = context.WithValue(ctx, segmentKey, segment)
 	ctx = context.WithValue(ctx, commentKey, comment)
 
 	return ctx
 }
 
-// ReleaseArgsFromContext retrieves input arguments of Release action from a context.
-// If an argument is not found, a default value will be returned.
-func ReleaseArgsFromContext(ctx context.Context) (segment semver.Segment, comment string) {
+// ReleaseParamsFromContext retrieves input parameters for Release action from a context.
+// If a parameter is not found, a default value will be returned.
+func ReleaseParamsFromContext(ctx context.Context) (segment semver.Segment, comment string) {
 	var ok bool
 
 	segment, ok = ctx.Value(segmentKey).(semver.Segment)
@@ -50,7 +47,6 @@ func ReleaseArgsFromContext(ctx context.Context) (segment semver.Segment, commen
 // release is the action for release command.
 type release struct {
 	ui     cui.CUI
-	spec   *spec.Spec // This needs to be a pointer, so updates made by flag.Parse will be available here
 	step1  *step.GitGetRepo
 	step2  *step.GitGetBranch
 	step3  *step.GitStatus
@@ -79,15 +75,14 @@ type release struct {
 }
 
 // NewRelease creates an instance of Release action.
-func NewRelease(ui cui.CUI, workDir, githubToken string, s *spec.Spec) Action {
+func NewRelease(ui cui.CUI, workDir, githubToken string, s spec.Spec) Action {
 	transport := &http.Transport{}
 	client := &http.Client{
 		Transport: transport,
 	}
 
 	return &release{
-		ui:   ui,
-		spec: s,
+		ui: ui,
 		step1: &step.GitGetRepo{
 			WorkDir: workDir,
 		},
@@ -224,10 +219,10 @@ func NewRelease(ui cui.CUI, workDir, githubToken string, s *spec.Spec) Action {
 	}
 }
 
-func (r *release) getLDFlags() string {
-	buildTool := r.spec.ToolName
-	if r.spec.ToolVersion != "" {
-		buildTool += "@" + r.spec.ToolVersion
+func (r *release) getLDFlags(s spec.Spec) string {
+	buildTool := s.ToolName
+	if s.ToolVersion != "" {
+		buildTool += "@" + s.ToolVersion
 	}
 
 	vPkg := r.step12.Result.PackagePath
@@ -244,8 +239,8 @@ func (r *release) getLDFlags() string {
 
 // Dry is a dry run of the action.
 func (r *release) Dry(ctx context.Context) error {
-	// Retrive input arguments from context
-	segment, _ := ReleaseArgsFromContext(ctx)
+	s := SpecFromContext(ctx)
+	segment, _ := ReleaseParamsFromContext(ctx)
 
 	// Get repo name
 	if err := r.step1.Run(ctx); err != nil {
@@ -320,7 +315,7 @@ func (r *release) Dry(ctx context.Context) error {
 		return err
 	}
 
-	if r.spec.Release.Build {
+	if s.Release.Build {
 		// Find package version path
 		if err := r.step12.Run(ctx); err != nil {
 			return err
@@ -337,7 +332,7 @@ func (r *release) Dry(ctx context.Context) error {
 		}
 
 		// Dry -- Cross-compile and build artifacts
-		r.step15.LDFlags = r.getLDFlags()
+		r.step15.LDFlags = r.getLDFlags(s)
 		if err := r.step15.Dry(ctx); err != nil {
 			return err
 		}
@@ -411,8 +406,8 @@ func (r *release) Dry(ctx context.Context) error {
 
 // Run executes the action.
 func (r *release) Run(ctx context.Context) error {
-	// Retrive input arguments from context
-	segment, comment := ReleaseArgsFromContext(ctx)
+	s := SpecFromContext(ctx)
+	segment, comment := ReleaseParamsFromContext(ctx)
 
 	// Get repo name
 	if err := r.step1.Run(ctx); err != nil {
@@ -499,7 +494,7 @@ func (r *release) Run(ctx context.Context) error {
 		return err
 	}
 
-	if r.spec.Release.Build {
+	if s.Release.Build {
 		r.ui.Outputf("➡️  Building artifacts ...")
 
 		// Find package version path
@@ -518,8 +513,8 @@ func (r *release) Run(ctx context.Context) error {
 		}
 
 		// Cross-compile and build artifacts
-		r.step15.LDFlags = r.getLDFlags()
-		r.step15.Platforms = r.spec.Build.Platforms
+		r.step15.LDFlags = r.getLDFlags(s)
+		r.step15.Platforms = s.Build.Platforms
 		if err := r.step15.Run(ctx); err != nil {
 			return err
 		}

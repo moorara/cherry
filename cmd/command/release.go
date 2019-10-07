@@ -46,12 +46,12 @@ const (
 // release is the release command.
 type release struct {
 	ui     cui.CUI
-	Spec   *spec.Spec // This needs to be a pointer, so updates made by flag.Parse will be available to downstream consumers
+	Spec   spec.Spec
 	action action.Action
 }
 
 // NewRelease creates a new release command.
-func NewRelease(ui cui.CUI, workDir, githubToken string, s *spec.Spec) (cli.Command, error) {
+func NewRelease(ui cui.CUI, workDir, githubToken string, s spec.Spec) (cli.Command, error) {
 	if githubToken == "" {
 		return nil, errors.New("github token is not set")
 	}
@@ -108,7 +108,8 @@ func (c *release) Run(args []string) int {
 	}
 
 	ctx := context.Background()
-	ctx = action.ContextForRelease(ctx, segment, comment)
+	ctx = action.ContextWithSpec(ctx, c.Spec)
+	ctx = action.ContextWithReleaseParams(ctx, segment, comment)
 	ctx, cancel := context.WithTimeout(ctx, releaseTimeout)
 	defer cancel()
 

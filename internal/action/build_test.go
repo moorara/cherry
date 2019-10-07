@@ -16,13 +16,13 @@ func TestNewBuild(t *testing.T) {
 		name    string
 		ui      cui.CUI
 		workDir string
-		s       *spec.Spec
+		s       spec.Spec
 	}{
 		{
 			name:    "OK",
 			ui:      &mockCUI{},
 			workDir: ".",
-			s: &spec.Spec{
+			s: spec.Spec{
 				ToolName:    "cherry",
 				ToolVersion: "test",
 				Build: spec.Build{
@@ -45,7 +45,7 @@ func TestNewBuild(t *testing.T) {
 }
 
 func TestBuildDry(t *testing.T) {
-	s := &spec.Spec{
+	s := spec.Spec{
 		ToolName:    "cherry",
 		ToolVersion: "test",
 		Build: spec.Build{
@@ -62,22 +62,20 @@ func TestBuildDry(t *testing.T) {
 		{
 			name: "Step1Fails",
 			action: &build{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GoList{
 					Mock: &mockStep{
 						RunOutError: errors.New("error on run: step1"),
 					},
 				},
 			},
-			ctx:           context.Background(),
+			ctx:           ContextWithSpec(context.Background(), s),
 			expectedError: errors.New("error on run: step1"),
 		},
 		{
 			name: "Step2Fails",
 			action: &build{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -87,14 +85,13 @@ func TestBuildDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           context.Background(),
+			ctx:           ContextWithSpec(context.Background(), s),
 			expectedError: errors.New("error on run: step2"),
 		},
 		{
 			name: "Step3Fails",
 			action: &build{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -107,14 +104,13 @@ func TestBuildDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           context.Background(),
+			ctx:           ContextWithSpec(context.Background(), s),
 			expectedError: errors.New("error on run: step3"),
 		},
 		{
 			name: "Step4Fails",
 			action: &build{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -130,14 +126,13 @@ func TestBuildDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           context.Background(),
+			ctx:           ContextWithSpec(context.Background(), s),
 			expectedError: errors.New("error on run: step4"),
 		},
 		{
 			name: "Step5Fails",
 			action: &build{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -156,14 +151,13 @@ func TestBuildDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           context.Background(),
+			ctx:           ContextWithSpec(context.Background(), s),
 			expectedError: errors.New("error on run: step5"),
 		},
 		{
 			name: "Step6Fails",
 			action: &build{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -185,14 +179,13 @@ func TestBuildDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           context.Background(),
+			ctx:           ContextWithSpec(context.Background(), s),
 			expectedError: errors.New("error on dry: step6"),
 		},
 		{
 			name: "Success",
 			action: &build{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -212,8 +205,7 @@ func TestBuildDry(t *testing.T) {
 					Mock: &mockStep{},
 				},
 			},
-			ctx:           context.Background(),
-			expectedError: nil,
+			ctx: ContextWithSpec(context.Background(), s),
 		},
 	}
 
@@ -226,7 +218,7 @@ func TestBuildDry(t *testing.T) {
 }
 
 func TestBuildRun(t *testing.T) {
-	s := &spec.Spec{
+	s := spec.Spec{
 		ToolName:    "cherry",
 		ToolVersion: "test",
 		Build: spec.Build{
@@ -246,22 +238,20 @@ func TestBuildRun(t *testing.T) {
 		{
 			name: "Step1Fails",
 			action: &build{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GoList{
 					Mock: &mockStep{
 						RunOutError: errors.New("error on run: step1"),
 					},
 				},
 			},
-			ctx:           context.Background(),
+			ctx:           ContextWithSpec(context.Background(), s),
 			expectedError: errors.New("error on run: step1"),
 		},
 		{
 			name: "Step2Fails",
 			action: &build{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -271,14 +261,13 @@ func TestBuildRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           context.Background(),
+			ctx:           ContextWithSpec(context.Background(), s),
 			expectedError: errors.New("error on run: step2"),
 		},
 		{
 			name: "Step3Fails",
 			action: &build{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -291,14 +280,13 @@ func TestBuildRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           context.Background(),
+			ctx:           ContextWithSpec(context.Background(), s),
 			expectedError: errors.New("error on run: step3"),
 		},
 		{
 			name: "Step4Fails",
 			action: &build{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -314,14 +302,13 @@ func TestBuildRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           context.Background(),
+			ctx:           ContextWithSpec(context.Background(), s),
 			expectedError: errors.New("error on run: step4"),
 		},
 		{
 			name: "Step5Fails",
 			action: &build{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -340,14 +327,13 @@ func TestBuildRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           context.Background(),
+			ctx:           ContextWithSpec(context.Background(), s),
 			expectedError: errors.New("error on run: step5"),
 		},
 		{
 			name: "Step6Fails",
 			action: &build{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -369,14 +355,13 @@ func TestBuildRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           context.Background(),
+			ctx:           ContextWithSpec(context.Background(), s),
 			expectedError: errors.New("error on run: step6"),
 		},
 		{
 			name: "Success",
 			action: &build{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GoList{
 					Mock: &mockStep{},
 				},
@@ -394,8 +379,7 @@ func TestBuildRun(t *testing.T) {
 				},
 				step6: step6OK,
 			},
-			ctx:           context.Background(),
-			expectedError: nil,
+			ctx: ContextWithSpec(context.Background(), s),
 		},
 	}
 
@@ -560,8 +544,7 @@ func TestBuildRevert(t *testing.T) {
 					Mock: &mockStep{},
 				},
 			},
-			ctx:           context.Background(),
-			expectedError: nil,
+			ctx: context.Background(),
 		},
 	}
 

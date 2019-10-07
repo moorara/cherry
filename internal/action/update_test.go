@@ -78,8 +78,7 @@ func TestUpdateDry(t *testing.T) {
 					Mock: &mockStep{},
 				},
 			},
-			ctx:           context.Background(),
-			expectedError: nil,
+			ctx: context.Background(),
 		},
 	}
 
@@ -138,8 +137,7 @@ func TestUpdateRun(t *testing.T) {
 					Mock: &mockStep{},
 				},
 			},
-			ctx:           context.Background(),
-			expectedError: nil,
+			ctx: context.Background(),
 		},
 	}
 
@@ -198,8 +196,7 @@ func TestUpdateRevert(t *testing.T) {
 					Mock: &mockStep{},
 				},
 			},
-			ctx:           context.Background(),
-			expectedError: nil,
+			ctx: context.Background(),
 		},
 	}
 

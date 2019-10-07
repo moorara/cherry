@@ -16,7 +16,7 @@ func TestNewRelease(t *testing.T) {
 		ui            cui.CUI
 		workDir       string
 		githubToken   string
-		spec          *spec.Spec
+		spec          spec.Spec
 		expectedError error
 	}{
 		{
@@ -31,7 +31,7 @@ func TestNewRelease(t *testing.T) {
 			ui:          &mockCUI{},
 			workDir:     ".",
 			githubToken: "github-token",
-			spec:        &spec.Spec{},
+			spec:        spec.Spec{},
 		},
 	}
 
@@ -76,7 +76,7 @@ func TestReleaseRun(t *testing.T) {
 			name: "InvalidFlags",
 			cmd: &release{
 				ui:   &mockCUI{},
-				Spec: &spec.Spec{},
+				Spec: spec.Spec{},
 			},
 			args:         []string{"-unknown"},
 			expectedExit: releaseFlagErr,
@@ -85,7 +85,7 @@ func TestReleaseRun(t *testing.T) {
 			name: "ActionFails",
 			cmd: &release{
 				ui:   &mockCUI{},
-				Spec: &spec.Spec{},
+				Spec: spec.Spec{},
 				action: &mockAction{
 					RunOutError: errors.New("error on run: action"),
 				},
@@ -97,7 +97,7 @@ func TestReleaseRun(t *testing.T) {
 			name: "PatchSuccess",
 			cmd: &release{
 				ui:     &mockCUI{},
-				Spec:   &spec.Spec{},
+				Spec:   spec.Spec{},
 				action: &mockAction{},
 			},
 			args:         []string{"-patch"},
@@ -107,7 +107,7 @@ func TestReleaseRun(t *testing.T) {
 			name: "MinorSuccess",
 			cmd: &release{
 				ui:     &mockCUI{},
-				Spec:   &spec.Spec{},
+				Spec:   spec.Spec{},
 				action: &mockAction{},
 			},
 			args:         []string{"-minor"},
@@ -117,7 +117,7 @@ func TestReleaseRun(t *testing.T) {
 			name: "MajorSuccess",
 			cmd: &release{
 				ui:     &mockCUI{},
-				Spec:   &spec.Spec{},
+				Spec:   spec.Spec{},
 				action: &mockAction{},
 			},
 			args:         []string{"-major"},

@@ -17,14 +17,14 @@ func TestNewBuild(t *testing.T) {
 		name          string
 		ui            cui.CUI
 		workDir       string
-		spec          *spec.Spec
+		spec          spec.Spec
 		expectedError error
 	}{
 		{
 			name:    "OK",
 			ui:      &mockCUI{},
 			workDir: ".",
-			spec:    &spec.Spec{},
+			spec:    spec.Spec{},
 		},
 	}
 
@@ -58,11 +58,13 @@ func TestBuildHelp(t *testing.T) {
 		{
 			name: "OK",
 			cmd: &build{
-				Build: &spec.Build{
-					CrossCompile:   true,
-					MainFile:       "main.go",
-					BinaryFile:     "bin/cherry",
-					VersionPackage: "cmd/version",
+				Spec: spec.Spec{
+					Build: spec.Build{
+						CrossCompile:   true,
+						MainFile:       "main.go",
+						BinaryFile:     "bin/cherry",
+						VersionPackage: "cmd/version",
+					},
 				},
 			},
 		},
@@ -92,8 +94,8 @@ func TestBuildRun(t *testing.T) {
 		{
 			name: "InvalidFlags",
 			cmd: &build{
-				ui:    &mockCUI{},
-				Build: &spec.Build{},
+				ui:   &mockCUI{},
+				Spec: spec.Spec{},
 			},
 			args:         []string{"-unknown"},
 			expectedExit: buildFlagErr,
@@ -101,8 +103,8 @@ func TestBuildRun(t *testing.T) {
 		{
 			name: "ActionFails",
 			cmd: &build{
-				ui:    &mockCUI{},
-				Build: &spec.Build{},
+				ui:   &mockCUI{},
+				Spec: spec.Spec{},
 				action: &mockAction{
 					RunOutError: errors.New("error on run: action"),
 				},
@@ -114,7 +116,7 @@ func TestBuildRun(t *testing.T) {
 			name: "Success",
 			cmd: &build{
 				ui:     &mockCUI{},
-				Build:  &spec.Build{},
+				Spec:   spec.Spec{},
 				action: &mockAction{},
 			},
 			args:         []string{},

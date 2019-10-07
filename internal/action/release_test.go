@@ -12,42 +12,76 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestContextWithReleaseParams(t *testing.T) {
+	tests := []struct {
+		name    string
+		ctx     context.Context
+		segment semver.Segment
+		comment string
+	}{
+		{
+			name:    "Patch",
+			ctx:     context.Background(),
+			segment: semver.Patch,
+			comment: "patch release",
+		},
+		{
+			name:    "Minor",
+			ctx:     context.Background(),
+			segment: semver.Minor,
+			comment: "minor release",
+		},
+		{
+			name:    "Major",
+			ctx:     context.Background(),
+			segment: semver.Major,
+			comment: "major release",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := ContextWithReleaseParams(tc.ctx, tc.segment, tc.comment)
+
+			segment, ok := ctx.Value(segmentKey).(semver.Segment)
+			assert.True(t, ok)
+			assert.Equal(t, tc.segment, segment)
+
+			comment, ok := ctx.Value(commentKey).(string)
+			assert.True(t, ok)
+			assert.Equal(t, tc.comment, comment)
+		})
+	}
+}
+
 func TestContext(t *testing.T) {
 	tests := []struct {
 		name            string
-		addToContext    bool
-		segment         semver.Segment
-		comment         string
+		ctx             context.Context
 		expectedSegment semver.Segment
 		expectedComment string
 	}{
 		{
 			name:            "Default",
-			addToContext:    false,
+			ctx:             context.Background(),
 			expectedSegment: semver.Patch,
 			expectedComment: "",
 		},
 		{
 			name:            "Patch",
-			addToContext:    true,
-			segment:         semver.Patch,
-			comment:         "patch release",
+			ctx:             context.WithValue(context.WithValue(context.Background(), segmentKey, semver.Patch), commentKey, "patch release"),
 			expectedSegment: semver.Patch,
 			expectedComment: "patch release",
 		},
 		{
 			name:            "Minor",
-			addToContext:    true,
-			segment:         semver.Minor,
-			comment:         "minor release",
+			ctx:             context.WithValue(context.WithValue(context.Background(), segmentKey, semver.Minor), commentKey, "minor release"),
 			expectedSegment: semver.Minor,
 			expectedComment: "minor release",
 		},
 		{
 			name:            "Major",
-			addToContext:    true,
-			segment:         semver.Major,
-			comment:         "major release",
+			ctx:             context.WithValue(context.WithValue(context.Background(), segmentKey, semver.Major), commentKey, "major release"),
 			expectedSegment: semver.Major,
 			expectedComment: "major release",
 		},
@@ -55,14 +89,7 @@ func TestContext(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
-
-			if tc.addToContext {
-				ctx = ContextForRelease(ctx, tc.segment, tc.comment)
-			}
-
-			segment, comment := ReleaseArgsFromContext(ctx)
-
+			segment, comment := ReleaseParamsFromContext(tc.ctx)
 			assert.Equal(t, tc.expectedSegment, segment)
 			assert.Equal(t, tc.expectedComment, comment)
 		})
@@ -75,14 +102,14 @@ func TestNewRelease(t *testing.T) {
 		ui          cui.CUI
 		workDir     string
 		githubToken string
-		s           *spec.Spec
+		s           spec.Spec
 	}{
 		{
 			name:        "OK",
 			ui:          &mockCUI{},
 			workDir:     ".",
 			githubToken: "github-token",
-			s: &spec.Spec{
+			s: spec.Spec{
 				ToolName:    "cherry",
 				ToolVersion: "test",
 				Build: spec.Build{
@@ -109,16 +136,23 @@ func TestNewRelease(t *testing.T) {
 }
 
 func TestReleaseDry(t *testing.T) {
-	s := &spec.Spec{
-		ToolName:    "cherry",
-		ToolVersion: "test",
-		Build: spec.Build{
-			Platforms: []string{"linux-amd64", "darwin-amd64"},
+	ctx := ContextWithSpec(
+		ContextWithReleaseParams(
+			context.Background(),
+			semver.Patch,
+			"comment",
+		),
+		spec.Spec{
+			ToolName:    "cherry",
+			ToolVersion: "test",
+			Build: spec.Build{
+				Platforms: []string{"linux-amd64", "darwin-amd64"},
+			},
+			Release: spec.Release{
+				Build: true,
+			},
 		},
-		Release: spec.Release{
-			Build: true,
-		},
-	}
+	)
 
 	step1OK := &step.GitGetRepo{Mock: &mockStep{}}
 
@@ -181,22 +215,20 @@ func TestReleaseDry(t *testing.T) {
 		{
 			name: "Step1Fails",
 			action: &release{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GitGetRepo{
 					Mock: &mockStep{
 						RunOutError: errors.New("error on run: step1"),
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step1"),
 		},
 		{
 			name: "Step2Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: &step.GitGetBranch{
 					Mock: &mockStep{
@@ -204,27 +236,25 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step2"),
 		},
 		{
 			name: "BranchNotMaster",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: &step.GitGetBranch{
 					Mock: &mockStep{},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("release has to be done from master branch"),
 		},
 		{
 			name: "Step3Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: &step.GitStatus{
@@ -233,28 +263,26 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step3"),
 		},
 		{
 			name: "BranchNotClean",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: &step.GitStatus{
 					Mock: &mockStep{},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("working directory is not clean and has uncommitted changes"),
 		},
 		{
 			name: "Step4Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: step3OK,
@@ -264,14 +292,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step4"),
 		},
 		{
 			name: "Step5Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: step3OK,
@@ -282,14 +309,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step5"),
 		},
 		{
 			name: "Step6Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: step3OK,
@@ -301,14 +327,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step6"),
 		},
 		{
 			name: "Step7Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: step3OK,
@@ -321,14 +346,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step7"),
 		},
 		{
 			name: "Step8Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: step3OK,
@@ -342,14 +366,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step8"),
 		},
 		{
 			name: "Step9Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: step3OK,
@@ -364,14 +387,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step9"),
 		},
 		{
 			name: "Step10Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: step3OK,
@@ -387,14 +409,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step10"),
 		},
 		{
 			name: "Step11Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -411,14 +432,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step11"),
 		},
 		{
 			name: "Step12Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -436,14 +456,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step12"),
 		},
 		{
 			name: "Step13Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -462,14 +481,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step13"),
 		},
 		{
 			name: "Step14Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -489,14 +507,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step14"),
 		},
 		{
 			name: "Step15Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -517,14 +534,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step15"),
 		},
 		{
 			name: "Step16Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -546,14 +562,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step16"),
 		},
 		{
 			name: "Step17Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -576,14 +591,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step17"),
 		},
 		{
 			name: "Step19Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -608,14 +622,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step19"),
 		},
 		{
 			name: "Step20Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -641,14 +654,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step20"),
 		},
 		{
 			name: "Step21Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -675,14 +687,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step21"),
 		},
 		{
 			name: "Step22Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -710,14 +721,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step22"),
 		},
 		{
 			name: "Step23Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -746,14 +756,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step23"),
 		},
 		{
 			name: "Step24Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -783,14 +792,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step24"),
 		},
 		{
 			name: "Step25Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -821,14 +829,13 @@ func TestReleaseDry(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on dry: step25"),
 		},
 		{
 			name: "Success",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -855,7 +862,7 @@ func TestReleaseDry(t *testing.T) {
 				step24: step24OK,
 				step25: step25OK,
 			},
-			ctx: ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx: ctx,
 		},
 	}
 
@@ -868,16 +875,23 @@ func TestReleaseDry(t *testing.T) {
 }
 
 func TestReleaseRun(t *testing.T) {
-	s := &spec.Spec{
-		ToolName:    "cherry",
-		ToolVersion: "test",
-		Build: spec.Build{
-			Platforms: []string{"linux-amd64", "darwin-amd64"},
+	ctx := ContextWithSpec(
+		ContextWithReleaseParams(
+			context.Background(),
+			semver.Patch,
+			"comment",
+		),
+		spec.Spec{
+			ToolName:    "cherry",
+			ToolVersion: "test",
+			Build: spec.Build{
+				Platforms: []string{"linux-amd64", "darwin-amd64"},
+			},
+			Release: spec.Release{
+				Build: true,
+			},
 		},
-		Release: spec.Release{
-			Build: true,
-		},
-	}
+	)
 
 	step1OK := &step.GitGetRepo{Mock: &mockStep{}}
 
@@ -965,22 +979,20 @@ func TestReleaseRun(t *testing.T) {
 		{
 			name: "Step1Fails",
 			action: &release{
-				ui:   &mockCUI{},
-				spec: s,
+				ui: &mockCUI{},
 				step1: &step.GitGetRepo{
 					Mock: &mockStep{
 						RunOutError: errors.New("error on run: step1"),
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step1"),
 		},
 		{
 			name: "Step2Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: &step.GitGetBranch{
 					Mock: &mockStep{
@@ -988,27 +1000,25 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step2"),
 		},
 		{
 			name: "BranchNotMaster",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: &step.GitGetBranch{
 					Mock: &mockStep{},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("release has to be done from master branch"),
 		},
 		{
 			name: "Step3Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: &step.GitStatus{
@@ -1017,28 +1027,26 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step3"),
 		},
 		{
 			name: "BranchNotClean",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: &step.GitStatus{
 					Mock: &mockStep{},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("working directory is not clean and has uncommitted changes"),
 		},
 		{
 			name: "Step4Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: step3OK,
@@ -1048,14 +1056,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step4"),
 		},
 		{
 			name: "Step5Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: step3OK,
@@ -1066,14 +1073,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step5"),
 		},
 		{
 			name: "Step6Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: step3OK,
@@ -1085,14 +1091,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step6"),
 		},
 		{
 			name: "Step7Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: step3OK,
@@ -1105,14 +1110,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step7"),
 		},
 		{
 			name: "Step8Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: step3OK,
@@ -1126,14 +1130,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step8"),
 		},
 		{
 			name: "Step9Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: step3OK,
@@ -1148,14 +1151,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step9"),
 		},
 		{
 			name: "Step10Fails",
 			action: &release{
 				ui:    &mockCUI{},
-				spec:  s,
 				step1: step1OK,
 				step2: step2OK,
 				step3: step3OK,
@@ -1171,14 +1173,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step10"),
 		},
 		{
 			name: "Step11Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1195,14 +1196,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step11"),
 		},
 		{
 			name: "Step12Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1220,14 +1220,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step12"),
 		},
 		{
 			name: "Step13Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1246,14 +1245,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step13"),
 		},
 		{
 			name: "Step14Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1273,14 +1271,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step14"),
 		},
 		{
 			name: "Step15Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1301,14 +1298,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step15"),
 		},
 		{
 			name: "Step16Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1330,14 +1326,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step16"),
 		},
 		{
 			name: "Step17Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1360,14 +1355,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step17"),
 		},
 		{
 			name: "Step19Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1392,14 +1386,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step19"),
 		},
 		{
 			name: "Step20Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1425,14 +1418,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step20"),
 		},
 		{
 			name: "Step21Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1459,14 +1451,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step21"),
 		},
 		{
 			name: "Step22Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1494,14 +1485,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step22"),
 		},
 		{
 			name: "Step23Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1530,14 +1520,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step23"),
 		},
 		{
 			name: "Step24Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1567,14 +1556,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step24"),
 		},
 		{
 			name: "Step25Fails",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1605,14 +1593,13 @@ func TestReleaseRun(t *testing.T) {
 					},
 				},
 			},
-			ctx:           ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx:           ctx,
 			expectedError: errors.New("error on run: step25"),
 		},
 		{
 			name: "Success",
 			action: &release{
 				ui:     &mockCUI{},
-				spec:   s,
 				step1:  step1OK,
 				step2:  step2OK,
 				step3:  step3OK,
@@ -1639,7 +1626,7 @@ func TestReleaseRun(t *testing.T) {
 				step24: step24OK,
 				step25: step25OK,
 			},
-			ctx: ContextForRelease(context.Background(), semver.Patch, "comment"),
+			ctx: ctx,
 		},
 	}
 

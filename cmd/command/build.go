@@ -25,10 +25,10 @@ const (
 
 	Flags:
 
-		-cross-compile:    build the binary for all platforms                (default: {{.Build.CrossCompile}})
-		-main-file:        path to main.go file                              (default: {{.Build.MainFile}})
-		-binary-file:      path for binary files                             (default: {{.Build.BinaryFile}})
-		-version-package:  relative path to package containing version info  (default: {{.Build.VersionPackage}})
+		-cross-compile:    build the binary for all platforms                (default: {{.Spec.Build.CrossCompile}})
+		-main-file:        path to main.go file                              (default: {{.Spec.Build.MainFile}})
+		-binary-file:      path for binary files                             (default: {{.Spec.Build.BinaryFile}})
+		-version-package:  relative path to package containing version info  (default: {{.Spec.Build.VersionPackage}})
 
 	Examples:
 
@@ -41,15 +41,15 @@ const (
 // build is the build command.
 type build struct {
 	ui     cui.CUI
-	Build  *spec.Build // This needs to be a pointer, so updates made by flag.Parse will be available to downstream consumers
+	Spec   spec.Spec
 	action action.Action
 }
 
 // NewBuild creates a new build command.
-func NewBuild(ui cui.CUI, workDir string, s *spec.Spec) (cli.Command, error) {
+func NewBuild(ui cui.CUI, workDir string, s spec.Spec) (cli.Command, error) {
 	return &build{
 		ui:     ui,
-		Build:  &s.Build,
+		Spec:   s,
 		action: action.NewBuild(ui, workDir, s),
 	}, nil
 }
@@ -70,7 +70,7 @@ func (c *build) Help() string {
 
 // Run runs the actual command with the given command-line arguments.
 func (c *build) Run(args []string) int {
-	fs := c.Build.FlagSet()
+	fs := c.Spec.Build.FlagSet()
 	fs.Usage = func() {
 		c.ui.Outputf(c.Help())
 	}
@@ -79,7 +79,9 @@ func (c *build) Run(args []string) int {
 		return buildFlagErr
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), buildTimeout)
+	ctx := context.Background()
+	ctx = action.ContextWithSpec(ctx, c.Spec)
+	ctx, cancel := context.WithTimeout(ctx, buildTimeout)
 	defer cancel()
 
 	if err := c.action.Run(ctx); err != nil {
