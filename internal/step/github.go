@@ -708,7 +708,6 @@ func getUploadContent(filepath string) (*uploadContent, error) {
 	mimeType := http.DetectContentType(buff)
 
 	// Reset the offset back to the beginning of the file
-	// SEEK_SET: seek relative to the origin of the file
 	_, err = file.Seek(0, io.SeekStart)
 	if err != nil {
 		return nil, err
