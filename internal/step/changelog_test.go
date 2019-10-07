@@ -3,7 +3,6 @@ package step
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -62,15 +61,7 @@ func TestChangelogGenerateDry(t *testing.T) {
 		repo          string
 		tag           string
 		expectedError string
-	}{
-		{
-			name:        "Success",
-			workDir:     os.TempDir(),
-			gitHubToken: "github-token",
-			repo:        "username/repo",
-			tag:         "v0.1.0",
-		},
-	}
+	}{}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -103,16 +94,7 @@ func TestChangelogGenerateRun(t *testing.T) {
 		tag              string
 		expectedError    string
 		expectedFilename string
-	}{
-		{
-			name:          "InvalidGitHubToken",
-			workDir:       os.TempDir(),
-			gitHubToken:   "github-token",
-			repo:          "username/repo",
-			tag:           "v0.1.0",
-			expectedError: `401 - Bad credentials`,
-		},
-	}
+	}{}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -146,16 +128,7 @@ func TestChangelogGenerateRevert(t *testing.T) {
 		repo          string
 		tag           string
 		expectedError string
-	}{
-		{
-			name:          "OK",
-			workDir:       os.TempDir(),
-			gitHubToken:   "github-token",
-			repo:          "username/repo",
-			tag:           "v0.1.0",
-			expectedError: ``,
-		},
-	}
+	}{}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
