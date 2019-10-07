@@ -956,23 +956,23 @@ func TestGitHubEditReleaseDry(t *testing.T) {
 			token:         "github-token",
 			repo:          "username/repo",
 			releaseID:     2,
-			expectedError: `Get /repos/username/repo/releases/2: unsupported protocol scheme ""`,
+			expectedError: `Get /repos/username/repo/releases/latest: unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
 			mockResponses: []mockHTTP{
-				{"GET", "/repos/{owner}/{repo}/releases/{id}", 403, ``},
+				{"GET", "/repos/{owner}/{repo}/releases/latest", 403, ``},
 			},
 			token:         "github-token",
 			repo:          "username/repo",
 			releaseID:     2,
-			expectedError: `GET /repos/username/repo/releases/2 403: `,
+			expectedError: `GET /repos/username/repo/releases/latest 403: `,
 		},
 		{
 			name: "Success",
 			mockResponses: []mockHTTP{
 				{
-					"GET", "/repos/{owner}/{repo}/releases/{id}", 200, `{
+					"GET", "/repos/{owner}/{repo}/releases/latest", 200, `{
 						"id": 2,
 						"tag_name": "v0.2.0",
 						"target_commitish": "master",
@@ -1232,22 +1232,22 @@ func TestGitHubUploadAssetsDry(t *testing.T) {
 			token:         "github-token",
 			repo:          "username/repo",
 			releaseID:     2,
-			expectedError: `Get /repos/username/repo/releases/2/assets: unsupported protocol scheme ""`,
+			expectedError: `Get /repos/username/repo/releases/latest: unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
 			mockResponses: []mockHTTP{
-				{"GET", "/repos/{owner}/{repo}/releases/{id}/assets", 403, ``},
+				{"GET", "/repos/{owner}/{repo}/releases/latest", 403, ``},
 			},
 			token:         "github-token",
 			repo:          "username/repo",
-			expectedError: `GET /repos/username/repo/releases/0/assets 403: `,
+			expectedError: `GET /repos/username/repo/releases/latest 403: `,
 		},
 		{
 			name: "Success",
 			mockResponses: []mockHTTP{
 				{
-					"GET", "/repos/{owner}/{repo}/releases/{id}/assets", 200, `[]`,
+					"GET", "/repos/{owner}/{repo}/releases/latest", 200, `[]`,
 				},
 			},
 			token: "github-token",
