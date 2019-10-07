@@ -5,7 +5,7 @@ WORKDIR /repo
 COPY . .
 ENV CGO_ENABLED=0
 RUN scripts/install.sh
-RUN cherry build -cross-compile=false
+RUN cherry build -cross-compile=false -binary-file=cherry
 
 # FINAL STAGE
 FROM golang:1.11-alpine
