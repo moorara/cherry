@@ -7,9 +7,9 @@ import (
 
 	"github.com/mitchellh/cli"
 	"github.com/moorara/cherry/internal/action"
-	"github.com/moorara/cherry/internal/semver"
 	"github.com/moorara/cherry/internal/spec"
 	"github.com/moorara/cherry/pkg/cui"
+	"github.com/moorara/cherry/pkg/semver"
 )
 
 const (

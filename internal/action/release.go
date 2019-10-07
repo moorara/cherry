@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/moorara/cherry/internal/semver"
 	"github.com/moorara/cherry/internal/spec"
 	"github.com/moorara/cherry/internal/step"
 	"github.com/moorara/cherry/pkg/cui"
+	"github.com/moorara/cherry/pkg/semver"
 )
 
 // contextKey is the type for the keys added to context.
@@ -282,6 +282,7 @@ func (r *release) Dry(ctx context.Context) error {
 
 	// Release the version
 	curr, next := r.step5.Result.Version.Release(segment)
+	next.Prerelease = []string{"0"}
 
 	// Dry -- Update the version file with the current version
 	r.step6.Version = curr.Version()
@@ -376,7 +377,7 @@ func (r *release) Dry(ctx context.Context) error {
 	}
 
 	// Dry -- Update the version file with the next version
-	r.step21.Version = next.PreRelease()
+	r.step21.Version = next.Version()
 	if err := r.step21.Dry(ctx); err != nil {
 		return err
 	}
@@ -388,7 +389,7 @@ func (r *release) Dry(ctx context.Context) error {
 	}
 
 	//  Dry -- Create a commit for next version
-	r.step23.Message = fmt.Sprintf("Beginning %s [skip ci]", next.PreRelease())
+	r.step23.Message = fmt.Sprintf("Beginning %s [skip ci]", next.Version())
 	if err := r.step23.Dry(ctx); err != nil {
 		return err
 	}
@@ -451,6 +452,7 @@ func (r *release) Run(ctx context.Context) error {
 
 	// Release the version
 	curr, next := r.step5.Result.Version.Release(segment)
+	next.Prerelease = []string{"0"}
 
 	// Update the version file with the current version
 	r.step6.Version = curr.Version()
@@ -570,7 +572,7 @@ func (r *release) Run(ctx context.Context) error {
 	}
 
 	// Update the version file with the next version
-	r.step21.Version = next.PreRelease()
+	r.step21.Version = next.Version()
 	if err := r.step21.Run(ctx); err != nil {
 		return err
 	}
@@ -582,12 +584,12 @@ func (r *release) Run(ctx context.Context) error {
 	}
 
 	//  Create a commit for next version
-	r.step23.Message = fmt.Sprintf("Beginning %s [skip ci]", next.PreRelease())
+	r.step23.Message = fmt.Sprintf("Beginning %s [skip ci]", next.Version())
 	if err := r.step23.Run(ctx); err != nil {
 		return err
 	}
 
-	r.ui.Infof("⬆️  Pushing commit for next version %s ...", next.PreRelease())
+	r.ui.Infof("⬆️  Pushing commit for next version %s ...", next.Version())
 
 	// Push the commit for next release
 	if err := r.step24.Run(ctx); err != nil {

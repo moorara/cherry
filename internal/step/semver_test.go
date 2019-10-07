@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/moorara/cherry/internal/semver"
+	"github.com/moorara/cherry/pkg/semver"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -98,13 +98,13 @@ func TestSemVerReadDry(t *testing.T) {
 			name:          "InvalidTextVersion",
 			workDir:       "./test",
 			filename:      "invalid",
-			expectedError: `invalid major version: strconv.ParseUint: parsing "x": invalid syntax`,
+			expectedError: `invalid semantic version`,
 		},
 		{
 			name:          "InvalidJSONVersion",
 			workDir:       "./test",
 			filename:      "invalid.json",
-			expectedError: `invalid major version: strconv.ParseUint: parsing "x": invalid syntax`,
+			expectedError: `invalid semantic version`,
 		},
 		{
 			name:     "TextFileSuccess",
@@ -181,13 +181,13 @@ func TestSemVerReadRun(t *testing.T) {
 			name:          "InvalidTextVersion",
 			workDir:       "./test",
 			filename:      "invalid",
-			expectedError: `invalid major version: strconv.ParseUint: parsing "x": invalid syntax`,
+			expectedError: `invalid semantic version`,
 		},
 		{
 			name:          "InvalidJSONVersion",
 			workDir:       "./test",
 			filename:      "invalid.json",
-			expectedError: `invalid major version: strconv.ParseUint: parsing "x": invalid syntax`,
+			expectedError: `invalid semantic version`,
 		},
 		{
 			name:             "TextFileSuccess",
