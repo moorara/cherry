@@ -7,11 +7,10 @@ import (
 )
 
 func main() {
-	fmt.Printf(`
-	version:    %s
-	revision:   %s
-	branch:     %s
-	goVersion:  %s
-	buildTool:  %s
-	buildTime:  %s`+"\n\n", version.Version, version.Revision, version.Branch, version.GoVersion, version.BuildTool, version.BuildTime)
+	fmt.Printf("Version:   %s\n", version.Version)
+	fmt.Printf("Revision:  %s\n", version.Revision)
+	fmt.Printf("Branch:    %s\n", version.Branch)
+	fmt.Printf("GoVersion: %s\n", version.GoVersion)
+	fmt.Printf("BuildTool: %s\n", version.BuildTool)
+	fmt.Printf("BuildTime: %s\n", version.BuildTime)
 }

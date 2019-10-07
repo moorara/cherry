@@ -1,54 +1,77 @@
 package main
 
 import (
+	"errors"
 	"os"
 
 	"github.com/mitchellh/cli"
-	"github.com/moorara/cherry/cmd/config"
+	"github.com/moorara/cherry/cmd/command"
 	"github.com/moorara/cherry/cmd/version"
-	"github.com/moorara/goto/log"
-
-	app "github.com/moorara/cherry/cmd/v1/cli"
-	util "github.com/moorara/cherry/pkg/cli"
+	"github.com/moorara/cherry/internal/spec"
+	"github.com/moorara/cherry/pkg/cui"
+	"github.com/moorara/konfig"
 )
 
 const (
-	initError = 10
+	osErr     = 10
+	configErr = 11
+	specErr   = 12
 )
 
+var config = struct {
+	GithubToken string
+}{}
+
 func main() {
-	// Create logger
-	opts := log.Options{Name: config.Config.Name, Level: config.Config.LogLevel}
-	logger := log.NewLogger(opts)
-	logger = logger.With(
-		config.Config.Name, map[string]string{
-			"version":   version.Version,
-			"revision":  version.Revision,
-			"branch":    version.Branch,
-			"goVersion": version.GoVersion,
-			"buildTool": version.BuildTool,
-			"buildTime": version.BuildTime,
+	ui := cui.New()
+
+	wd, err := os.Getwd()
+	if err != nil {
+		ui.Errorf("%s", err)
+		os.Exit(osErr)
+	}
+
+	err = konfig.Pick(&config, konfig.PrefixEnv("CHERRY_"), konfig.PrefixFileEnv("CHERRY_"))
+	if err != nil {
+		ui.Errorf("%s", err)
+		os.Exit(configErr)
+	}
+
+	// Read the spec
+	// If spec file not found, create a default spec
+	s, err := spec.Read()
+	if err != nil {
+		var se *spec.Error
+		if errors.As(err, &se) && se.SpecNotFound {
+			s = new(spec.Spec)
+		} else {
+			ui.Errorf("%s", err)
+			os.Exit(specErr)
+		}
+	}
+
+	// Update spec
+	s.SetDefaults()
+	s.ToolVersion = version.Version
+
+	c := cli.NewCLI("cherry", version.String())
+	c.Args = os.Args[1:]
+	c.Commands = map[string]cli.CommandFactory{
+		"build": func() (cli.Command, error) {
+			return command.NewBuild(ui, wd, *s)
 		},
-	)
-
-	// Create cli.Ui
-	var ui cli.Ui
-	if config.Config.LogJSON {
-		ui = util.NewLoggerUI(logger)
-	} else {
-		ui = util.NewUI().Colored().Concurrent()
+		"release": func() (cli.Command, error) {
+			return command.NewRelease(ui, wd, config.GithubToken, *s)
+		},
+		"update": func() (cli.Command, error) {
+			return command.NewUpdate(ui, config.GithubToken)
+		},
 	}
 
-	app, err := app.New(ui, config.Config.Name, config.Config.GithubToken)
+	code, err := c.Run()
 	if err != nil {
-		ui.Error(err.Error())
-		os.Exit(initError)
+		ui.Errorf("%s", err)
 	}
 
-	status, err := app.Run()
-	if err != nil {
-		ui.Error(err.Error())
-	}
-
-	os.Exit(status)
+	os.Exit(code)
 }

@@ -1,11 +1,7 @@
-test:
-	cherry test
-
+.PHONY: build
 build:
 	cherry build
 
+.PHONY: release
 release:
 	cherry release
-
-
-.PHONY: test build release

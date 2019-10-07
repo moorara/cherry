@@ -1,4 +1,3 @@
+.PHONY: build
 build:
 	cherry build
-
-.PHONY: build

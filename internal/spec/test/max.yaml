@@ -1,0 +1,31 @@
+version: "1.0"
+
+language: go
+version_file: VERSION
+
+test:
+  cover_mode: atomic
+  report_path: coverage
+
+build:
+  cross_compile: true
+  main_file: main.go
+  binary_file: bin/cherry
+  version_package: ./cmd/version
+  go_versions:
+    - 1.11
+    - 1.12.10
+    - 1.13.1
+  platforms:
+    - linux-386
+    - linux-amd64
+    - linux-arm
+    - linux-arm64
+    - darwin-386
+    - darwin-amd64
+    - windows-386
+    - windows-amd64
+
+release:
+  model: master
+  build: true

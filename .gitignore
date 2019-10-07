@@ -11,7 +11,5 @@ cherry-*
 *.log
 *.out
 *.test
-coverage/
-
-# Exceptions
-!Dockerfile.test
+cover.html
+coverage.html

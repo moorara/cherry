@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 #
-# This script will install the latest version of Cherry
+# This script will install the latest version of Cherry.
 #
 # USAGE:
 #   ./install.sh
@@ -23,7 +23,7 @@ get_latest_release() {
   elif hash wget 2>/dev/null; then
     content=$(wget -qO- $release_url)
   else
-    printf "No command available to get %s\n" "$release_url"
+    echo "No command available to get $release_url"
     exit 1
   fi
 
@@ -41,7 +41,7 @@ install_cherry() {
   elif hash wget 2>/dev/null; then
     wget -qO "$bin_path" "$download_url"
   else
-    printf "No command available to download %s\n" "$download_url"
+    echo "No command available to download $download_url"
     exit 1
   fi
 
@@ -49,7 +49,7 @@ install_cherry() {
 }
 
 main() {
-  printf "Installing the latest release of Cherry ...\n"
+  echo "Installing the latest release of Cherry ..."
 
   os=$(uname -s | tr '[:upper:]' '[:lower:]')
   arch=$(uname -m)
@@ -63,7 +63,7 @@ main() {
   get_latest_release "$os" "$arch"
   install_cherry "$download_url"
 
-  printf "Cherry %s installed successfully.\n" "$latest_version"
+  echo "Cherry $latest_version installed successfully."
 }
 
 

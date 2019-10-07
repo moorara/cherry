@@ -3,12 +3,6 @@ docker_image ?= moorara/$(name)
 docker_tag ?= latest
 
 
-clean:
-	@ rm -rf bin coverage $(name)
-
-run:
-	@ go run main.go
-
 build:
 	@ cherry build -cross-compile=false
 
@@ -22,7 +16,8 @@ test-short:
 	@ go test -short ./...
 
 coverage:
-	@ cherry test
+	@ go test -covermode=atomic -coverprofile=c.out ./...
+	@ go tool cover -html=c.out -o coverage.html
 
 docker:
 	@ docker build -t $(docker_image):$(docker_tag) .
@@ -37,7 +32,6 @@ load-docker:
 	@ docker image load -i docker.tar
 
 
-.PHONY: clean
-.PHONY: run build build-all
+.PHONY: build build-all
 .PHONY: test test-short coverage
 .PHONY: docker push save-docker load-docker

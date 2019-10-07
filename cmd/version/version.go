@@ -1,18 +1,15 @@
 package version
 
-import (
-	"fmt"
-)
+import "fmt"
 
-const (
-	template = `
+const template = `
 	version:    %s
 	revision:   %s
 	branch:     %s
 	goVersion:  %s
 	buildTool:  %s
-	buildTime:  %s` + "\n"
-)
+	buildTime:  %s
+`
 
 var (
 	// Version is the semantic version

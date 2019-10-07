@@ -1,16 +1,20 @@
-[![Build Status][circleci-image]][circleci-url]
+[![Build Status][workflow-image]][workflow-url]
 [![Go Report Card][goreport-image]][goreport-url]
 [![Test Coverage][coverage-image]][coverage-url]
 [![Maintainability][maintainability-image]][maintainability-url]
 
 # Cherry
 
-This is a **WORK-IN-PROGRESS**.
+Cherry is an experimental tool and it is **WORK-IN-PROGRESS**.
 
-Cherry is an **opinionated** tool for *testing*, *buidling*, *releasing*, and *deploying* applications.
-Currently, Cherry only supports [Go](https://golang.org) applications and [GitHub](https://github.com) repositories.
+Cherry is an **opinionated** tool for _buidling_ and _releasing_ applications.
+Currently, Cherry only supports [Go](https://golang.org) for building and [GitHub](https://github.com) repositories for releasing.
 
-## Prerequisites
+For Go applications, Cherry supports cross-compiling and injecting metadata into the binaries.
+
+For releasing, Cherry supports text files (`VERSION`) and JSON files (`package.json`).
+
+## Prerequisites/Dependencies
 
 You need to have the following tools installed and ready.
 
@@ -23,6 +27,12 @@ For releasing GitHub repository you need a **personal access token** with **admi
 ## Quick Start
 
 ### Install
+
+```
+curl -s https://git.io/JeCX6 | sh
+```
+
+Or
 
 ```
 curl -s https://raw.githubusercontent.com/moorara/cherry/master/scripts/install.sh | sh
@@ -40,10 +50,6 @@ You can take a look at [examples](./examples) to see how you can use and configu
 
 You can run `cherry` or `cherry -help` to see the list of available commands.
 For each command you can then use `-help` flag too see the help text for the command.
-
-**`test`**
-
-`cherry test` will run your tests the same way as `go test` and generates an **aggregated coverage report**. 
 
 **`build`**
 
@@ -67,7 +73,6 @@ It downloads the latest release for your system from GitHub and replaces the loc
 
 | Command            | Description                                          |
 |--------------------|------------------------------------------------------|
-| `make run`         | Run the application locally                          |
 | `make build`       | Build the binary locally                             |
 | `make build-all`   | Build the binary locally for all supported platforms |
 | `make test`        | Run the unit tests                                   |
@@ -79,8 +84,8 @@ It downloads the latest release for your system from GitHub and replaces the loc
 | `make load-docker` | Load saved image from disk                           |
 
 
-[circleci-url]: https://circleci.com/gh/moorara/cherry/tree/master
-[circleci-image]: https://circleci.com/gh/moorara/cherry/tree/master.svg?style=shield
+[workflow-url]: https://github.com/moorara/cherry/actions
+[workflow-image]: https://github.com/moorara/cherry/workflows/Main/badge.svg
 [goreport-url]: https://goreportcard.com/report/github.com/moorara/cherry
 [goreport-image]: https://goreportcard.com/badge/github.com/moorara/cherry
 [coverage-url]: https://codeclimate.com/github/moorara/cherry/test_coverage
