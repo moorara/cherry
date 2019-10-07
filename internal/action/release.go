@@ -356,9 +356,7 @@ func (r *release) Dry(ctx context.Context) error {
 	defer func() {
 		r.step18.Repo = r.step1.Result.Repo
 		r.step18.Branch = r.step2.Result.Name
-		if err := r.step18.Dry(ctx); err != nil {
-			// Skip
-		}
+		_ = r.step18.Dry(ctx)
 	}()
 
 	// Dry -- Push the commit for current release

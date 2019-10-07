@@ -142,8 +142,7 @@ func (s *GitHubBranchProtection) makeRequest(ctx context.Context, method string)
 		return nil, nil
 	}
 
-	var body map[string]interface{}
-	body = map[string]interface{}{}
+	body := map[string]interface{}{}
 	err = json.NewDecoder(res.Body).Decode(&body)
 	if err != nil {
 		return nil, err
@@ -384,7 +383,7 @@ func (s *GitHubCreateRelease) Run(ctx context.Context) error {
 	url := fmt.Sprintf("%s/repos/%s/releases", s.BaseURL, s.Repo)
 
 	body := new(bytes.Buffer)
-	json.NewEncoder(body).Encode(s.ReleaseData)
+	_ = json.NewEncoder(body).Encode(s.ReleaseData)
 
 	release, err := s.makeRequest(ctx, method, url, body)
 	if err != nil {
@@ -496,7 +495,7 @@ func (s *GitHubEditRelease) Run(ctx context.Context) error {
 	url := fmt.Sprintf("%s/repos/%s/releases/%d", s.BaseURL, s.Repo, s.ReleaseID)
 
 	body := new(bytes.Buffer)
-	json.NewEncoder(body).Encode(s.ReleaseData)
+	_ = json.NewEncoder(body).Encode(s.ReleaseData)
 
 	release, err := s.makeRequest(ctx, method, url, body)
 	if err != nil {
@@ -709,8 +708,7 @@ func getUploadContent(filepath string) (*uploadContent, error) {
 	mimeType := http.DetectContentType(buff)
 
 	// Reset the offset back to the beginning of the file
-	// SEEK_SET: seek relative to the origin of the file
-	_, err = file.Seek(0, os.SEEK_SET)
+	_, err = file.Seek(0, io.SeekStart)
 	if err != nil {
 		return nil, err
 	}

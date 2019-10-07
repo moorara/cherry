@@ -37,7 +37,7 @@ func TestBuildSetDefaults(t *testing.T) {
 		{
 			Build{},
 			Build{
-				CrossCompile:   defaultCrossCompile,
+				CrossCompile:   false,
 				MainFile:       defaultMainFile,
 				BinaryFile:     "bin/spec",
 				VersionPackage: defaultVersionPackage,
@@ -108,7 +108,7 @@ func TestReleaseSetDefaults(t *testing.T) {
 			Release{},
 			Release{
 				Model: defaultModel,
-				Build: defaultBuild,
+				Build: false,
 			},
 		},
 		{
@@ -166,7 +166,7 @@ func TestSpecSetDefaults(t *testing.T) {
 				Version:     defaultVersion,
 				Language:    defaultLanguage,
 				Build: Build{
-					CrossCompile:   defaultCrossCompile,
+					CrossCompile:   false,
 					MainFile:       defaultMainFile,
 					BinaryFile:     "bin/spec",
 					VersionPackage: defaultVersionPackage,
@@ -175,7 +175,7 @@ func TestSpecSetDefaults(t *testing.T) {
 				},
 				Release: Release{
 					Model: defaultModel,
-					Build: defaultBuild,
+					Build: false,
 				},
 			},
 		},
