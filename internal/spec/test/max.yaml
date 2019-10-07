@@ -3,10 +3,6 @@ version: "1.0"
 language: go
 version_file: VERSION
 
-test:
-  cover_mode: atomic
-  report_path: coverage
-
 build:
   cross_compile: true
   main_file: main.go
