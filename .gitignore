@@ -11,4 +11,5 @@ cherry-*
 *.log
 *.out
 *.test
-coverage/
+cover.html
+coverage.html
