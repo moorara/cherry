@@ -17,3 +17,10 @@ jobs:
         uses: moorara/actions/go-cover@master
         with:
           codeclimate_reporter_id: ${{ secrets.CODECLIMATE_REPORTER_ID }}
+  docker:
+    name: Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Build Image
+        run: make docker
