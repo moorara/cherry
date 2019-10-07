@@ -357,7 +357,7 @@ func (s *GitCommit) Dry(ctx context.Context) error {
 	}
 
 	var stdout, stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "git", "commit", "--dry-run", "-m", s.Message)
+	cmd := exec.CommandContext(ctx, "git", "log", "--oneline")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

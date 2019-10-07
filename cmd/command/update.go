@@ -11,8 +11,10 @@ import (
 )
 
 const (
-	updateErr     = 40
-	updateFlagErr = 41
+	updateFlagErr   = 41
+	updateDryErr    = 42
+	updateRunErr    = 43
+	updateRevertErr = 44
 
 	updateTimeout = time.Minute
 
@@ -64,9 +66,23 @@ func (c *update) Run(args []string) int {
 	ctx, cancel := context.WithTimeout(context.Background(), updateTimeout)
 	defer cancel()
 
+	// Try finding any possible failure before running the command
+	if err := c.action.Dry(ctx); err != nil {
+		c.ui.Errorf("%s", err)
+		return updateDryErr
+	}
+
+	// Running the command
 	if err := c.action.Run(ctx); err != nil {
 		c.ui.Errorf("%s", err)
-		return updateErr
+
+		// Try reverting back any side effect in case of failure
+		if err := c.action.Revert(ctx); err != nil {
+			c.ui.Errorf("%s", err)
+			return updateRevertErr
+		}
+
+		return updateRunErr
 	}
 
 	return 0

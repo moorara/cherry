@@ -12,9 +12,7 @@ import (
 	"strings"
 )
 
-const (
-	changelogFilename = "CHANGELOG.md"
-)
+const changelogFilename = "CHANGELOG.md"
 
 // ChangelogGenerate runs `github_changelog_generator` Ruby gem!
 type ChangelogGenerate struct {
@@ -48,6 +46,8 @@ func (s *ChangelogGenerate) Dry(ctx context.Context) error {
 			strings.Trim(stderr.String(), "\n"),
 		)
 	}
+
+	s.Result.Filename = changelogFilename
 
 	return nil
 }

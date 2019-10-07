@@ -475,7 +475,7 @@ func (s *GitHubEditRelease) Dry(ctx context.Context) error {
 	}
 
 	method := "GET"
-	url := fmt.Sprintf("%s/repos/%s/releases/%d", s.BaseURL, s.Repo, s.ReleaseID)
+	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
 
 	_, err := s.makeRequest(ctx, method, url, nil)
 	if err != nil {
@@ -542,7 +542,7 @@ func (s *GitHubUploadAssets) Dry(ctx context.Context) error {
 	}
 
 	method := "GET"
-	url := fmt.Sprintf("%s/repos/%s/releases/%d/assets", s.BaseURL, s.Repo, s.ReleaseID)
+	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
 
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {

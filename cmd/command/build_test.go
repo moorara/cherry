@@ -101,7 +101,19 @@ func TestBuildRun(t *testing.T) {
 			expectedExit: buildFlagErr,
 		},
 		{
-			name: "ActionFails",
+			name: "DryFails",
+			cmd: &build{
+				ui:   &mockCUI{},
+				Spec: spec.Spec{},
+				action: &mockAction{
+					DryOutError: errors.New("error on dry: action"),
+				},
+			},
+			args:         []string{},
+			expectedExit: buildDryErr,
+		},
+		{
+			name: "RunFails",
 			cmd: &build{
 				ui:   &mockCUI{},
 				Spec: spec.Spec{},
@@ -110,7 +122,20 @@ func TestBuildRun(t *testing.T) {
 				},
 			},
 			args:         []string{},
-			expectedExit: buildErr,
+			expectedExit: buildRunErr,
+		},
+		{
+			name: "RevertFails",
+			cmd: &build{
+				ui:   &mockCUI{},
+				Spec: spec.Spec{},
+				action: &mockAction{
+					RunOutError:    errors.New("error on run: action"),
+					RevertOutError: errors.New("error on revert: action"),
+				},
+			},
+			args:         []string{},
+			expectedExit: buildRevertErr,
 		},
 		{
 			name: "Success",

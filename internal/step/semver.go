@@ -174,10 +174,12 @@ func (s *SemVerUpdate) Dry(ctx context.Context) error {
 		return s.Mock.Dry(ctx)
 	}
 
-	_, err := s.writeVersion(true)
+	filename, err := s.writeVersion(true)
 	if err != nil {
 		return err
 	}
+
+	s.Result.Filename = filename
 
 	return nil
 }
