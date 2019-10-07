@@ -24,3 +24,9 @@ jobs:
       - uses: actions/checkout@master
       - name: Build
         run: make docker
+      - name: Push
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_REF"
+          echo "$GITHUB_CONTEXT"
