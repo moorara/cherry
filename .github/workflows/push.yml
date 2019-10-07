@@ -32,7 +32,7 @@ jobs:
       - name: Build
         run: make docker
       - name: Push
-        if: github.ref == "refs/heads/master"
+        if: github.ref == 'refs/heads/master'
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
