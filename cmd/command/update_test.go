@@ -69,7 +69,18 @@ func TestUpdateRun(t *testing.T) {
 			expectedExit: updateFlagErr,
 		},
 		{
-			name: "ActionFails",
+			name: "DryFails",
+			cmd: &update{
+				ui: &mockCUI{},
+				action: &mockAction{
+					DryOutError: errors.New("error on dry: action"),
+				},
+			},
+			args:         []string{},
+			expectedExit: updateDryErr,
+		},
+		{
+			name: "RunFails",
 			cmd: &update{
 				ui: &mockCUI{},
 				action: &mockAction{
@@ -77,7 +88,19 @@ func TestUpdateRun(t *testing.T) {
 				},
 			},
 			args:         []string{},
-			expectedExit: updateErr,
+			expectedExit: updateRunErr,
+		},
+		{
+			name: "RevertFails",
+			cmd: &update{
+				ui: &mockCUI{},
+				action: &mockAction{
+					RunOutError:    errors.New("error on run: action"),
+					RevertOutError: errors.New("error on revert: action"),
+				},
+			},
+			args:         []string{},
+			expectedExit: updateRevertErr,
 		},
 		{
 			name: "Success",

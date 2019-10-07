@@ -82,7 +82,19 @@ func TestReleaseRun(t *testing.T) {
 			expectedExit: releaseFlagErr,
 		},
 		{
-			name: "ActionFails",
+			name: "DryFails",
+			cmd: &release{
+				ui:   &mockCUI{},
+				Spec: spec.Spec{},
+				action: &mockAction{
+					DryOutError: errors.New("error on dry: action"),
+				},
+			},
+			args:         []string{},
+			expectedExit: releaseDryErr,
+		},
+		{
+			name: "RunFails",
 			cmd: &release{
 				ui:   &mockCUI{},
 				Spec: spec.Spec{},
@@ -91,7 +103,20 @@ func TestReleaseRun(t *testing.T) {
 				},
 			},
 			args:         []string{},
-			expectedExit: releaseErr,
+			expectedExit: releaseRunErr,
+		},
+		{
+			name: "RevertFails",
+			cmd: &release{
+				ui:   &mockCUI{},
+				Spec: spec.Spec{},
+				action: &mockAction{
+					RunOutError:    errors.New("error on run: action"),
+					RevertOutError: errors.New("error on revert: action"),
+				},
+			},
+			args:         []string{},
+			expectedExit: releaseRevertErr,
 		},
 		{
 			name: "PatchSuccess",

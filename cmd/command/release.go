@@ -13,8 +13,10 @@ import (
 )
 
 const (
-	releaseErr     = 30
-	releaseFlagErr = 31
+	releaseFlagErr   = 31
+	releaseDryErr    = 32
+	releaseRunErr    = 33
+	releaseRevertErr = 34
 
 	releaseTimeout = 10 * time.Minute
 
@@ -113,9 +115,23 @@ func (c *release) Run(args []string) int {
 	ctx, cancel := context.WithTimeout(ctx, releaseTimeout)
 	defer cancel()
 
+	// Try finding any possible failure before running the command
+	if err := c.action.Dry(ctx); err != nil {
+		c.ui.Errorf("%s", err)
+		return releaseDryErr
+	}
+
+	// Running the command
 	if err := c.action.Run(ctx); err != nil {
 		c.ui.Errorf("%s", err)
-		return releaseErr
+
+		// Try reverting back any side effect in case of failure
+		if err := c.action.Revert(ctx); err != nil {
+			c.ui.Errorf("%s", err)
+			return releaseRevertErr
+		}
+
+		return releaseRunErr
 	}
 
 	return 0

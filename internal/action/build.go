@@ -72,6 +72,8 @@ func (b *build) getLDFlags(s spec.Spec) string {
 
 // Dry is a dry run of the action.
 func (b *build) Dry(ctx context.Context) error {
+	b.ui.Outputf("◉ Running preflight checks ...")
+
 	s := SpecFromContext(ctx)
 
 	// Step 1 to 5 do NOT have hany side effect
@@ -151,6 +153,8 @@ func (b *build) Run(ctx context.Context) error {
 
 // Revert reverts back an executed action.
 func (b *build) Revert(ctx context.Context) error {
+	b.ui.Outputf("✖ Reverting back ...")
+
 	steps := []step.Step{b.step6, b.step5, b.step4, b.step3, b.step2, b.step1}
 
 	for _, s := range steps {

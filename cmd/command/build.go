@@ -13,8 +13,10 @@ import (
 )
 
 const (
-	buildErr     = 20
-	buildFlagErr = 21
+	buildFlagErr   = 21
+	buildDryErr    = 22
+	buildRunErr    = 23
+	buildRevertErr = 24
 
 	buildTimeout = 2 * time.Minute
 
@@ -84,9 +86,23 @@ func (c *build) Run(args []string) int {
 	ctx, cancel := context.WithTimeout(ctx, buildTimeout)
 	defer cancel()
 
+	// Try finding any possible failure before running the command
+	if err := c.action.Dry(ctx); err != nil {
+		c.ui.Errorf("%s", err)
+		return buildDryErr
+	}
+
+	// Running the command
 	if err := c.action.Run(ctx); err != nil {
 		c.ui.Errorf("%s", err)
-		return buildErr
+
+		// Try reverting back any side effect in case of failure
+		if err := c.action.Revert(ctx); err != nil {
+			c.ui.Errorf("%s", err)
+			return buildRevertErr
+		}
+
+		return buildRunErr
 	}
 
 	return 0

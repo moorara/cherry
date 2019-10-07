@@ -50,6 +50,8 @@ func NewUpdate(ui cui.CUI, githubToken string) Action {
 
 // Dry is a dry run of the action.
 func (u *update) Dry(ctx context.Context) error {
+	u.ui.Outputf("◉ Running preflight checks ...")
+
 	binPath, err := exec.LookPath(os.Args[0])
 	if err != nil {
 		return err
@@ -101,6 +103,8 @@ func (u *update) Run(ctx context.Context) error {
 
 // Revert reverts back an executed action.
 func (u *update) Revert(ctx context.Context) error {
+	u.ui.Outputf("✖ Reverting back ...")
+
 	steps := []step.Step{u.step2, u.step1}
 
 	for _, s := range steps {

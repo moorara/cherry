@@ -239,6 +239,8 @@ func (r *release) getLDFlags(s spec.Spec) string {
 
 // Dry is a dry run of the action.
 func (r *release) Dry(ctx context.Context) error {
+	r.ui.Outputf("⏺️  Running preflight checks ...")
+
 	s := SpecFromContext(ctx)
 	segment, _ := ReleaseParamsFromContext(ctx)
 
@@ -607,6 +609,8 @@ func (r *release) Run(ctx context.Context) error {
 
 // Revert reverts back an executed action.
 func (r *release) Revert(ctx context.Context) error {
+	r.ui.Outputf("🛑 Reverting back ...")
+
 	steps := []step.Step{
 		r.step25, r.step24, r.step23, r.step22, r.step21,
 		r.step20, r.step19, r.step18, r.step17, r.step16,
