@@ -1,5 +1,58 @@
 # Change Log
 
+## [v0.4.0](https://github.com/moorara/cherry/tree/v0.4.0) (2019-10-07)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.3.1...v0.4.0)
+
+**Implemented enhancements:**
+
+- Build smaller binaries by removing debugging information [\#98](https://github.com/moorara/cherry/issues/98)
+- Add notify command [\#65](https://github.com/moorara/cherry/issues/65)
+- Add linting [\#63](https://github.com/moorara/cherry/issues/63)
+
+**Fixed bugs:**
+
+- Run all pre-flight checks before starting the release process [\#100](https://github.com/moorara/cherry/issues/100)
+- Packages with zero coverage don't show in coverage report [\#67](https://github.com/moorara/cherry/issues/67)
+
+**Closed issues:**
+
+- Shorten installation URL using git.io [\#123](https://github.com/moorara/cherry/issues/123)
+- Improve testing coverage [\#25](https://github.com/moorara/cherry/issues/25)
+
+**Merged pull requests:**
+
+- Build and push versioned Docker images [\#130](https://github.com/moorara/cherry/pull/130) ([moorara](https://github.com/moorara))
+- Add dry and revert [\#129](https://github.com/moorara/cherry/pull/129) ([moorara](https://github.com/moorara))
+- Add Docker push step [\#128](https://github.com/moorara/cherry/pull/128) ([moorara](https://github.com/moorara))
+- Fix linting issues [\#127](https://github.com/moorara/cherry/pull/127) ([moorara](https://github.com/moorara))
+- Reinvent cherry [\#126](https://github.com/moorara/cherry/pull/126) ([moorara](https://github.com/moorara))
+- Delete PULL\_REQUEST\_TEMPLATE.md [\#125](https://github.com/moorara/cherry/pull/125) ([moorara](https://github.com/moorara))
+- Update module yaml to v2.2.4 [\#124](https://github.com/moorara/cherry/pull/124) ([renovate[bot]](https://github.com/apps/renovate))
+- Update golang Docker tag to v1.13 [\#122](https://github.com/moorara/cherry/pull/122) ([renovate[bot]](https://github.com/apps/renovate))
+- Update module moorara/goto to v0.3.0 [\#121](https://github.com/moorara/cherry/pull/121) ([renovate[bot]](https://github.com/apps/renovate))
+- Update module stretchr/testify to v1.4.0 [\#120](https://github.com/moorara/cherry/pull/120) ([renovate[bot]](https://github.com/apps/renovate))
+- Update module moorara/goto to v0.2.9 [\#119](https://github.com/moorara/cherry/pull/119) ([renovate[bot]](https://github.com/apps/renovate))
+- Update golang.org/x/sys commit hash to fc99dfb [\#117](https://github.com/moorara/cherry/pull/117) ([renovate[bot]](https://github.com/apps/renovate))
+- Update golang.org/x/sys commit hash to 94b544f [\#116](https://github.com/moorara/cherry/pull/116) ([renovate[bot]](https://github.com/apps/renovate))
+- Update module moorara/goto to v0.2.8 [\#115](https://github.com/moorara/cherry/pull/115) ([renovate[bot]](https://github.com/apps/renovate))
+- Update module moorara/goto to v0.2.7 [\#114](https://github.com/moorara/cherry/pull/114) ([renovate[bot]](https://github.com/apps/renovate))
+- Update module gorilla/mux to v1.7.3 [\#113](https://github.com/moorara/cherry/pull/113) ([renovate[bot]](https://github.com/apps/renovate))
+- Update golang.org/x/sys commit hash to fae7ac5 [\#112](https://github.com/moorara/cherry/pull/112) ([renovate[bot]](https://github.com/apps/renovate))
+- Update golang.org/x/sys commit hash to dbbf3f1 [\#111](https://github.com/moorara/cherry/pull/111) ([renovate[bot]](https://github.com/apps/renovate))
+- Update golang.org/x/sys commit hash to abf6ff7 [\#110](https://github.com/moorara/cherry/pull/110) ([renovate[bot]](https://github.com/apps/renovate))
+- Update golang.org/x/sys commit hash to 0e01d88 [\#109](https://github.com/moorara/cherry/pull/109) ([renovate[bot]](https://github.com/apps/renovate))
+- Update golang.org/x/sys commit hash to 8097e1b [\#108](https://github.com/moorara/cherry/pull/108) ([renovate[bot]](https://github.com/apps/renovate))
+- Update golang.org/x/sys commit hash to c432e74 [\#107](https://github.com/moorara/cherry/pull/107) ([renovate[bot]](https://github.com/apps/renovate))
+- Update golang.org/x/sys commit hash to ad400b1 [\#106](https://github.com/moorara/cherry/pull/106) ([renovate[bot]](https://github.com/apps/renovate))
+- Update module gorilla/mux to v1.7.2 [\#105](https://github.com/moorara/cherry/pull/105) ([renovate[bot]](https://github.com/apps/renovate))
+- Update golang.org/x/sys commit hash to 61b9204 [\#104](https://github.com/moorara/cherry/pull/104) ([renovate[bot]](https://github.com/apps/renovate))
+- Update module prometheus/client\_golang to v0.9.3 [\#103](https://github.com/moorara/cherry/pull/103) ([renovate[bot]](https://github.com/apps/renovate))
+- Add go mod tidy option to renovate config [\#102](https://github.com/moorara/cherry/pull/102) ([moorara](https://github.com/moorara))
+- Update module gorilla/mux to v1.7.1 [\#101](https://github.com/moorara/cherry/pull/101) ([renovate[bot]](https://github.com/apps/renovate))
+- Update README [\#99](https://github.com/moorara/cherry/pull/99) ([moorara](https://github.com/moorara))
+- Add Cherry logos [\#97](https://github.com/moorara/cherry/pull/97) ([moorara](https://github.com/moorara))
+- Refactor git service [\#96](https://github.com/moorara/cherry/pull/96) ([moorara](https://github.com/moorara))
+
 ## [v0.3.1](https://github.com/moorara/cherry/tree/v0.3.1) (2019-03-22)
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.3.0...v0.3.1)
 
