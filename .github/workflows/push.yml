@@ -29,8 +29,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
+      - uses: moorara/actions/semver@master
       - name: Build
-        run: make docker
+        run: make docker docker_tag=$(cat VERSION)
       - name: Push
         if: github.ref == 'refs/heads/master'
         env:
@@ -38,4 +39,4 @@ jobs:
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         run: |
           docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
-          make push
+          make push docker_tag=$(cat VERSION)
