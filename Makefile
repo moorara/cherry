@@ -20,10 +20,10 @@ coverage:
 	@ go tool cover -html=c.out -o coverage.html
 
 docker:
-	@ docker build -t $(docker_image):$(docker_tag) .
+	@ docker image build -t $(docker_image):$(docker_tag) .
 
 push:
-	@ docker push $(docker_image):$(docker_tag)
+	@ docker image push $(docker_image):$(docker_tag)
 
 save-docker:
 	@ docker image save -o docker.tar $(docker_image):$(docker_tag)
