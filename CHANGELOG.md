@@ -1,6 +1,15 @@
 # Change Log
 
-## [v0.4.0](https://github.com/moorara/cherry/tree/v0.4.0) (2019-10-07)
+## [v0.4.1](https://github.com/moorara/cherry/tree/v0.4.1) (2019-10-31)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.4.0...v0.4.1)
+
+**Merged pull requests:**
+
+- Fix issue with help command when github token is not set [\#133](https://github.com/moorara/cherry/pull/133) ([moorara](https://github.com/moorara))
+- Update Makefile [\#132](https://github.com/moorara/cherry/pull/132) ([moorara](https://github.com/moorara))
+- Refactor Makefile [\#131](https://github.com/moorara/cherry/pull/131) ([moorara](https://github.com/moorara))
+
+## [v0.4.0](https://github.com/moorara/cherry/tree/v0.4.0) (2019-10-08)
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.3.1...v0.4.0)
 
 **Implemented enhancements:**
