@@ -20,11 +20,11 @@ func TestNewRelease(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:          "NoGitHubToken",
-			ui:            &mockCUI{},
-			workDir:       ".",
-			githubToken:   "",
-			expectedError: errors.New("github token is not set"),
+			name:        "NoGitHubToken",
+			ui:          &mockCUI{},
+			workDir:     ".",
+			githubToken: "",
+			spec:        spec.Spec{},
 		},
 		{
 			name:        "OK",

@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/mitchellh/cli"
@@ -54,10 +53,6 @@ type release struct {
 
 // NewRelease creates a new release command.
 func NewRelease(ui cui.CUI, workDir, githubToken string, s spec.Spec) (cli.Command, error) {
-	if githubToken == "" {
-		return nil, errors.New("github token is not set")
-	}
-
 	return &release{
 		ui:     ui,
 		Spec:   s,
