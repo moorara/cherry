@@ -16,9 +16,6 @@ import (
 )
 
 const (
-	githubAcceptType = "application/vnd.github.v3+json"
-	githubUserAgent  = "cherry"
-
 	// GitHubURL is the BaseURL for GitHub.
 	GitHubURL = "https://github.com"
 
@@ -93,6 +90,21 @@ func (e *httpError) Error() string {
 	return fmt.Sprintf("%s %s %d: %s", e.Request.Method, e.Request.URL.Path, e.StatusCode, e.Message)
 }
 
+func createGitHubRequest(ctx context.Context, token, method, url string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", token))
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+	req.Header.Set("User-Agent", "cherry") // ref: https://developer.github.com/v3/#user-agent-required
+	req.Header.Set("Content-Type", "application/json")
+
+	return req, nil
+}
+
 // GitHubBranchProtection enables/disables branch protection for administrators.
 // See https://developer.github.com/v3/repos/branches/#get-admin-enforcement-of-protected-branch
 // See https://developer.github.com/v3/repos/branches/#add-admin-enforcement-of-protected-branch
@@ -107,59 +119,26 @@ type GitHubBranchProtection struct {
 	Enabled bool
 }
 
-func (s *GitHubBranchProtection) makeRequest(ctx context.Context, method string) (map[string]interface{}, error) {
-	var statusCode int
-	switch method {
-	case "GET", "POST":
-		statusCode = 200
-	case "DELETE":
-		statusCode = 204
-	}
-
-	url := fmt.Sprintf("%s/repos/%s/branches/%s/protection/enforce_admins", s.BaseURL, s.Repo, s.Branch)
-	req, err := http.NewRequest(method, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req = req.WithContext(ctx)
-
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
-	req.Header.Set("Accept", githubAcceptType)
-	req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
-
-	res, err := s.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != statusCode {
-		return nil, newHTTPError(res)
-	}
-
-	if method == "DELETE" {
-		return nil, nil
-	}
-
-	body := map[string]interface{}{}
-	err = json.NewDecoder(res.Body).Decode(&body)
-	if err != nil {
-		return nil, err
-	}
-
-	return body, nil
-}
-
 // Dry is a dry run of the step.
 func (s *GitHubBranchProtection) Dry(ctx context.Context) error {
 	if s.Mock != nil {
 		return s.Mock.Dry(ctx)
 	}
 
-	_, err := s.makeRequest(ctx, "GET")
+	url := fmt.Sprintf("%s/repos/%s/branches/%s/protection/enforce_admins", s.BaseURL, s.Repo, s.Branch)
+	req, err := createGitHubRequest(ctx, s.Token, "GET", url, nil)
 	if err != nil {
 		return err
+	}
+
+	res, err := s.Client.Do(req)
+	if err != nil {
+		return fmt.Errorf("GitHubBranchProtection.Dry: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return fmt.Errorf("GitHubBranchProtection.Dry: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -172,15 +151,30 @@ func (s *GitHubBranchProtection) Run(ctx context.Context) error {
 	}
 
 	var method string
+	var statusCode int
+
 	if s.Enabled {
 		method = "POST"
+		statusCode = 200
 	} else {
 		method = "DELETE"
+		statusCode = 204
 	}
 
-	_, err := s.makeRequest(ctx, method)
+	url := fmt.Sprintf("%s/repos/%s/branches/%s/protection/enforce_admins", s.BaseURL, s.Repo, s.Branch)
+	req, err := createGitHubRequest(ctx, s.Token, method, url, nil)
 	if err != nil {
 		return err
+	}
+
+	res, err := s.Client.Do(req)
+	if err != nil {
+		return fmt.Errorf("GitHubBranchProtection.Run: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != statusCode {
+		return fmt.Errorf("GitHubBranchProtection.Run: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -193,15 +187,30 @@ func (s *GitHubBranchProtection) Revert(ctx context.Context) error {
 	}
 
 	var method string
+	var statusCode int
+
 	if s.Enabled {
 		method = "DELETE"
+		statusCode = 204
 	} else {
 		method = "POST"
+		statusCode = 200
 	}
 
-	_, err := s.makeRequest(ctx, method)
+	url := fmt.Sprintf("%s/repos/%s/branches/%s/protection/enforce_admins", s.BaseURL, s.Repo, s.Branch)
+	req, err := createGitHubRequest(ctx, s.Token, method, url, nil)
 	if err != nil {
 		return err
+	}
+
+	res, err := s.Client.Do(req)
+	if err != nil {
+		return fmt.Errorf("GitHubBranchProtection.Revert: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != statusCode {
+		return fmt.Errorf("GitHubBranchProtection.Revert: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -220,50 +229,26 @@ type GitHubGetLatestRelease struct {
 	}
 }
 
-func (s *GitHubGetLatestRelease) makeRequest(ctx context.Context) (*GitHubRelease, error) {
-	method := "GET"
-	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
-
-	req, err := http.NewRequest(method, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req = req.WithContext(ctx)
-
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
-	req.Header.Set("Accept", githubAcceptType)
-	req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
-	req.Header.Set("Content-Type", "application/json")
-
-	res, err := s.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
-		return nil, newHTTPError(res)
-	}
-
-	release := new(GitHubRelease)
-	err = json.NewDecoder(res.Body).Decode(release)
-	if err != nil {
-		return nil, err
-	}
-
-	return release, nil
-}
-
 // Dry is a dry run of the step.
 func (s *GitHubGetLatestRelease) Dry(ctx context.Context) error {
 	if s.Mock != nil {
 		return s.Mock.Dry(ctx)
 	}
 
-	_, err := s.makeRequest(ctx)
+	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
+	req, err := createGitHubRequest(ctx, s.Token, "GET", url, nil)
 	if err != nil {
 		return err
+	}
+
+	res, err := s.Client.Do(req)
+	if err != nil {
+		return fmt.Errorf("GitHubGetLatestRelease.Dry: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return fmt.Errorf("GitHubGetLatestRelease.Dry: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -275,12 +260,26 @@ func (s *GitHubGetLatestRelease) Run(ctx context.Context) error {
 		return s.Mock.Run(ctx)
 	}
 
-	release, err := s.makeRequest(ctx)
+	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
+	req, err := createGitHubRequest(ctx, s.Token, "GET", url, nil)
 	if err != nil {
 		return err
 	}
 
-	s.Result.LatestRelease = *release
+	res, err := s.Client.Do(req)
+	if err != nil {
+		return fmt.Errorf("GitHubGetLatestRelease.Run: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return fmt.Errorf("GitHubGetLatestRelease.Run: %s", newHTTPError(res))
+	}
+
+	err = json.NewDecoder(res.Body).Decode(&s.Result.LatestRelease)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -310,64 +309,26 @@ type GitHubCreateRelease struct {
 	}
 }
 
-func (s *GitHubCreateRelease) makeRequest(ctx context.Context, method, url string, body io.Reader) (*GitHubRelease, error) {
-	var statusCode int
-	switch method {
-	case "GET":
-		statusCode = 200
-	case "POST":
-		statusCode = 201
-	case "DELETE":
-		statusCode = 204
-	}
-
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		return nil, err
-	}
-
-	req = req.WithContext(ctx)
-
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
-	req.Header.Set("Accept", githubAcceptType)
-	req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
-	req.Header.Set("Content-Type", "application/json")
-
-	res, err := s.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != statusCode {
-		return nil, newHTTPError(res)
-	}
-
-	if method == "DELETE" {
-		return nil, nil
-	}
-
-	release := new(GitHubRelease)
-	err = json.NewDecoder(res.Body).Decode(release)
-	if err != nil {
-		return nil, err
-	}
-
-	return release, nil
-}
-
 // Dry is a dry run of the step.
 func (s *GitHubCreateRelease) Dry(ctx context.Context) error {
 	if s.Mock != nil {
 		return s.Mock.Dry(ctx)
 	}
 
-	method := "GET"
-	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
-
-	_, err := s.makeRequest(ctx, method, url, nil)
+	url := fmt.Sprintf("%s/repos/%s/releases", s.BaseURL, s.Repo)
+	req, err := createGitHubRequest(ctx, s.Token, "GET", url, nil)
 	if err != nil {
 		return err
+	}
+
+	res, err := s.Client.Do(req)
+	if err != nil {
+		return fmt.Errorf("GitHubCreateRelease.Dry: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return fmt.Errorf("GitHubCreateRelease.Dry: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -379,18 +340,28 @@ func (s *GitHubCreateRelease) Run(ctx context.Context) error {
 		return s.Mock.Run(ctx)
 	}
 
-	method := "POST"
 	url := fmt.Sprintf("%s/repos/%s/releases", s.BaseURL, s.Repo)
-
 	body := new(bytes.Buffer)
 	_ = json.NewEncoder(body).Encode(s.ReleaseData)
-
-	release, err := s.makeRequest(ctx, method, url, body)
+	req, err := createGitHubRequest(ctx, s.Token, "POST", url, body)
 	if err != nil {
 		return err
 	}
 
-	s.Result.Release = *release
+	res, err := s.Client.Do(req)
+	if err != nil {
+		return fmt.Errorf("GitHubCreateRelease.Run: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 201 {
+		return fmt.Errorf("GitHubCreateRelease.Run: %s", newHTTPError(res))
+	}
+
+	err = json.NewDecoder(res.Body).Decode(&s.Result.Release)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -401,12 +372,20 @@ func (s *GitHubCreateRelease) Revert(ctx context.Context) error {
 		return s.Mock.Revert(ctx)
 	}
 
-	method := "DELETE"
 	url := fmt.Sprintf("%s/repos/%s/releases/%d", s.BaseURL, s.Repo, s.Result.Release.ID)
-
-	_, err := s.makeRequest(ctx, method, url, nil)
+	req, err := createGitHubRequest(ctx, s.Token, "DELETE", url, nil)
 	if err != nil {
 		return err
+	}
+
+	res, err := s.Client.Do(req)
+	if err != nil {
+		return fmt.Errorf("GitHubCreateRelease.Revert: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 204 {
+		return fmt.Errorf("GitHubCreateRelease.Revert: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -428,58 +407,26 @@ type GitHubEditRelease struct {
 	}
 }
 
-func (s *GitHubEditRelease) makeRequest(ctx context.Context, method, url string, body io.Reader) (*GitHubRelease, error) {
-	var statusCode int
-	switch method {
-	case "GET":
-		statusCode = 200
-	case "PATCH":
-		statusCode = 200
-	}
-
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		return nil, err
-	}
-
-	req = req.WithContext(ctx)
-
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
-	req.Header.Set("Accept", githubAcceptType)
-	req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
-	req.Header.Set("Content-Type", "application/json")
-
-	res, err := s.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != statusCode {
-		return nil, newHTTPError(res)
-	}
-
-	release := new(GitHubRelease)
-	err = json.NewDecoder(res.Body).Decode(release)
-	if err != nil {
-		return nil, err
-	}
-
-	return release, nil
-}
-
 // Dry is a dry run of the step.
 func (s *GitHubEditRelease) Dry(ctx context.Context) error {
 	if s.Mock != nil {
 		return s.Mock.Dry(ctx)
 	}
 
-	method := "GET"
-	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
-
-	_, err := s.makeRequest(ctx, method, url, nil)
+	url := fmt.Sprintf("%s/repos/%s/releases", s.BaseURL, s.Repo)
+	req, err := createGitHubRequest(ctx, s.Token, "GET", url, nil)
 	if err != nil {
 		return err
+	}
+
+	res, err := s.Client.Do(req)
+	if err != nil {
+		return fmt.Errorf("GitHubEditRelease.Dry: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return fmt.Errorf("GitHubEditRelease.Dry: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -491,18 +438,28 @@ func (s *GitHubEditRelease) Run(ctx context.Context) error {
 		return s.Mock.Run(ctx)
 	}
 
-	method := "PATCH"
 	url := fmt.Sprintf("%s/repos/%s/releases/%d", s.BaseURL, s.Repo, s.ReleaseID)
-
 	body := new(bytes.Buffer)
 	_ = json.NewEncoder(body).Encode(s.ReleaseData)
-
-	release, err := s.makeRequest(ctx, method, url, body)
+	req, err := createGitHubRequest(ctx, s.Token, "PATCH", url, body)
 	if err != nil {
 		return err
 	}
 
-	s.Result.Release = *release
+	res, err := s.Client.Do(req)
+	if err != nil {
+		return fmt.Errorf("GitHubEditRelease.Run: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return fmt.Errorf("GitHubEditRelease.Run: %s", newHTTPError(res))
+	}
+
+	err = json.NewDecoder(res.Body).Decode(&s.Result.Release)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -541,29 +498,20 @@ func (s *GitHubUploadAssets) Dry(ctx context.Context) error {
 		return s.Mock.Dry(ctx)
 	}
 
-	method := "GET"
-	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
-
-	req, err := http.NewRequest(method, url, nil)
+	url := fmt.Sprintf("%s/repos/%s/releases", s.BaseURL, s.Repo)
+	req, err := createGitHubRequest(ctx, s.Token, "GET", url, nil)
 	if err != nil {
 		return err
 	}
 
-	req = req.WithContext(ctx)
-
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
-	req.Header.Set("Accept", githubAcceptType)
-	req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
-	req.Header.Set("Content-Type", "application/json")
-
 	res, err := s.Client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubUploadAssets.Dry: %s", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return newHTTPError(res)
+		return fmt.Errorf("GitHubUploadAssets.Dry: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -596,17 +544,12 @@ func (s *GitHubUploadAssets) Run(ctx context.Context) error {
 			}
 			defer content.Body.Close()
 
-			req, err := http.NewRequest(method, url, content.Body)
+			req, err := createGitHubRequest(ctx, s.Token, method, url, content.Body)
 			if err != nil {
 				doneCh <- err
 				return
 			}
 
-			req = req.WithContext(ctx)
-
-			req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
-			req.Header.Set("Accept", githubAcceptType)
-			req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
 			req.Header.Set("Content-Type", content.MIMEType)
 			req.ContentLength = content.Length
 
@@ -636,7 +579,7 @@ func (s *GitHubUploadAssets) Run(ctx context.Context) error {
 
 	for range s.AssetFiles {
 		if err := <-doneCh; err != nil {
-			return err
+			return fmt.Errorf("GitHubUploadAssets.Run: %s", err)
 		}
 	}
 
@@ -652,27 +595,19 @@ func (s *GitHubUploadAssets) Revert(ctx context.Context) error {
 	for _, asset := range s.Result.Assets {
 		method := "DELETE"
 		url := fmt.Sprintf("%s/repos/%s/releases/assets/%d", s.BaseURL, s.Repo, asset.ID)
-
-		req, err := http.NewRequest(method, url, nil)
+		req, err := createGitHubRequest(ctx, s.Token, method, url, nil)
 		if err != nil {
 			return err
 		}
 
-		req = req.WithContext(ctx)
-
-		req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
-		req.Header.Set("Accept", githubAcceptType)
-		req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
-		req.Header.Set("Content-Type", "application/json")
-
 		res, err := s.Client.Do(req)
 		if err != nil {
-			return err
+			return fmt.Errorf("GitHubUploadAssets.Revert: %s", err)
 		}
 		defer res.Body.Close()
 
 		if res.StatusCode != 204 {
-			return newHTTPError(res)
+			return fmt.Errorf("GitHubUploadAssets.Revert: %s", newHTTPError(res))
 		}
 	}
 
@@ -736,18 +671,15 @@ type GitHubDownloadAsset struct {
 }
 
 func (s *GitHubDownloadAsset) makeRequest(ctx context.Context) (io.ReadCloser, error) {
-	method := "GET"
 	url := fmt.Sprintf("%s/%s/releases/download/%s/%s", s.BaseURL, s.Repo, s.Tag, s.AssetName)
-
-	req, err := http.NewRequest(method, url, nil)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	req = req.WithContext(ctx)
-
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", s.Token))
-	req.Header.Set("User-Agent", githubUserAgent) // ref: https://developer.github.com/v3/#user-agent-required
+	req.Header.Set("User-Agent", "cherry") // ref: https://developer.github.com/v3/#user-agent-required
 
 	res, err := s.Client.Do(req)
 	if err != nil {
@@ -769,7 +701,7 @@ func (s *GitHubDownloadAsset) Dry(ctx context.Context) error {
 
 	body, err := s.makeRequest(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubDownloadAsset.Dry: %s", err)
 	}
 	defer body.Close()
 
@@ -784,18 +716,18 @@ func (s *GitHubDownloadAsset) Run(ctx context.Context) error {
 
 	body, err := s.makeRequest(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubDownloadAsset.Run: %s", err)
 	}
 	defer body.Close()
 
 	file, err := os.OpenFile(s.Filepath, os.O_WRONLY, 0755)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubDownloadAsset.Run: %s", err)
 	}
 
 	size, err := io.Copy(file, body)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubDownloadAsset.Run: %s", err)
 	}
 
 	s.Result.Size = size
@@ -809,5 +741,10 @@ func (s *GitHubDownloadAsset) Revert(ctx context.Context) error {
 		return s.Mock.Revert(ctx)
 	}
 
-	return os.Remove(s.Filepath)
+	err := os.Remove(s.Filepath)
+	if err != nil {
+		return fmt.Errorf("GitHubDownloadAsset.Revert: %s", err)
+	}
+
+	return nil
 }

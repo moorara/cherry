@@ -33,7 +33,7 @@ func (s *GoVersion) Dry(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GoVersion.Dry: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -51,7 +51,7 @@ func (s *GoVersion) Run(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GoVersion.Run: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	// Get the version of Go compiler
@@ -94,7 +94,7 @@ func (s *GoList) Dry(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GoList.Dry: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -112,7 +112,7 @@ func (s *GoList) Run(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GoList.Run: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	s.Result.PackagePath = strings.Trim(stdout.String(), "\n")
@@ -162,7 +162,7 @@ func (s *GoBuild) build(ctx context.Context, binaryFile string) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("%s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	s.Result.Binaries = append(s.Result.Binaries, binaryFile)
@@ -186,7 +186,7 @@ func (s *GoBuild) Dry(ctx context.Context) error {
 	binaryFile := filepath.Join(dir, s.BinaryFile)
 	err = s.build(ctx, binaryFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("GoBuild.Dry: %s", err)
 	}
 
 	return nil
@@ -223,7 +223,7 @@ func (s *GoBuild) Run(ctx context.Context) error {
 		binaryFile := fmt.Sprintf("%s-%s", s.BinaryFile, platform)
 		err := s.build(ctx, binaryFile)
 		if err != nil {
-			return err
+			return fmt.Errorf("GoBuild.Run: %s", err)
 		}
 	}
 
@@ -238,7 +238,7 @@ func (s *GoBuild) Revert(ctx context.Context) error {
 
 	for _, binary := range s.Result.Binaries {
 		if err := os.Remove(binary); err != nil {
-			return err
+			return fmt.Errorf("GoBuild.Revert: %s", err)
 		}
 	}
 

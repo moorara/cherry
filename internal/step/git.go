@@ -62,7 +62,7 @@ func (s *GitStatus) Dry(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitStatus.Dry: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -80,7 +80,7 @@ func (s *GitStatus) Run(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitStatus.Run: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	s.Result.IsClean = len(stdout.String()) == 0
@@ -120,7 +120,7 @@ func (s *GitGetRepo) Dry(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitGetRepo.Dry: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -139,7 +139,7 @@ func (s *GitGetRepo) Run(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitGetRepo.Run: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	owner, name, err := parseGitURL(stdout.String())
@@ -184,7 +184,7 @@ func (s *GitGetBranch) Dry(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitGetBranch.Dry: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -202,7 +202,7 @@ func (s *GitGetBranch) Run(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitGetBranch.Run: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	s.Result.Name = strings.Trim(stdout.String(), "\n")
@@ -241,7 +241,7 @@ func (s *GitGetHEAD) Dry(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitGetHEAD.Dry: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -259,7 +259,7 @@ func (s *GitGetHEAD) Run(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitGetHEAD.Run: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	s.Result.SHA = strings.Trim(stdout.String(), "\n")
@@ -297,7 +297,7 @@ func (s *GitAdd) Dry(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitAdd.Dry: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -316,7 +316,7 @@ func (s *GitAdd) Run(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitAdd.Run: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -337,7 +337,7 @@ func (s *GitAdd) Revert(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitAdd.Revert: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -362,7 +362,7 @@ func (s *GitCommit) Dry(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitCommit.Dry: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -380,7 +380,7 @@ func (s *GitCommit) Run(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitCommit.Run: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -400,7 +400,7 @@ func (s *GitCommit) Revert(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitCommit.Revert: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -426,7 +426,7 @@ func (s *GitTag) Dry(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitTag.Dry: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -451,7 +451,7 @@ func (s *GitTag) Run(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitTag.Run: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -471,7 +471,7 @@ func (s *GitTag) Revert(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitTag.Revert: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -495,7 +495,7 @@ func (s *GitPush) Dry(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitPush.Dry: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -513,7 +513,7 @@ func (s *GitPush) Run(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitPush.Run: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -548,7 +548,7 @@ func (s *GitPushTag) Dry(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitPushTag.Dry: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -566,7 +566,7 @@ func (s *GitPushTag) Run(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitPushTag.Run: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -600,7 +600,7 @@ func (s *GitPull) Dry(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitPull.Dry: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil
@@ -618,7 +618,7 @@ func (s *GitPull) Run(ctx context.Context) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s: %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+		return fmt.Errorf("GitPull.Run: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
 	}
 
 	return nil

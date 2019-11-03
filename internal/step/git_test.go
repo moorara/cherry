@@ -147,7 +147,7 @@ func TestGitStatusDry(t *testing.T) {
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitStatus.Dry: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
 			name:    "Success",
@@ -183,7 +183,7 @@ func TestGitStatusRun(t *testing.T) {
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitStatus.Run: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
 			name:    "Success",
@@ -296,7 +296,7 @@ func TestGitGetRepoDry(t *testing.T) {
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitGetRepo.Dry: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
 			name:    "Success",
@@ -332,7 +332,7 @@ func TestGitGetRepoRun(t *testing.T) {
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitGetRepo.Run: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
 			name:    "Success",
@@ -446,7 +446,7 @@ func TestGitGetBranchDry(t *testing.T) {
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitGetBranch.Dry: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
 			name:    "Success",
@@ -482,7 +482,7 @@ func TestGitGetBranchRun(t *testing.T) {
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitGetBranch.Run: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
 			name:    "Success",
@@ -595,7 +595,7 @@ func TestGitGetHEADDry(t *testing.T) {
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitGetHEAD.Dry: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
 			name:    "FullSHA",
@@ -635,7 +635,7 @@ func TestGitGetHEADRun(t *testing.T) {
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitGetHEAD.Run: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 		{
 			name:    "FullSHA",
@@ -755,7 +755,7 @@ func TestGitAddDry(t *testing.T) {
 			name:          "Error",
 			workDir:       os.TempDir(),
 			files:         []string{"."},
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitAdd.Dry: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -790,7 +790,7 @@ func TestGitAddRun(t *testing.T) {
 			name:          "Error",
 			workDir:       os.TempDir(),
 			files:         []string{"."},
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitAdd.Run: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -825,7 +825,7 @@ func TestGitAddRevert(t *testing.T) {
 			name:          "Error",
 			workDir:       os.TempDir(),
 			files:         []string{"."},
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitAdd.Revert: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -905,7 +905,7 @@ func TestGitCommitDry(t *testing.T) {
 			name:          "Error",
 			workDir:       os.TempDir(),
 			message:       "test message",
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitCommit.Dry: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -940,7 +940,7 @@ func TestGitCommitRun(t *testing.T) {
 			name:          "Error",
 			workDir:       os.TempDir(),
 			message:       "test message",
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitCommit.Run: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -975,7 +975,7 @@ func TestGitCommitRevert(t *testing.T) {
 			name:          "Error",
 			workDir:       os.TempDir(),
 			message:       "test message",
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitCommit.Revert: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -1057,14 +1057,14 @@ func TestGitTagDry(t *testing.T) {
 			workDir:       os.TempDir(),
 			tag:           "test-tag",
 			annotation:    "",
-			expectedError: "exit status 128: fatal: not a git repository (or any of the parent directories): .git",
+			expectedError: "GitTag.Dry: exit status 128 fatal: not a git repository (or any of the parent directories): .git",
 		},
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
 			tag:           "test-tag",
 			annotation:    "annotation message",
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitTag.Dry: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -1102,14 +1102,14 @@ func TestGitTagRun(t *testing.T) {
 			workDir:       os.TempDir(),
 			tag:           "test-tag",
 			annotation:    "",
-			expectedError: "exit status 128: fatal: not a git repository (or any of the parent directories): .git",
+			expectedError: "GitTag.Run: exit status 128 fatal: not a git repository (or any of the parent directories): .git",
 		},
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
 			tag:           "test-tag",
 			annotation:    "annotation message",
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitTag.Run: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -1147,14 +1147,14 @@ func TestGitTagRevert(t *testing.T) {
 			workDir:       os.TempDir(),
 			tag:           "test-tag",
 			annotation:    "",
-			expectedError: "exit status 128: fatal: not a git repository (or any of the parent directories): .git",
+			expectedError: "GitTag.Revert: exit status 128 fatal: not a git repository (or any of the parent directories): .git",
 		},
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
 			tag:           "test-tag",
 			annotation:    "annotation message",
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitTag.Revert: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -1233,7 +1233,7 @@ func TestGitPushDry(t *testing.T) {
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitPush.Dry: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -1265,7 +1265,7 @@ func TestGitPushRun(t *testing.T) {
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitPush.Run: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -1376,7 +1376,7 @@ func TestGitPushTagDry(t *testing.T) {
 			name:          "Error",
 			workDir:       os.TempDir(),
 			tag:           "v0.1.0",
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitPushTag.Dry: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -1411,7 +1411,7 @@ func TestGitPushTagRun(t *testing.T) {
 			name:          "Error",
 			workDir:       os.TempDir(),
 			tag:           "v0.1.0",
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitPushTag.Run: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -1524,7 +1524,7 @@ func TestGitPullDry(t *testing.T) {
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitPull.Dry: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
@@ -1556,7 +1556,7 @@ func TestGitPullRun(t *testing.T) {
 		{
 			name:          "Error",
 			workDir:       os.TempDir(),
-			expectedError: `exit status 128: fatal: not a git repository (or any of the parent directories): .git`,
+			expectedError: `GitPull.Run: exit status 128 fatal: not a git repository (or any of the parent directories): .git`,
 		},
 	}
 
