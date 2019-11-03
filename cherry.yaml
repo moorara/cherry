@@ -3,6 +3,7 @@ version: "1.0"
 language: go
 
 build:
+  binary_file: cherry
   cross_compile: true
 
 release:
