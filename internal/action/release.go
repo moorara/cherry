@@ -301,7 +301,8 @@ func (r *release) Dry(ctx context.Context) error {
 	}
 
 	// Dry -- Add unstaged to files to staging
-	r.step9.Files = []string{r.step6.Result.Filename, r.step8.Result.Filename}
+	// The CHANGELOG.md file may not exist if this is the first release
+	r.step9.Files = []string{r.step6.Result.Filename}
 	if err := r.step9.Dry(ctx); err != nil {
 		return err
 	}
