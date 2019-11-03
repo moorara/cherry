@@ -1,0 +1,21 @@
+name: Release
+on:
+  push:
+    tags:
+      - v[0-9].[0-9]+.[0-9]+
+jobs:
+  docker:
+    name: Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: moorara/actions/semver@master
+      - name: Build Latest Image
+        run: make docker docker_tag=$(cat VERSION)
+      - name: Push Latest Image
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+        run: |
+          docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
+          make push-latest docker_tag=$(cat VERSION)
