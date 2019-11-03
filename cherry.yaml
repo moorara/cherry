@@ -3,8 +3,8 @@ version: "1.0"
 language: go
 
 build:
-  binary_file: cherry
   cross_compile: true
+  binary_file: bin/cherry
 
 release:
   build: true
