@@ -1,6 +1,14 @@
 # Change Log
 
-## [v0.4.1](https://github.com/moorara/cherry/tree/v0.4.1) (2019-10-31)
+## [v0.4.2](https://github.com/moorara/cherry/tree/v0.4.2) (2019-11-02)
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.4.1...v0.4.2)
+
+**Merged pull requests:**
+
+- Refactor GitHub workflows [\#135](https://github.com/moorara/cherry/pull/135) ([moorara](https://github.com/moorara))
+- Fix bug [\#134](https://github.com/moorara/cherry/pull/134) ([moorara](https://github.com/moorara))
+
+## [v0.4.1](https://github.com/moorara/cherry/tree/v0.4.1) (2019-11-01)
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.4.0...v0.4.1)
 
 **Merged pull requests:**
