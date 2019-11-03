@@ -40,7 +40,7 @@ func (s *ChangelogGenerate) Dry(ctx context.Context) error {
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf(
-			"%s: %s %s",
+			"ChangelogGenerate.Dry: %s %s %s",
 			err.Error(),
 			strings.Trim(stdout.String(), "\n"),
 			strings.Trim(stderr.String(), "\n"),
@@ -74,7 +74,7 @@ func (s *ChangelogGenerate) Run(ctx context.Context) error {
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf(
-			"%s: %s %s",
+			"ChangelogGenerate.Run: %s %s %s",
 			err.Error(),
 			strings.Trim(stdout.String(), "\n"),
 			strings.Trim(stderr.String(), "\n"),

@@ -133,12 +133,12 @@ func (s *GitHubBranchProtection) Dry(ctx context.Context) error {
 
 	res, err := s.Client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubBranchProtection.Dry: %s", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return newHTTPError(res)
+		return fmt.Errorf("GitHubBranchProtection.Dry: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -169,12 +169,12 @@ func (s *GitHubBranchProtection) Run(ctx context.Context) error {
 
 	res, err := s.Client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubBranchProtection.Run: %s", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != statusCode {
-		return newHTTPError(res)
+		return fmt.Errorf("GitHubBranchProtection.Run: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -205,12 +205,12 @@ func (s *GitHubBranchProtection) Revert(ctx context.Context) error {
 
 	res, err := s.Client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubBranchProtection.Revert: %s", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != statusCode {
-		return newHTTPError(res)
+		return fmt.Errorf("GitHubBranchProtection.Revert: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -243,12 +243,12 @@ func (s *GitHubGetLatestRelease) Dry(ctx context.Context) error {
 
 	res, err := s.Client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubGetLatestRelease.Dry: %s", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return newHTTPError(res)
+		return fmt.Errorf("GitHubGetLatestRelease.Dry: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -268,12 +268,12 @@ func (s *GitHubGetLatestRelease) Run(ctx context.Context) error {
 
 	res, err := s.Client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubGetLatestRelease.Run: %s", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return newHTTPError(res)
+		return fmt.Errorf("GitHubGetLatestRelease.Run: %s", newHTTPError(res))
 	}
 
 	err = json.NewDecoder(res.Body).Decode(&s.Result.LatestRelease)
@@ -323,12 +323,12 @@ func (s *GitHubCreateRelease) Dry(ctx context.Context) error {
 
 	res, err := s.Client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubCreateRelease.Dry: %s", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return newHTTPError(res)
+		return fmt.Errorf("GitHubCreateRelease.Dry: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -350,12 +350,12 @@ func (s *GitHubCreateRelease) Run(ctx context.Context) error {
 
 	res, err := s.Client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubCreateRelease.Run: %s", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 201 {
-		return newHTTPError(res)
+		return fmt.Errorf("GitHubCreateRelease.Run: %s", newHTTPError(res))
 	}
 
 	err = json.NewDecoder(res.Body).Decode(&s.Result.Release)
@@ -380,12 +380,12 @@ func (s *GitHubCreateRelease) Revert(ctx context.Context) error {
 
 	res, err := s.Client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubCreateRelease.Revert: %s", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 204 {
-		return newHTTPError(res)
+		return fmt.Errorf("GitHubCreateRelease.Revert: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -421,12 +421,12 @@ func (s *GitHubEditRelease) Dry(ctx context.Context) error {
 
 	res, err := s.Client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubEditRelease.Dry: %s", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return newHTTPError(res)
+		return fmt.Errorf("GitHubEditRelease.Dry: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -448,12 +448,12 @@ func (s *GitHubEditRelease) Run(ctx context.Context) error {
 
 	res, err := s.Client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubEditRelease.Run: %s", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return newHTTPError(res)
+		return fmt.Errorf("GitHubEditRelease.Run: %s", newHTTPError(res))
 	}
 
 	err = json.NewDecoder(res.Body).Decode(&s.Result.Release)
@@ -506,12 +506,12 @@ func (s *GitHubUploadAssets) Dry(ctx context.Context) error {
 
 	res, err := s.Client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubUploadAssets.Dry: %s", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return newHTTPError(res)
+		return fmt.Errorf("GitHubUploadAssets.Dry: %s", newHTTPError(res))
 	}
 
 	return nil
@@ -579,7 +579,7 @@ func (s *GitHubUploadAssets) Run(ctx context.Context) error {
 
 	for range s.AssetFiles {
 		if err := <-doneCh; err != nil {
-			return err
+			return fmt.Errorf("GitHubUploadAssets.Run: %s", err)
 		}
 	}
 
@@ -602,12 +602,12 @@ func (s *GitHubUploadAssets) Revert(ctx context.Context) error {
 
 		res, err := s.Client.Do(req)
 		if err != nil {
-			return err
+			return fmt.Errorf("GitHubUploadAssets.Revert: %s", err)
 		}
 		defer res.Body.Close()
 
 		if res.StatusCode != 204 {
-			return newHTTPError(res)
+			return fmt.Errorf("GitHubUploadAssets.Revert: %s", newHTTPError(res))
 		}
 	}
 
@@ -701,7 +701,7 @@ func (s *GitHubDownloadAsset) Dry(ctx context.Context) error {
 
 	body, err := s.makeRequest(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubDownloadAsset.Dry: %s", err)
 	}
 	defer body.Close()
 
@@ -716,18 +716,18 @@ func (s *GitHubDownloadAsset) Run(ctx context.Context) error {
 
 	body, err := s.makeRequest(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubDownloadAsset.Run: %s", err)
 	}
 	defer body.Close()
 
 	file, err := os.OpenFile(s.Filepath, os.O_WRONLY, 0755)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubDownloadAsset.Run: %s", err)
 	}
 
 	size, err := io.Copy(file, body)
 	if err != nil {
-		return err
+		return fmt.Errorf("GitHubDownloadAsset.Run: %s", err)
 	}
 
 	s.Result.Size = size
@@ -741,5 +741,10 @@ func (s *GitHubDownloadAsset) Revert(ctx context.Context) error {
 		return s.Mock.Revert(ctx)
 	}
 
-	return os.Remove(s.Filepath)
+	err := os.Remove(s.Filepath)
+	if err != nil {
+		return fmt.Errorf("GitHubDownloadAsset.Revert: %s", err)
+	}
+
+	return nil
 }

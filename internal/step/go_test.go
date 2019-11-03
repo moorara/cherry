@@ -205,7 +205,7 @@ func TestGoListDry(t *testing.T) {
 			name:          "InvalidPackage",
 			workDir:       "./test",
 			pkg:           "./cmd",
-			expectedError: "exit status 1: build ./cmd: cannot find module for path ./cmd",
+			expectedError: "GoList.Dry: exit status 1 build ./cmd: cannot find module for path ./cmd",
 		},
 		{
 			name:    "Success",
@@ -246,7 +246,7 @@ func TestGoListRun(t *testing.T) {
 			name:          "InvalidPackage",
 			workDir:       "./test",
 			pkg:           "./cmd",
-			expectedError: "exit status 1: build ./cmd: cannot find module for path ./cmd",
+			expectedError: "GoList.Run: exit status 1 build ./cmd: cannot find module for path ./cmd",
 		},
 		{
 			name:                "Success",

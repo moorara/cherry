@@ -91,7 +91,7 @@ func (s *SemVerRead) Dry(ctx context.Context) error {
 
 	_, _, err := s.readVersion()
 	if err != nil {
-		return err
+		return fmt.Errorf("SemVerRead.Dry: %s", err)
 	}
 
 	return nil
@@ -105,7 +105,7 @@ func (s *SemVerRead) Run(ctx context.Context) error {
 
 	filename, version, err := s.readVersion()
 	if err != nil {
-		return err
+		return fmt.Errorf("SemVerRead.Run: %s", err)
 	}
 
 	s.Result.Filename = filename
@@ -176,7 +176,7 @@ func (s *SemVerUpdate) Dry(ctx context.Context) error {
 
 	filename, err := s.writeVersion(true)
 	if err != nil {
-		return err
+		return fmt.Errorf("SemVerUpdate.Dry: %s", err)
 	}
 
 	s.Result.Filename = filename
@@ -192,7 +192,7 @@ func (s *SemVerUpdate) Run(ctx context.Context) error {
 
 	filename, err := s.writeVersion(false)
 	if err != nil {
-		return err
+		return fmt.Errorf("SemVerUpdate.Run: %s", err)
 	}
 
 	s.Result.Filename = filename
