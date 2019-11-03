@@ -315,7 +315,7 @@ func (s *GitHubCreateRelease) Dry(ctx context.Context) error {
 		return s.Mock.Dry(ctx)
 	}
 
-	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
+	url := fmt.Sprintf("%s/repos/%s/releases", s.BaseURL, s.Repo)
 	req, err := createGitHubRequest(ctx, s.Token, "GET", url, nil)
 	if err != nil {
 		return err
@@ -413,7 +413,7 @@ func (s *GitHubEditRelease) Dry(ctx context.Context) error {
 		return s.Mock.Dry(ctx)
 	}
 
-	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
+	url := fmt.Sprintf("%s/repos/%s/releases", s.BaseURL, s.Repo)
 	req, err := createGitHubRequest(ctx, s.Token, "GET", url, nil)
 	if err != nil {
 		return err
@@ -498,7 +498,7 @@ func (s *GitHubUploadAssets) Dry(ctx context.Context) error {
 		return s.Mock.Dry(ctx)
 	}
 
-	url := fmt.Sprintf("%s/repos/%s/releases/latest", s.BaseURL, s.Repo)
+	url := fmt.Sprintf("%s/repos/%s/releases", s.BaseURL, s.Repo)
 	req, err := createGitHubRequest(ctx, s.Token, "GET", url, nil)
 	if err != nil {
 		return err

@@ -660,31 +660,21 @@ func TestGitHubCreateReleaseDry(t *testing.T) {
 			name:          "RequestError",
 			token:         "github-token",
 			repo:          "username/repo",
-			expectedError: `Get /repos/username/repo/releases/latest: unsupported protocol scheme ""`,
+			expectedError: `Get /repos/username/repo/releases: unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
 			mockResponses: []mockHTTP{
-				{"GET", "/repos/{owner}/{repo}/releases/latest", 403, ``},
+				{"GET", "/repos/{owner}/{repo}/releases", 403, ``},
 			},
 			token:         "github-token",
 			repo:          "username/repo",
-			expectedError: `GET /repos/username/repo/releases/latest 403: `,
+			expectedError: `GET /repos/username/repo/releases 403: `,
 		},
 		{
 			name: "Success",
 			mockResponses: []mockHTTP{
-				{
-					"GET", "/repos/{owner}/{repo}/releases/latest", 200, `{
-						"id": 1,
-						"tag_name": "v0.1.0",
-						"target_commitish": "master",
-						"name": "0.1.0",
-						"body": "comment",
-						"draft": false,
-						"prerelease": false
-					}`,
-				},
+				{"GET", "/repos/{owner}/{repo}/releases", 200, `[]`},
 			},
 			token: "github-token",
 			repo:  "username/repo",
@@ -956,32 +946,22 @@ func TestGitHubEditReleaseDry(t *testing.T) {
 			token:         "github-token",
 			repo:          "username/repo",
 			releaseID:     2,
-			expectedError: `Get /repos/username/repo/releases/latest: unsupported protocol scheme ""`,
+			expectedError: `Get /repos/username/repo/releases: unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
 			mockResponses: []mockHTTP{
-				{"GET", "/repos/{owner}/{repo}/releases/latest", 403, ``},
+				{"GET", "/repos/{owner}/{repo}/releases", 403, ``},
 			},
 			token:         "github-token",
 			repo:          "username/repo",
 			releaseID:     2,
-			expectedError: `GET /repos/username/repo/releases/latest 403: `,
+			expectedError: `GET /repos/username/repo/releases 403: `,
 		},
 		{
 			name: "Success",
 			mockResponses: []mockHTTP{
-				{
-					"GET", "/repos/{owner}/{repo}/releases/latest", 200, `{
-						"id": 2,
-						"tag_name": "v0.2.0",
-						"target_commitish": "master",
-						"name": "0.2.0",
-						"body": "",
-						"draft": true,
-						"prerelease": false
-					}`,
-				},
+				{"GET", "/repos/{owner}/{repo}/releases", 200, `[]`},
 			},
 			token:     "github-token",
 			repo:      "username/repo",
@@ -1232,23 +1212,21 @@ func TestGitHubUploadAssetsDry(t *testing.T) {
 			token:         "github-token",
 			repo:          "username/repo",
 			releaseID:     2,
-			expectedError: `Get /repos/username/repo/releases/latest: unsupported protocol scheme ""`,
+			expectedError: `Get /repos/username/repo/releases: unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
 			mockResponses: []mockHTTP{
-				{"GET", "/repos/{owner}/{repo}/releases/latest", 403, ``},
+				{"GET", "/repos/{owner}/{repo}/releases", 403, ``},
 			},
 			token:         "github-token",
 			repo:          "username/repo",
-			expectedError: `GET /repos/username/repo/releases/latest 403: `,
+			expectedError: `GET /repos/username/repo/releases 403: `,
 		},
 		{
 			name: "Success",
 			mockResponses: []mockHTTP{
-				{
-					"GET", "/repos/{owner}/{repo}/releases/latest", 200, `[]`,
-				},
+				{"GET", "/repos/{owner}/{repo}/releases", 200, `[]`},
 			},
 			token: "github-token",
 			repo:  "username/repo",
