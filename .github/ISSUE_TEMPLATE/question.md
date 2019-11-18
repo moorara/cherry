@@ -1,6 +1,6 @@
 ---
 name: Question
-about: Ask a question about this package/library
+about: Ask a question about this project
 title: ''
 labels: question
 assignees: ''

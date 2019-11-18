@@ -1,6 +1,6 @@
 ---
 name: Change Request
-about: Suggest a change or an improvement for this package/library
+about: Suggest a change or an improvement for this project
 title: ''
 labels: ''
 assignees: ''
