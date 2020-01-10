@@ -58,7 +58,8 @@ func TestChangelogGenerateDry(t *testing.T) {
 		name          string
 		workDir       string
 		gitHubToken   string
-		repo          string
+		gitHubUser    string
+		gitHubProject string
 		tag           string
 		expectedError string
 	}{}
@@ -66,10 +67,11 @@ func TestChangelogGenerateDry(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			step := ChangelogGenerate{
-				WorkDir:     tc.workDir,
-				GitHubToken: tc.gitHubToken,
-				Repo:        tc.repo,
-				Tag:         tc.tag,
+				WorkDir:       tc.workDir,
+				GitHubToken:   tc.gitHubToken,
+				GitHubUser:    tc.gitHubUser,
+				GitHubProject: tc.gitHubProject,
+				Tag:           tc.tag,
 			}
 
 			ctx := context.Background()
@@ -90,7 +92,8 @@ func TestChangelogGenerateRun(t *testing.T) {
 		name             string
 		workDir          string
 		gitHubToken      string
-		repo             string
+		gitHubUser       string
+		gitHubProject    string
 		tag              string
 		expectedError    string
 		expectedFilename string
@@ -99,10 +102,11 @@ func TestChangelogGenerateRun(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			step := ChangelogGenerate{
-				WorkDir:     tc.workDir,
-				GitHubToken: tc.gitHubToken,
-				Repo:        tc.repo,
-				Tag:         tc.tag,
+				WorkDir:       tc.workDir,
+				GitHubToken:   tc.gitHubToken,
+				GitHubUser:    tc.gitHubUser,
+				GitHubProject: tc.gitHubProject,
+				Tag:           tc.tag,
 			}
 
 			ctx := context.Background()
@@ -125,7 +129,8 @@ func TestChangelogGenerateRevert(t *testing.T) {
 		name          string
 		workDir       string
 		gitHubToken   string
-		repo          string
+		gitHubUser    string
+		gitHubProject string
 		tag           string
 		expectedError string
 	}{}
@@ -133,10 +138,11 @@ func TestChangelogGenerateRevert(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			step := ChangelogGenerate{
-				WorkDir:     tc.workDir,
-				GitHubToken: tc.gitHubToken,
-				Repo:        tc.repo,
-				Tag:         tc.tag,
+				WorkDir:       tc.workDir,
+				GitHubToken:   tc.gitHubToken,
+				GitHubUser:    tc.gitHubUser,
+				GitHubProject: tc.gitHubProject,
+				Tag:           tc.tag,
 			}
 
 			ctx := context.Background()
