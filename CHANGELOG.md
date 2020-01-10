@@ -1,6 +1,19 @@
-# Change Log
+# Changelog
 
-## [v0.4.2](https://github.com/moorara/cherry/tree/v0.4.2) (2019-11-02)
+## [v0.4.3](https://github.com/moorara/cherry/tree/v0.4.3) (2020-01-10)
+
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.4.2...v0.4.3)
+
+**Merged pull requests:**
+
+- Absorb the breaking change in github-changelog-generator [\#140](https://github.com/moorara/cherry/pull/140) ([moorara](https://github.com/moorara))
+- Update module yaml to v2.2.7 [\#139](https://github.com/moorara/cherry/pull/139) ([renovate[bot]](https://github.com/apps/renovate))
+- Update GitHub templates [\#138](https://github.com/moorara/cherry/pull/138) ([moorara](https://github.com/moorara))
+- Update dev.yml [\#137](https://github.com/moorara/cherry/pull/137) ([moorara](https://github.com/moorara))
+- Update module yaml to v2.2.5 [\#136](https://github.com/moorara/cherry/pull/136) ([renovate[bot]](https://github.com/apps/renovate))
+
+## [v0.4.2](https://github.com/moorara/cherry/tree/v0.4.2) (2019-11-03)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.4.1...v0.4.2)
 
 **Merged pull requests:**
@@ -9,6 +22,7 @@
 - Fix bug [\#134](https://github.com/moorara/cherry/pull/134) ([moorara](https://github.com/moorara))
 
 ## [v0.4.1](https://github.com/moorara/cherry/tree/v0.4.1) (2019-11-01)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.4.0...v0.4.1)
 
 **Merged pull requests:**
@@ -18,6 +32,7 @@
 - Refactor Makefile [\#131](https://github.com/moorara/cherry/pull/131) ([moorara](https://github.com/moorara))
 
 ## [v0.4.0](https://github.com/moorara/cherry/tree/v0.4.0) (2019-10-08)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.3.1...v0.4.0)
 
 **Implemented enhancements:**
@@ -71,6 +86,7 @@
 - Refactor git service [\#96](https://github.com/moorara/cherry/pull/96) ([moorara](https://github.com/moorara))
 
 ## [v0.3.1](https://github.com/moorara/cherry/tree/v0.3.1) (2019-03-22)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.3.0...v0.3.1)
 
 **Fixed bugs:**
@@ -84,6 +100,7 @@
 - Fix go version error [\#93](https://github.com/moorara/cherry/pull/93) ([moorara](https://github.com/moorara))
 
 ## [v0.3.0](https://github.com/moorara/cherry/tree/v0.3.0) (2019-03-21)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.2.5...v0.3.0)
 
 **Fixed bugs:**
@@ -107,6 +124,7 @@
 - Switch to goto logger [\#76](https://github.com/moorara/cherry/pull/76) ([moorara](https://github.com/moorara))
 
 ## [v0.2.5](https://github.com/moorara/cherry/tree/v0.2.5) (2019-02-08)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.2.4...v0.2.5)
 
 **Implemented enhancements:**
@@ -120,6 +138,7 @@
 - Fix push tag issue [\#71](https://github.com/moorara/cherry/pull/71) ([moorara](https://github.com/moorara))
 
 ## [v0.2.4](https://github.com/moorara/cherry/tree/v0.2.4) (2019-02-05)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.2.3...v0.2.4)
 
 **Merged pull requests:**
@@ -127,6 +146,7 @@
 - Fix issue with github-changelog-generator [\#70](https://github.com/moorara/cherry/pull/70) ([moorara](https://github.com/moorara))
 
 ## [v0.2.3](https://github.com/moorara/cherry/tree/v0.2.3) (2019-02-04)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.2.2...v0.2.3)
 
 **Implemented enhancements:**
@@ -140,6 +160,7 @@
 - Configure Renovate [\#59](https://github.com/moorara/cherry/pull/59) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [v0.2.2](https://github.com/moorara/cherry/tree/v0.2.2) (2019-01-28)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.2.1...v0.2.2)
 
 **Fixed bugs:**
@@ -153,6 +174,7 @@
 - Update Go modules [\#60](https://github.com/moorara/cherry/pull/60) ([moorara](https://github.com/moorara))
 
 ## [v0.2.1](https://github.com/moorara/cherry/tree/v0.2.1) (2019-01-18)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.2.0...v0.2.1)
 
 **Fixed bugs:**
@@ -166,6 +188,7 @@
 - Fix update bug [\#56](https://github.com/moorara/cherry/pull/56) ([moorara](https://github.com/moorara))
 
 ## [v0.2.0](https://github.com/moorara/cherry/tree/v0.2.0) (2019-01-17)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.9...v0.2.0)
 
 **Implemented enhancements:**
@@ -177,6 +200,7 @@
 - Add self-update command 🎉 [\#53](https://github.com/moorara/cherry/pull/53) ([moorara](https://github.com/moorara))
 
 ## [v0.1.9](https://github.com/moorara/cherry/tree/v0.1.9) (2019-01-17)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.8...v0.1.9)
 
 **Merged pull requests:**
@@ -184,6 +208,7 @@
 - Improve Release [\#51](https://github.com/moorara/cherry/pull/51) ([moorara](https://github.com/moorara))
 
 ## [v0.1.8](https://github.com/moorara/cherry/tree/v0.1.8) (2019-01-16)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.7...v0.1.8)
 
 **Merged pull requests:**
@@ -191,6 +216,7 @@
 - Improve experience! [\#50](https://github.com/moorara/cherry/pull/50) ([moorara](https://github.com/moorara))
 
 ## [v0.1.7](https://github.com/moorara/cherry/tree/v0.1.7) (2019-01-16)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.6...v0.1.7)
 
 **Fixed bugs:**
@@ -202,6 +228,7 @@
 - Improve install script [\#49](https://github.com/moorara/cherry/pull/49) ([moorara](https://github.com/moorara))
 
 ## [v0.1.6](https://github.com/moorara/cherry/tree/v0.1.6) (2019-01-16)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.5...v0.1.6)
 
 **Merged pull requests:**
@@ -210,6 +237,7 @@
 - Improve tests for formula package [\#46](https://github.com/moorara/cherry/pull/46) ([moorara](https://github.com/moorara))
 
 ## [v0.1.5](https://github.com/moorara/cherry/tree/v0.1.5) (2019-01-15)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.4...v0.1.5)
 
 **Fixed bugs:**
@@ -229,6 +257,7 @@
 - Skip CI for next version commit [\#41](https://github.com/moorara/cherry/pull/41) ([moorara](https://github.com/moorara))
 
 ## [v0.1.4](https://github.com/moorara/cherry/tree/v0.1.4) (2019-01-14)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.3...v0.1.4)
 
 **Fixed bugs:**
@@ -240,6 +269,7 @@
 - Fix long upload timeout [\#39](https://github.com/moorara/cherry/pull/39) ([moorara](https://github.com/moorara))
 
 ## [v0.1.3](https://github.com/moorara/cherry/tree/v0.1.3) (2019-01-14)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.2...v0.1.3)
 
 **Merged pull requests:**
@@ -247,6 +277,7 @@
 - Remove scripts [\#36](https://github.com/moorara/cherry/pull/36) ([moorara](https://github.com/moorara))
 
 ## [v0.1.2](https://github.com/moorara/cherry/tree/v0.1.2) (2019-01-14)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.1...v0.1.2)
 
 **Implemented enhancements:**
@@ -293,6 +324,7 @@
 - Update README [\#3](https://github.com/moorara/cherry/pull/3) ([moorara](https://github.com/moorara))
 
 ## [v0.1.1](https://github.com/moorara/cherry/tree/v0.1.1) (2018-11-25)
+
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.0...v0.1.1)
 
 **Merged pull requests:**
@@ -300,10 +332,13 @@
 - Fix release script [\#2](https://github.com/moorara/cherry/pull/2) ([moorara](https://github.com/moorara))
 
 ## [v0.1.0](https://github.com/moorara/cherry/tree/v0.1.0) (2018-11-25)
+
+[Full Changelog](https://github.com/moorara/cherry/compare/fa7fae0c8abba93f167341e9739311565ffbdf88...v0.1.0)
+
 **Merged pull requests:**
 
 - Bootstrap Cherry [\#1](https://github.com/moorara/cherry/pull/1) ([moorara](https://github.com/moorara))
 
 
 
-\* *This Change Log was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)*
+\* *This Changelog was automatically generated by [github_changelog_generator](https://github.com/github-changelog-generator/github-changelog-generator)*
