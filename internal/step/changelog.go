@@ -16,12 +16,13 @@ const changelogFilename = "CHANGELOG.md"
 
 // ChangelogGenerate runs `github_changelog_generator` Ruby gem!
 type ChangelogGenerate struct {
-	Mock        Step
-	WorkDir     string
-	GitHubToken string
-	Repo        string
-	Tag         string
-	Result      struct {
+	Mock          Step
+	WorkDir       string
+	GitHubToken   string
+	GitHubUser    string
+	GitHubProject string
+	Tag           string
+	Result        struct {
 		Filename  string
 		Changelog string
 	}
@@ -34,7 +35,15 @@ func (s *ChangelogGenerate) Dry(ctx context.Context) error {
 	}
 
 	var stdout, stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "github_changelog_generator", "--version")
+
+	cmd := exec.CommandContext(ctx,
+		"github_changelog_generator",
+		"--token", s.GitHubToken,
+		"--user", s.GitHubUser,
+		"--project", s.GitHubProject,
+		"--output", "", // print the changelog to stdout
+	)
+
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -63,10 +72,11 @@ func (s *ChangelogGenerate) Run(ctx context.Context) error {
 	cmd := exec.CommandContext(ctx,
 		"github_changelog_generator",
 		"--token", s.GitHubToken,
+		"--user", s.GitHubUser,
+		"--project", s.GitHubProject,
 		"--no-filter-by-milestone",
 		"--exclude-labels", "question,duplicate,invalid,wontfix",
 		"--future-release", s.Tag,
-		s.Repo,
 	)
 
 	cmd.Dir = s.WorkDir
