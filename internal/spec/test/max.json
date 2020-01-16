@@ -2,10 +2,6 @@
   "version": "1.0",
   "language": "go",
   "versionFile": "VERSION",
-  "test": {
-    "coverMode": "atomic",
-    "reportPath": "coverage"
-  },
   "build": {
     "crossCompile": true,
     "mainFile": "main.go",
