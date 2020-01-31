@@ -11,8 +11,9 @@ import (
 )
 
 func parseGitURL(output string) (string, string, error) {
-	// origin  git@github.com:USERNAME/REPOSITORY.git (push)     --> git@github.com:USERNAME/REPOSITORY.git
-	// origin  https://github.com/USERNAME/REPOSITORY.git (push) --> https://github.com/USERNAME/REPOSITORY.git
+	// origin  git@github.com:USERNAME/REPOSITORY.git (push)       --> git@github.com:USERNAME/REPOSITORY.git
+	// origin  ssh://git@github.com:USERNAME/REPOSITORY.git (push) --> git@github.com:USERNAME/REPOSITORY.git
+	// origin  https://github.com/USERNAME/REPOSITORY.git (push)   --> https://github.com/USERNAME/REPOSITORY.git
 	re := regexp.MustCompile(`origin[[:blank:]]+(.*)[[:blank:]]\(push\)`)
 	subs := re.FindStringSubmatch(output)
 	if len(subs) != 2 {
@@ -21,9 +22,10 @@ func parseGitURL(output string) (string, string, error) {
 
 	gitURL := subs[1]
 
-	// git@github.com:USERNAME/REPOSITORY.git     --> USERNAME/REPOSITORY.git
-	// https://github.com/USERNAME/REPOSITORY.git --> USERNAME/REPOSITORY.git
-	re = regexp.MustCompile(`(git@[^/]+:|https://[^/]+/)([^/]+/[^/]+)`)
+	// git@github.com:USERNAME/REPOSITORY.git       --> USERNAME/REPOSITORY.git
+	// https://github.com/USERNAME/REPOSITORY.git   --> USERNAME/REPOSITORY.git
+	// ssh://git@github.com/USERNAME/REPOSITORY.git --> USERNAME/REPOSITORY.git
+	re = regexp.MustCompile(`(git@[^/]+:|https://[^/]+/|ssh://[^/]+/)([^/]+/[^/]+)`)
 	subs = re.FindStringSubmatch(gitURL)
 	if len(subs) != 3 {
 		return "", "", errors.New("failed to get git repository name")
@@ -115,12 +117,17 @@ func (s *GitGetRepo) Dry(ctx context.Context) error {
 	}
 
 	var stdout, stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "git", "remote")
+	cmd := exec.CommandContext(ctx, "git", "remote", "-v")
 	cmd.Dir = s.WorkDir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("GitGetRepo.Dry: %s %s", err.Error(), strings.Trim(stderr.String(), "\n"))
+	}
+
+	_, _, err := parseGitURL(stdout.String())
+	if err != nil {
+		return fmt.Errorf("GitGetRepo.Dry: %s", err.Error())
 	}
 
 	return nil
@@ -144,7 +151,7 @@ func (s *GitGetRepo) Run(ctx context.Context) error {
 
 	owner, name, err := parseGitURL(stdout.String())
 	if err != nil {
-		return err
+		return fmt.Errorf("GitGetRepo.Run: %s", err.Error())
 	}
 
 	s.Result.Owner = owner
