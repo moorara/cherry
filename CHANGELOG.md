@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.4.4](https://github.com/moorara/cherry/tree/v0.4.4) (2020-02-01)
+
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.4.3...v0.4.4)
+
+**Merged pull requests:**
+
+- Add new SSH URL schema [\#143](https://github.com/moorara/cherry/pull/143) ([moorara](https://github.com/moorara))
+- Update module yaml to v2.2.8 [\#142](https://github.com/moorara/cherry/pull/142) ([renovate[bot]](https://github.com/apps/renovate))
+- Remove leftover sections from spec tests [\#141](https://github.com/moorara/cherry/pull/141) ([moorara](https://github.com/moorara))
+
 ## [v0.4.3](https://github.com/moorara/cherry/tree/v0.4.3) (2020-01-10)
 
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.4.2...v0.4.3)
@@ -96,7 +106,6 @@
 **Merged pull requests:**
 
 - Fix typo in pipeline configuration [\#95](https://github.com/moorara/cherry/pull/95) ([moorara](https://github.com/moorara))
-- Add integration with Code Climate [\#94](https://github.com/moorara/cherry/pull/94) ([moorara](https://github.com/moorara))
 - Fix go version error [\#93](https://github.com/moorara/cherry/pull/93) ([moorara](https://github.com/moorara))
 
 ## [v0.3.0](https://github.com/moorara/cherry/tree/v0.3.0) (2019-03-21)
@@ -109,6 +118,7 @@
 
 **Merged pull requests:**
 
+- Add integration with Code Climate [\#94](https://github.com/moorara/cherry/pull/94) ([moorara](https://github.com/moorara))
 - Remove unused metrics package [\#90](https://github.com/moorara/cherry/pull/90) ([moorara](https://github.com/moorara))
 - Use annotated tags for releasing [\#89](https://github.com/moorara/cherry/pull/89) ([moorara](https://github.com/moorara))
 - Update .github files [\#87](https://github.com/moorara/cherry/pull/87) ([moorara](https://github.com/moorara))
@@ -119,7 +129,6 @@
 - Update module moorara/goto to v0.2.3 [\#82](https://github.com/moorara/cherry/pull/82) ([renovate[bot]](https://github.com/apps/renovate))
 - Fix Docker image [\#81](https://github.com/moorara/cherry/pull/81) ([moorara](https://github.com/moorara))
 - Add support for release models [\#80](https://github.com/moorara/cherry/pull/80) ([moorara](https://github.com/moorara))
-- Fix logger [\#78](https://github.com/moorara/cherry/pull/78) ([moorara](https://github.com/moorara))
 - Update logger [\#77](https://github.com/moorara/cherry/pull/77) ([moorara](https://github.com/moorara))
 - Switch to goto logger [\#76](https://github.com/moorara/cherry/pull/76) ([moorara](https://github.com/moorara))
 
@@ -143,6 +152,7 @@
 
 **Merged pull requests:**
 
+- Fix logger [\#78](https://github.com/moorara/cherry/pull/78) ([moorara](https://github.com/moorara))
 - Fix issue with github-changelog-generator [\#70](https://github.com/moorara/cherry/pull/70) ([moorara](https://github.com/moorara))
 
 ## [v0.2.3](https://github.com/moorara/cherry/tree/v0.2.3) (2019-02-04)
@@ -157,7 +167,6 @@
 **Merged pull requests:**
 
 - Improve test command [\#69](https://github.com/moorara/cherry/pull/69) ([moorara](https://github.com/moorara))
-- Configure Renovate [\#59](https://github.com/moorara/cherry/pull/59) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [v0.2.2](https://github.com/moorara/cherry/tree/v0.2.2) (2019-01-28)
 
@@ -205,6 +214,7 @@
 
 **Merged pull requests:**
 
+- Configure Renovate [\#59](https://github.com/moorara/cherry/pull/59) ([renovate[bot]](https://github.com/apps/renovate))
 - Improve Release [\#51](https://github.com/moorara/cherry/pull/51) ([moorara](https://github.com/moorara))
 
 ## [v0.1.8](https://github.com/moorara/cherry/tree/v0.1.8) (2019-01-16)
@@ -253,7 +263,6 @@
 
 - Change CircleCI badge style [\#45](https://github.com/moorara/cherry/pull/45) ([moorara](https://github.com/moorara))
 - Switch to CircleCI [\#44](https://github.com/moorara/cherry/pull/44) ([moorara](https://github.com/moorara))
-- Add install script [\#43](https://github.com/moorara/cherry/pull/43) ([moorara](https://github.com/moorara))
 - Skip CI for next version commit [\#41](https://github.com/moorara/cherry/pull/41) ([moorara](https://github.com/moorara))
 
 ## [v0.1.4](https://github.com/moorara/cherry/tree/v0.1.4) (2019-01-14)
@@ -296,6 +305,7 @@
 
 **Merged pull requests:**
 
+- Add install script [\#43](https://github.com/moorara/cherry/pull/43) ([moorara](https://github.com/moorara))
 - Cherry for Cherry! 🎉 [\#35](https://github.com/moorara/cherry/pull/35) ([moorara](https://github.com/moorara))
 - Improve testing [\#34](https://github.com/moorara/cherry/pull/34) ([moorara](https://github.com/moorara))
 - Install required tools on Docker image [\#33](https://github.com/moorara/cherry/pull/33) ([moorara](https://github.com/moorara))
