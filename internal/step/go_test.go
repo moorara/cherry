@@ -205,7 +205,7 @@ func TestGoListDry(t *testing.T) {
 			name:          "InvalidPackage",
 			workDir:       "./test",
 			pkg:           "./cmd",
-			expectedError: "GoList.Dry: exit status 1 build ./cmd: cannot find module for path ./cmd",
+			expectedError: "GoList.Dry: exit status 1 can't load package: package ./cmd",
 		},
 		{
 			name:    "Success",
@@ -228,7 +228,7 @@ func TestGoListDry(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.expectedError, err.Error())
+				assert.Contains(t, err.Error(), tc.expectedError)
 			}
 		})
 	}
@@ -246,7 +246,7 @@ func TestGoListRun(t *testing.T) {
 			name:          "InvalidPackage",
 			workDir:       "./test",
 			pkg:           "./cmd",
-			expectedError: "GoList.Run: exit status 1 build ./cmd: cannot find module for path ./cmd",
+			expectedError: "GoList.Run: exit status 1 can't load package: package ./cmd",
 		},
 		{
 			name:                "Success",
@@ -271,7 +271,7 @@ func TestGoListRun(t *testing.T) {
 				assert.Equal(t, tc.expectedPackagePath, step.Result.PackagePath)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tc.expectedError, err.Error())
+				assert.Contains(t, err.Error(), tc.expectedError)
 			}
 		})
 	}

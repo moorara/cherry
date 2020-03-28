@@ -147,7 +147,7 @@ func TestGitHubBranchProtectionDry(t *testing.T) {
 			token:         "github-token",
 			repo:          "username/repo",
 			branch:        "master",
-			expectedError: `GitHubBranchProtection.Dry: Get /repos/username/repo/branches/master/protection/enforce_admins: unsupported protocol scheme ""`,
+			expectedError: `GitHubBranchProtection.Dry: Get "/repos/username/repo/branches/master/protection/enforce_admins": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -224,7 +224,7 @@ func TestGitHubBranchProtectionRun(t *testing.T) {
 			repo:          "username/repo",
 			branch:        "master",
 			enabled:       true,
-			expectedError: `GitHubBranchProtection.Run: Post /repos/username/repo/branches/master/protection/enforce_admins: unsupported protocol scheme ""`,
+			expectedError: `GitHubBranchProtection.Run: Post "/repos/username/repo/branches/master/protection/enforce_admins": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -305,7 +305,7 @@ func TestGitHubBranchProtectionRevert(t *testing.T) {
 			repo:          "username/repo",
 			branch:        "master",
 			enabled:       true,
-			expectedError: `GitHubBranchProtection.Revert: Delete /repos/username/repo/branches/master/protection/enforce_admins: unsupported protocol scheme ""`,
+			expectedError: `GitHubBranchProtection.Revert: Delete "/repos/username/repo/branches/master/protection/enforce_admins": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -427,7 +427,7 @@ func TestGitHubGetLatestReleaseDry(t *testing.T) {
 			name:          "RequestError",
 			token:         "github-token",
 			repo:          "username/repo",
-			expectedError: `GitHubGetLatestRelease.Dry: Get /repos/username/repo/releases/latest: unsupported protocol scheme ""`,
+			expectedError: `GitHubGetLatestRelease.Dry: Get "/repos/username/repo/releases/latest": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -499,7 +499,7 @@ func TestGitHubGetLatestReleaseRun(t *testing.T) {
 			name:          "RequestError",
 			token:         "github-token",
 			repo:          "username/repo",
-			expectedError: `GitHubGetLatestRelease.Run: Get /repos/username/repo/releases/latest: unsupported protocol scheme ""`,
+			expectedError: `GitHubGetLatestRelease.Run: Get "/repos/username/repo/releases/latest": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -660,7 +660,7 @@ func TestGitHubCreateReleaseDry(t *testing.T) {
 			name:          "RequestError",
 			token:         "github-token",
 			repo:          "username/repo",
-			expectedError: `GitHubCreateRelease.Dry: Get /repos/username/repo/releases: unsupported protocol scheme ""`,
+			expectedError: `GitHubCreateRelease.Dry: Get "/repos/username/repo/releases": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -730,7 +730,7 @@ func TestGitHubCreateReleaseRun(t *testing.T) {
 				Draft:      true,
 				Prerelease: false,
 			},
-			expectedError: `GitHubCreateRelease.Run: Post /repos/username/repo/releases: unsupported protocol scheme ""`,
+			expectedError: `GitHubCreateRelease.Run: Post "/repos/username/repo/releases": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -830,7 +830,7 @@ func TestGitHubCreateReleaseRevert(t *testing.T) {
 			release: GitHubRelease{
 				ID: 2,
 			},
-			expectedError: `GitHubCreateRelease.Revert: Delete /repos/username/repo/releases/2: unsupported protocol scheme ""`,
+			expectedError: `GitHubCreateRelease.Revert: Delete "/repos/username/repo/releases/2": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -946,7 +946,7 @@ func TestGitHubEditReleaseDry(t *testing.T) {
 			token:         "github-token",
 			repo:          "username/repo",
 			releaseID:     2,
-			expectedError: `GitHubEditRelease.Dry: Get /repos/username/repo/releases: unsupported protocol scheme ""`,
+			expectedError: `GitHubEditRelease.Dry: Get "/repos/username/repo/releases": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -1018,7 +1018,7 @@ func TestGitHubEditReleaseRun(t *testing.T) {
 				Draft: false,
 				Body:  "comment",
 			},
-			expectedError: `GitHubEditRelease.Run: Patch /repos/username/repo/releases/2: unsupported protocol scheme ""`,
+			expectedError: `GitHubEditRelease.Run: Patch "/repos/username/repo/releases/2": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -1212,7 +1212,7 @@ func TestGitHubUploadAssetsDry(t *testing.T) {
 			token:         "github-token",
 			repo:          "username/repo",
 			releaseID:     2,
-			expectedError: `GitHubUploadAssets.Dry: Get /repos/username/repo/releases: unsupported protocol scheme ""`,
+			expectedError: `GitHubUploadAssets.Dry: Get "/repos/username/repo/releases": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -1281,7 +1281,7 @@ func TestGitHubUploadAssetsRun(t *testing.T) {
 			releaseID:          2,
 			releaseUploadURL:   "/repos/username/repo/releases/2/assets{?name,label}",
 			assetFiles:         []string{"./test/asset"},
-			expectedErrorRegex: `GitHubUploadAssets.Run: Post /repos/username/repo/releases/2/assets?name=asset: unsupported protocol scheme ""`,
+			expectedErrorRegex: `GitHubUploadAssets.Run: Post "/repos/username/repo/releases/2/assets?name=asset": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -1375,7 +1375,7 @@ func TestGitHubUploadAssetsRevert(t *testing.T) {
 			assets: []GitHubAsset{
 				{ID: 1},
 			},
-			expectedError: `GitHubUploadAssets.Revert: Delete /repos/username/repo/releases/assets/1: unsupported protocol scheme ""`,
+			expectedError: `GitHubUploadAssets.Revert: Delete "/repos/username/repo/releases/assets/1": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -1493,7 +1493,7 @@ func TestGitHubDownloadAssetDry(t *testing.T) {
 			repo:          "username/repo",
 			tag:           "v0.2.0",
 			assetName:     "cherry-linux-amd64",
-			expectedError: `GitHubDownloadAsset.Dry: Get /username/repo/releases/download/v0.2.0/cherry-linux-amd64: unsupported protocol scheme ""`,
+			expectedError: `GitHubDownloadAsset.Dry: Get "/username/repo/releases/download/v0.2.0/cherry-linux-amd64": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
@@ -1565,7 +1565,7 @@ func TestGitHubDownloadAssetRun(t *testing.T) {
 			repo:          "username/repo",
 			tag:           "v0.2.0",
 			assetName:     "cherry-linux-amd64",
-			expectedError: `GitHubDownloadAsset.Run: Get /username/repo/releases/download/v0.2.0/cherry-linux-amd64: unsupported protocol scheme ""`,
+			expectedError: `GitHubDownloadAsset.Run: Get "/username/repo/releases/download/v0.2.0/cherry-linux-amd64": unsupported protocol scheme ""`,
 		},
 		{
 			name: "BadStatusCode",
