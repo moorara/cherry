@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "language": "go",
+  "build": {
+    "crossCompile": true,
+    "mainFile": "main.go",
+    "binaryFile": "bin/cherry",
+    "versionPackage": "./version",
+    "goVersions": [
+      "1.15",
+      "1.14.6",
+      "1.12.x"
+    ],
+    "platforms": [
+      "linux-386",
+      "linux-amd64",
+      "linux-arm",
+      "linux-arm64",
+      "darwin-386",
+      "darwin-amd64",
+      "windows-386",
+      "windows-amd64"
+    ]
+  },
+  "release": {
+    "build": true
+  }
+}
