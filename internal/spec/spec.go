@@ -37,7 +37,7 @@ type Spec struct {
 
 // FromFile reads and returns specifications from a file.
 // If no spec file is found, a new spec with zero values will be returned.
-func FromFile() (*Spec, error) {
+func FromFile() (Spec, error) {
 	for _, file := range specFiles {
 		ext := filepath.Ext(file)
 		path := filepath.Clean(file)
@@ -47,28 +47,28 @@ func FromFile() (*Spec, error) {
 			if os.IsNotExist(err) {
 				continue
 			}
-			return nil, err
+			return Spec{}, err
 		}
 		defer f.Close()
 
-		spec := new(Spec)
+		spec := Spec{}
 
 		if ext == ".yml" || ext == ".yaml" {
-			err = yaml.NewDecoder(f).Decode(spec)
+			err = yaml.NewDecoder(f).Decode(&spec)
 		} else if ext == ".json" {
-			err = json.NewDecoder(f).Decode(spec)
+			err = json.NewDecoder(f).Decode(&spec)
 		} else {
-			return nil, errors.New("unknown spec file")
+			return Spec{}, errors.New("unknown spec file")
 		}
 
 		if err != nil {
-			return nil, err
+			return Spec{}, err
 		}
 
 		return spec, nil
 	}
 
-	return new(Spec), nil
+	return Spec{}, nil
 }
 
 // WithDefaults returns a new object with default values.

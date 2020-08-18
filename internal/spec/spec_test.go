@@ -10,13 +10,13 @@ func TestFromFile(t *testing.T) {
 	tests := []struct {
 		name          string
 		specFiles     []string
-		expectedSpec  *Spec
+		expectedSpec  Spec
 		expectedError string
 	}{
 		{
 			name:         "NoSpecFile",
 			specFiles:    []string{"test/null"},
-			expectedSpec: &Spec{},
+			expectedSpec: Spec{},
 		},
 		{
 			name:          "UnknownFile",
@@ -46,7 +46,7 @@ func TestFromFile(t *testing.T) {
 		{
 			name:      "MinimumYAML",
 			specFiles: []string{"test/min.yaml"},
-			expectedSpec: &Spec{
+			expectedSpec: Spec{
 				Version:  "1.0",
 				Language: "go",
 				Build:    Build{},
@@ -58,7 +58,7 @@ func TestFromFile(t *testing.T) {
 		{
 			name:      "MinimumJSON",
 			specFiles: []string{"test/min.json"},
-			expectedSpec: &Spec{
+			expectedSpec: Spec{
 				Version:  "1.0",
 				Language: "go",
 				Build:    Build{},
@@ -70,7 +70,7 @@ func TestFromFile(t *testing.T) {
 		{
 			name:      "MaximumYAML",
 			specFiles: []string{"test/max.yaml"},
-			expectedSpec: &Spec{
+			expectedSpec: Spec{
 				Version:  "1.0",
 				Language: "go",
 				Build: Build{
@@ -89,7 +89,7 @@ func TestFromFile(t *testing.T) {
 		{
 			name:      "MaximumJSON",
 			specFiles: []string{"test/max.json"},
-			expectedSpec: &Spec{
+			expectedSpec: Spec{
 				Version:  "1.0",
 				Language: "go",
 				Build: Build{
@@ -114,7 +114,7 @@ func TestFromFile(t *testing.T) {
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)
-				assert.Nil(t, spec)
+				assert.Equal(t, Spec{}, spec)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedSpec, spec)
