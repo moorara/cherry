@@ -21,7 +21,7 @@ const (
 var (
 	specFiles         = []string{"cherry.yml", "cherry.yaml", "cherry.json"}
 	defaultGoVersions = []string{"1.15"}
-	defaultPlatforms  = []string{"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"}
+	defaultPlatforms  = []string{"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "darwin-amd64", "windows-386", "windows-amd64"}
 )
 
 // Spec has all the specifications for Cherry.

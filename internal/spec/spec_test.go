@@ -79,7 +79,7 @@ func TestFromFile(t *testing.T) {
 					BinaryFile:     "bin/cherry",
 					VersionPackage: "./version",
 					GoVersions:     []string{"1.15", "1.14.6", "1.12.x"},
-					Platforms:      []string{"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"},
+					Platforms:      []string{"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "darwin-amd64", "windows-386", "windows-amd64"},
 				},
 				Release: Release{
 					Build: true,
@@ -98,7 +98,7 @@ func TestFromFile(t *testing.T) {
 					BinaryFile:     "bin/cherry",
 					VersionPackage: "./version",
 					GoVersions:     []string{"1.15", "1.14.6", "1.12.x"},
-					Platforms:      []string{"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"},
+					Platforms:      []string{"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "darwin-amd64", "windows-386", "windows-amd64"},
 				},
 				Release: Release{
 					Build: true,
@@ -246,7 +246,7 @@ func TestBuildFlagSet(t *testing.T) {
 				BinaryFile:     "bin/app",
 				VersionPackage: "./version",
 				GoVersions:     []string{"1.15"},
-				Platforms:      []string{"linux-386", "linux-amd64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"},
+				Platforms:      []string{"linux-386", "linux-amd64", "darwin-amd64", "windows-386", "windows-amd64"},
 			},
 			expectedName: "build",
 		},

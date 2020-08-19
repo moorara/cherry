@@ -29,16 +29,17 @@ type SemVer struct {
 }
 
 // Parse reads a semantic version string and returns a SemVer.
-func Parse(semver string) (SemVer, error) {
+// If the second return value is false, it implies that the input semver was incorrect.
+func Parse(semver string) (SemVer, bool) {
 	var major, minor, patch uint64
 	var prerelease, metadata []string
 
 	// Make sure the string is a valid semantic version
-	if re := regexp.MustCompile(`^\d+\.\d+\.\d+(\-\w+(\.\w+)*)?(\+\w+(\.\w+)*)?$`); !re.MatchString(semver) {
-		return SemVer{}, fmt.Errorf("invalid semantic version: %s", semver)
+	if re := regexp.MustCompile(`^v?[0-9]+\.[0-9]+\.[0-9]+(\-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$`); !re.MatchString(semver) {
+		return SemVer{}, false
 	}
 
-	re := regexp.MustCompile(`^(\d+)\.(\d+)\.(\d+)(\-[\.\w]+)?(\+[\.\w]*)?$`)
+	re := regexp.MustCompile(`^v?([0-9]+)\.([0-9]+)\.([0-9]+)(\-[\.[0-9A-Za-z-]+)?(\+[\.[0-9A-Za-z-]*)?$`)
 	subs := re.FindStringSubmatch(semver)
 
 	major, _ = strconv.ParseUint(subs[1], 10, 64)
@@ -59,7 +60,19 @@ func Parse(semver string) (SemVer, error) {
 		Patch:      uint(patch),
 		Prerelease: prerelease,
 		Metadata:   metadata,
-	}, nil
+	}, true
+}
+
+// AddPrerelease adds a new pre-release identifier to the current semantic version.
+// This is a shortcut for v.Prerelease = append(v.Prerelease, s...).
+func (v *SemVer) AddPrerelease(s ...string) {
+	v.Prerelease = append(v.Prerelease, s...)
+}
+
+// AddMetadata adds a new metadata identifier to the current semantic version.
+// This is a shortcut for v.Metadata = append(v.Metadata, s...).
+func (v *SemVer) AddMetadata(s ...string) {
+	v.Metadata = append(v.Metadata, s...)
 }
 
 // String returns a semantic version string (also implements fmt.Stringer).
