@@ -1,245 +1,26 @@
 package spec
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestError(t *testing.T) {
-	tests := []struct {
-		err          error
-		specNotFound bool
-	}{
-		{
-			err:          errors.New("spec file not found"),
-			specNotFound: true,
-		},
-	}
-
-	for _, tc := range tests {
-		e := &Error{
-			err:          tc.err,
-			SpecNotFound: tc.specNotFound,
-		}
-
-		assert.Equal(t, tc.err.Error(), e.Error())
-		assert.Equal(t, tc.err, e.Unwrap())
-	}
-}
-
-func TestBuildSetDefaults(t *testing.T) {
-	tests := []struct {
-		build         Build
-		expectedBuild Build
-	}{
-		{
-			Build{},
-			Build{
-				CrossCompile:   false,
-				MainFile:       defaultMainFile,
-				BinaryFile:     "bin/spec",
-				VersionPackage: defaultVersionPackage,
-				GoVersions:     defaultGoVersions,
-				Platforms:      defaultPlatforms,
-			},
-		},
-		{
-			Build{
-				CrossCompile:   true,
-				MainFile:       "cmd/main.go",
-				BinaryFile:     "build/app",
-				VersionPackage: "./cmd/version",
-				GoVersions:     []string{"1.10", "1.11"},
-				Platforms:      []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
-			},
-			Build{
-				CrossCompile:   true,
-				MainFile:       "cmd/main.go",
-				BinaryFile:     "build/app",
-				VersionPackage: "./cmd/version",
-				GoVersions:     []string{"1.10", "1.11"},
-				Platforms:      []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		tc.build.SetDefaults()
-		assert.Equal(t, tc.expectedBuild, tc.build)
-	}
-}
-
-func TestBuildFlagSet(t *testing.T) {
-	tests := []struct {
-		build        Build
-		expectedName string
-	}{
-		{
-			build:        Build{},
-			expectedName: "build",
-		},
-		{
-			build: Build{
-				CrossCompile:   true,
-				MainFile:       "main.go",
-				BinaryFile:     "bin/app",
-				VersionPackage: "./cmd/version",
-				GoVersions:     []string{"1.10", "1.11"},
-				Platforms:      []string{"linux-386", "linux-amd64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"},
-			},
-			expectedName: "build",
-		},
-	}
-
-	for _, tc := range tests {
-		fs := tc.build.FlagSet()
-		assert.Equal(t, tc.expectedName, fs.Name())
-	}
-}
-
-func TestReleaseSetDefaults(t *testing.T) {
-	tests := []struct {
-		release         Release
-		expectedRelease Release
-	}{
-		{
-			Release{},
-			Release{
-				Model: defaultModel,
-				Build: false,
-			},
-		},
-		{
-			Release{
-				Model: "branch",
-				Build: true,
-			},
-			Release{
-				Model: "branch",
-				Build: true,
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		tc.release.SetDefaults()
-		assert.Equal(t, tc.expectedRelease, tc.release)
-	}
-}
-
-func TestReleaseFlagSet(t *testing.T) {
-	tests := []struct {
-		release      Release
-		expectedName string
-	}{
-		{
-			release:      Release{},
-			expectedName: "release",
-		},
-		{
-			release: Release{
-				Model: "master",
-				Build: true,
-			},
-			expectedName: "release",
-		},
-	}
-
-	for _, tc := range tests {
-		fs := tc.release.FlagSet()
-		assert.Equal(t, tc.expectedName, fs.Name())
-	}
-}
-
-func TestSpecSetDefaults(t *testing.T) {
-	tests := []struct {
-		spec         Spec
-		expectedSpec Spec
-	}{
-		{
-			Spec{},
-			Spec{
-				ToolName:    defaultToolName,
-				ToolVersion: "",
-				Version:     defaultVersion,
-				Language:    defaultLanguage,
-				Build: Build{
-					CrossCompile:   false,
-					MainFile:       defaultMainFile,
-					BinaryFile:     "bin/spec",
-					VersionPackage: defaultVersionPackage,
-					GoVersions:     defaultGoVersions,
-					Platforms:      defaultPlatforms,
-				},
-				Release: Release{
-					Model: defaultModel,
-					Build: false,
-				},
-			},
-		},
-		{
-			Spec{
-				Version:     "2.0",
-				Language:    "go",
-				VersionFile: "version.yaml",
-				Build: Build{
-					CrossCompile:   true,
-					MainFile:       "cmd/main.go",
-					BinaryFile:     "build/app",
-					VersionPackage: "./cmd/version",
-					GoVersions:     []string{"1.10", "1.11"},
-					Platforms:      []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
-				},
-				Release: Release{
-					Model: "branch",
-					Build: true,
-				},
-			},
-			Spec{
-				ToolName:    defaultToolName,
-				ToolVersion: "",
-				Version:     "2.0",
-				Language:    "go",
-				VersionFile: "version.yaml",
-				Build: Build{
-					CrossCompile:   true,
-					MainFile:       "cmd/main.go",
-					BinaryFile:     "build/app",
-					VersionPackage: "./cmd/version",
-					GoVersions:     []string{"1.10", "1.11"},
-					Platforms:      []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
-				},
-				Release: Release{
-					Model: "branch",
-					Build: true,
-				},
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		tc.spec.SetDefaults()
-		assert.Equal(t, tc.expectedSpec, tc.spec)
-	}
-}
-
-func TestRead(t *testing.T) {
+func TestFromFile(t *testing.T) {
 	tests := []struct {
 		name          string
 		specFiles     []string
-		expectedSpec  *Spec
+		expectedSpec  Spec
 		expectedError string
 	}{
 		{
-			name:          "BadFile",
-			specFiles:     []string{"test/null"},
-			expectedError: "no spec file found",
+			name:         "NoSpecFile",
+			specFiles:    []string{"test/null"},
+			expectedSpec: Spec{},
 		},
 		{
 			name:          "UnknownFile",
-			specFiles:     []string{"test/unknown.hcl"},
+			specFiles:     []string{"test/unknown"},
 			expectedError: "unknown spec file",
 		},
 		{
@@ -265,7 +46,7 @@ func TestRead(t *testing.T) {
 		{
 			name:      "MinimumYAML",
 			specFiles: []string{"test/min.yaml"},
-			expectedSpec: &Spec{
+			expectedSpec: Spec{
 				Version:  "1.0",
 				Language: "go",
 				Build:    Build{},
@@ -277,7 +58,7 @@ func TestRead(t *testing.T) {
 		{
 			name:      "MinimumJSON",
 			specFiles: []string{"test/min.json"},
-			expectedSpec: &Spec{
+			expectedSpec: Spec{
 				Version:  "1.0",
 				Language: "go",
 				Build:    Build{},
@@ -289,20 +70,18 @@ func TestRead(t *testing.T) {
 		{
 			name:      "MaximumYAML",
 			specFiles: []string{"test/max.yaml"},
-			expectedSpec: &Spec{
-				Version:     "1.0",
-				Language:    "go",
-				VersionFile: "VERSION",
+			expectedSpec: Spec{
+				Version:  "1.0",
+				Language: "go",
 				Build: Build{
 					CrossCompile:   true,
 					MainFile:       "main.go",
 					BinaryFile:     "bin/cherry",
-					VersionPackage: "./cmd/version",
-					GoVersions:     []string{"1.11", "1.12.10", "1.13.1"},
-					Platforms:      []string{"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"},
+					VersionPackage: "./version",
+					GoVersions:     []string{"1.15", "1.14.6", "1.12.x"},
+					Platforms:      []string{"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "darwin-amd64", "windows-386", "windows-amd64"},
 				},
 				Release: Release{
-					Model: "master",
 					Build: true,
 				},
 			},
@@ -310,20 +89,18 @@ func TestRead(t *testing.T) {
 		{
 			name:      "MaximumJSON",
 			specFiles: []string{"test/max.json"},
-			expectedSpec: &Spec{
-				Version:     "1.0",
-				Language:    "go",
-				VersionFile: "VERSION",
+			expectedSpec: Spec{
+				Version:  "1.0",
+				Language: "go",
 				Build: Build{
 					CrossCompile:   true,
 					MainFile:       "main.go",
 					BinaryFile:     "bin/cherry",
-					VersionPackage: "./cmd/version",
-					GoVersions:     []string{"1.11", "1.12.10", "1.13.1"},
-					Platforms:      []string{"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"},
+					VersionPackage: "./version",
+					GoVersions:     []string{"1.15", "1.14.6", "1.12.x"},
+					Platforms:      []string{"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "darwin-amd64", "windows-386", "windows-amd64"},
 				},
 				Release: Release{
-					Model: "master",
 					Build: true,
 				},
 			},
@@ -333,23 +110,199 @@ func TestRead(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			specFiles = tc.specFiles
-			spec, err := Read()
+			spec, err := FromFile()
 
 			if tc.expectedError != "" {
 				assert.Contains(t, err.Error(), tc.expectedError)
-				assert.Nil(t, spec)
+				assert.Equal(t, Spec{}, spec)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedSpec, spec)
 			}
 		})
 	}
+}
 
-	t.Run("NoFile", func(t *testing.T) {
-		specFiles = []string{}
-		spec, err := Read()
+func TestSpecWithDefaults(t *testing.T) {
+	tests := []struct {
+		spec         Spec
+		expectedSpec Spec
+	}{
+		{
+			Spec{},
+			Spec{
+				ToolName:    defaultToolName,
+				ToolVersion: "",
+				Version:     defaultVersion,
+				Language:    defaultLanguage,
+				Build: Build{
+					CrossCompile:   false,
+					MainFile:       defaultMainFile,
+					BinaryFile:     "bin/spec",
+					VersionPackage: defaultVersionPackage,
+					GoVersions:     defaultGoVersions,
+					Platforms:      defaultPlatforms,
+				},
+				Release: Release{
+					Build: false,
+				},
+			},
+		},
+		{
+			Spec{
+				Version:  "2.0",
+				Language: "go",
+				Build: Build{
+					CrossCompile:   true,
+					MainFile:       "cmd/my-app/main.go",
+					BinaryFile:     "build/my-app",
+					VersionPackage: "./version",
+					GoVersions:     []string{"1.15", "1.14.6"},
+					Platforms:      []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
+				},
+				Release: Release{
+					Build: true,
+				},
+			},
+			Spec{
+				ToolName:    defaultToolName,
+				ToolVersion: "",
+				Version:     "2.0",
+				Language:    "go",
+				Build: Build{
+					CrossCompile:   true,
+					MainFile:       "cmd/my-app/main.go",
+					BinaryFile:     "build/my-app",
+					VersionPackage: "./version",
+					GoVersions:     []string{"1.15", "1.14.6"},
+					Platforms:      []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
+				},
+				Release: Release{
+					Build: true,
+				},
+			},
+		},
+	}
 
-		assert.Equal(t, "no spec file found", err.Error())
-		assert.Nil(t, spec)
-	})
+	for _, tc := range tests {
+		assert.Equal(t, tc.expectedSpec, tc.spec.WithDefaults())
+	}
+}
+
+func TestBuildWithDefaults(t *testing.T) {
+	tests := []struct {
+		build         Build
+		expectedBuild Build
+	}{
+		{
+			Build{},
+			Build{
+				CrossCompile:   false,
+				MainFile:       defaultMainFile,
+				BinaryFile:     "bin/spec",
+				VersionPackage: defaultVersionPackage,
+				GoVersions:     defaultGoVersions,
+				Platforms:      defaultPlatforms,
+			},
+		},
+		{
+			Build{
+				CrossCompile:   true,
+				MainFile:       "cmd/my-app/main.go",
+				BinaryFile:     "build/my-app",
+				VersionPackage: "./version",
+				GoVersions:     []string{"1.15", "1.14.6"},
+				Platforms:      []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
+			},
+			Build{
+				CrossCompile:   true,
+				MainFile:       "cmd/my-app/main.go",
+				BinaryFile:     "build/my-app",
+				VersionPackage: "./version",
+				GoVersions:     []string{"1.15", "1.14.6"},
+				Platforms:      []string{"linux-amd64", "darwin-amd64", "windows-amd64"},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		assert.Equal(t, tc.expectedBuild, tc.build.WithDefaults())
+	}
+}
+
+func TestBuildFlagSet(t *testing.T) {
+	tests := []struct {
+		build        Build
+		expectedName string
+	}{
+		{
+			build:        Build{},
+			expectedName: "build",
+		},
+		{
+			build: Build{
+				CrossCompile:   true,
+				MainFile:       "main.go",
+				BinaryFile:     "bin/app",
+				VersionPackage: "./version",
+				GoVersions:     []string{"1.15"},
+				Platforms:      []string{"linux-386", "linux-amd64", "darwin-amd64", "windows-386", "windows-amd64"},
+			},
+			expectedName: "build",
+		},
+	}
+
+	for _, tc := range tests {
+		fs := tc.build.FlagSet()
+		assert.Equal(t, tc.expectedName, fs.Name())
+	}
+}
+
+func TestReleaseWithDefaults(t *testing.T) {
+	tests := []struct {
+		release         Release
+		expectedRelease Release
+	}{
+		{
+			Release{},
+			Release{
+				Build: false,
+			},
+		},
+		{
+			Release{
+				Build: true,
+			},
+			Release{
+				Build: true,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		assert.Equal(t, tc.expectedRelease, tc.release.WithDefaults())
+	}
+}
+
+func TestReleaseFlagSet(t *testing.T) {
+	tests := []struct {
+		release      Release
+		expectedName string
+	}{
+		{
+			release:      Release{},
+			expectedName: "release",
+		},
+		{
+			release: Release{
+				Build: true,
+			},
+			expectedName: "release",
+		},
+	}
+
+	for _, tc := range tests {
+		fs := tc.release.FlagSet()
+		assert.Equal(t, tc.expectedName, fs.Name())
+	}
 }

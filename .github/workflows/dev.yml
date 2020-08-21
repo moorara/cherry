@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
+        with:
+          fetch-depth: 2
       - name: Lint
         uses: moorara/actions/go-lint@master
   test:
@@ -31,7 +33,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - uses: moorara/actions/semver@master
       - name: Build
         uses: moorara/actions/cherry@master
         with:

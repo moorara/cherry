@@ -15,30 +15,78 @@ const (
 	defaultVersion        = "1.0"
 	defaultLanguage       = "go"
 	defaultMainFile       = "main.go"
-	defaultVersionPackage = "./cmd/version"
-	defaultModel          = "master"
+	defaultVersionPackage = "./version"
 )
 
 var (
-	specFiles = []string{"cherry.yml", "cherry.yaml", "cherry.json"}
-
-	defaultGoVersions = []string{"1.13"}
-	defaultPlatforms  = []string{"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "darwin-386", "darwin-amd64", "windows-386", "windows-amd64"}
+	specFiles         = []string{"cherry.yml", "cherry.yaml", "cherry.json"}
+	defaultGoVersions = []string{"1.15"}
+	defaultPlatforms  = []string{"linux-386", "linux-amd64", "linux-arm", "linux-arm64", "darwin-amd64", "windows-386", "windows-amd64"}
 )
 
-// Error is the custom error type for spec package.
-type Error struct {
-	err          error
-	SpecNotFound bool
+// Spec has all the specifications for Cherry.
+type Spec struct {
+	ToolName    string `json:"-" yaml:"-"`
+	ToolVersion string `json:"-" yaml:"-"`
+
+	Version  string  `json:"version" yaml:"version"`
+	Language string  `json:"language" yaml:"language"`
+	Build    Build   `json:"build" yaml:"build"`
+	Release  Release `json:"release" yaml:"release"`
 }
 
-func (e *Error) Error() string {
-	return e.err.Error()
+// FromFile reads and returns specifications from a file.
+// If no spec file is found, a new spec with zero values will be returned.
+func FromFile() (Spec, error) {
+	for _, file := range specFiles {
+		ext := filepath.Ext(file)
+		path := filepath.Clean(file)
+
+		f, err := os.Open(path)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return Spec{}, err
+		}
+		defer f.Close()
+
+		spec := Spec{}
+
+		if ext == ".yml" || ext == ".yaml" {
+			err = yaml.NewDecoder(f).Decode(&spec)
+		} else if ext == ".json" {
+			err = json.NewDecoder(f).Decode(&spec)
+		} else {
+			return Spec{}, errors.New("unknown spec file")
+		}
+
+		if err != nil {
+			return Spec{}, err
+		}
+
+		return spec, nil
+	}
+
+	return Spec{}, nil
 }
 
-// Unwrap returns the next error in the error chain.
-func (e *Error) Unwrap() error {
-	return e.err
+// WithDefaults returns a new object with default values.
+func (s Spec) WithDefaults() Spec {
+	s.ToolName = "cherry"
+
+	if s.Version == "" {
+		s.Version = defaultVersion
+	}
+
+	if s.Language == "" {
+		s.Language = defaultLanguage
+	}
+
+	s.Build = s.Build.WithDefaults()
+	s.Release = s.Release.WithDefaults()
+
+	return s
 }
 
 // Build has the specifications for build command.
@@ -51,8 +99,8 @@ type Build struct {
 	Platforms      []string `json:"platforms" yaml:"platforms"`
 }
 
-// SetDefaults sets default values for empty fields.
-func (b *Build) SetDefaults() {
+// WithDefaults returns a new object with default values.
+func (b Build) WithDefaults() Build {
 	defaultBinaryFile := "bin/app"
 	if wd, err := os.Getwd(); err == nil {
 		defaultBinaryFile = "bin/" + filepath.Base(wd)
@@ -77,9 +125,11 @@ func (b *Build) SetDefaults() {
 	if len(b.Platforms) == 0 {
 		b.Platforms = defaultPlatforms
 	}
+
+	return b
 }
 
-// FlagSet returns a flag set for input arguments for build command.
+// FlagSet returns a flag set for arguments of build command.
 func (b *Build) FlagSet() *flag.FlagSet {
 	fs := flag.NewFlagSet("build", flag.ContinueOnError)
 	fs.BoolVar(&b.CrossCompile, "cross-compile", b.CrossCompile, "")
@@ -92,90 +142,18 @@ func (b *Build) FlagSet() *flag.FlagSet {
 
 // Release has the specifications for release command.
 type Release struct {
-	Model string `json:"model" yaml:"model"`
-	Build bool   `json:"build" yaml:"build"`
+	Build bool `json:"build" yaml:"build"`
 }
 
-// SetDefaults sets default values for empty fields.
-func (r *Release) SetDefaults() {
-	if r.Model == "" {
-		r.Model = defaultModel
-	}
+// WithDefaults returns a new object with default values.
+func (r Release) WithDefaults() Release {
+	return r
 }
 
-// FlagSet returns a flag set for input arguments for release command.
+// FlagSet returns a flag set for arguments of release command.
 func (r *Release) FlagSet() *flag.FlagSet {
 	fs := flag.NewFlagSet("release", flag.ContinueOnError)
-	fs.StringVar(&r.Model, "model", r.Model, "")
 	fs.BoolVar(&r.Build, "build", r.Build, "")
 
 	return fs
-}
-
-// Spec has all the specifications for Cherry.
-type Spec struct {
-	ToolName    string `json:"-" yaml:"-"`
-	ToolVersion string `json:"-" yaml:"-"`
-
-	Version     string  `json:"version" yaml:"version"`
-	Language    string  `json:"language" yaml:"language"`
-	VersionFile string  `json:"versionFile" yaml:"version_file"`
-	Build       Build   `json:"build" yaml:"build"`
-	Release     Release `json:"release" yaml:"release"`
-}
-
-// SetDefaults sets default values for empty fields.
-func (s *Spec) SetDefaults() {
-	if s.ToolName == "" {
-		s.ToolName = defaultToolName
-	}
-
-	if s.Version == "" {
-		s.Version = defaultVersion
-	}
-
-	if s.Language == "" {
-		s.Language = defaultLanguage
-	}
-
-	s.Build.SetDefaults()
-	s.Release.SetDefaults()
-}
-
-// Read reads and returns specifications from a file.
-func Read() (*Spec, error) {
-	for _, file := range specFiles {
-		ext := filepath.Ext(file)
-		path := filepath.Clean(file)
-
-		f, err := os.Open(path)
-		if err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-			return nil, err
-		}
-		defer f.Close()
-
-		spec := new(Spec)
-
-		if ext == ".yml" || ext == ".yaml" {
-			err = yaml.NewDecoder(f).Decode(spec)
-		} else if ext == ".json" {
-			err = json.NewDecoder(f).Decode(spec)
-		} else {
-			return nil, errors.New("unknown spec file")
-		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		return spec, nil
-	}
-
-	return nil, &Error{
-		err:          errors.New("no spec file found"),
-		SpecNotFound: true,
-	}
 }

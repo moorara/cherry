@@ -24,7 +24,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - uses: moorara/actions/semver@master
       - name: Build Image
         run: make docker docker_tag=$(cat VERSION)
       - name: Push Image

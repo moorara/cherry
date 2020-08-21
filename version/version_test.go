@@ -9,7 +9,7 @@ import (
 func TestString(t *testing.T) {
 	tests := []struct {
 		Version        string
-		Revision       string
+		Commit         string
 		Branch         string
 		GoVersion      string
 		BuildTool      string
@@ -18,14 +18,14 @@ func TestString(t *testing.T) {
 	}{
 		{
 			Version:   "1.0.0",
-			Revision:  "aaaaaaa",
+			Commit:    "aaaaaaa",
 			Branch:    "master",
 			GoVersion: "go1.13",
 			BuildTool: "tester",
 			BuildTime: "2019-09-25T22:00:00",
 			expectedString: `
 	version:    1.0.0
-	revision:   aaaaaaa
+	commit:     aaaaaaa
 	branch:     master
 	goVersion:  go1.13
 	buildTool:  tester
@@ -36,7 +36,7 @@ func TestString(t *testing.T) {
 
 	for _, tc := range tests {
 		Version = tc.Version
-		Revision = tc.Revision
+		Commit = tc.Commit
 		Branch = tc.Branch
 		GoVersion = tc.GoVersion
 		BuildTool = tc.BuildTool

@@ -9,270 +9,474 @@ import (
 func TestParse(t *testing.T) {
 	tests := []struct {
 		name           string
-		version        string
-		expectedError  string
+		semver         string
 		expectedSemver SemVer
+		expectedOK     bool
 	}{
 		{
-			name:          "Empty",
-			version:       "",
-			expectedError: "invalid semantic version",
+			name:           "Empty",
+			semver:         "",
+			expectedSemver: SemVer{},
+			expectedOK:     false,
 		},
 		{
-			name:          "NoMinor",
-			version:       "1",
-			expectedError: "invalid semantic version",
+			name:           "NoMinor",
+			semver:         "1",
+			expectedSemver: SemVer{},
+			expectedOK:     false,
 		},
 		{
-			name:          "NoPatch",
-			version:       "0.1",
-			expectedError: "invalid semantic version",
+			name:           "NoPatch",
+			semver:         "0.1",
+			expectedSemver: SemVer{},
+			expectedOK:     false,
 		},
 		{
-			name:          "InvalidMajor",
-			version:       "X.1.0",
-			expectedError: "invalid semantic version",
+			name:           "InvalidMajor",
+			semver:         "X.1.0",
+			expectedSemver: SemVer{},
+			expectedOK:     false,
 		},
 		{
-			name:          "InvalidMinor",
-			version:       "0.Y.0",
-			expectedError: "invalid semantic version",
+			name:           "InvalidMinor",
+			semver:         "0.Y.0",
+			expectedSemver: SemVer{},
+			expectedOK:     false,
 		},
 		{
-			name:          "InvalidPatch",
-			version:       "0.1.Z",
-			expectedError: "invalid semantic version",
+			name:           "InvalidPatch",
+			semver:         "0.1.Z",
+			expectedSemver: SemVer{},
+			expectedOK:     false,
 		},
 		{
-			name:          "InvalidPrerelease",
-			version:       "0.1.0-",
-			expectedError: "invalid semantic version",
+			name:           "InvalidPrerelease",
+			semver:         "0.1.0-",
+			expectedSemver: SemVer{},
+			expectedOK:     false,
 		},
 		{
-			name:          "InvalidPrerelease",
-			version:       "0.1.0-beta.",
-			expectedError: "invalid semantic version",
+			name:           "InvalidPrerelease",
+			semver:         "0.1.0-beta.",
+			expectedSemver: SemVer{},
+			expectedOK:     false,
 		},
 		{
-			name:          "InvalidMetadata",
-			version:       "0.1.0-beta.1+",
-			expectedError: "invalid semantic version",
+			name:           "InvalidMetadata",
+			semver:         "0.1.0-beta.1+",
+			expectedSemver: SemVer{},
+			expectedOK:     false,
 		},
 		{
-			name:          "InvalidMetadata",
-			version:       "0.1.0-beta.1+20191006.",
-			expectedError: "invalid semantic version",
+			name:           "InvalidMetadata",
+			semver:         "0.1.0-beta.1+20200818.",
+			expectedSemver: SemVer{},
+			expectedOK:     false,
 		},
 		{
-			name:    "OK",
-			version: "0.1.0",
+			name:   "Release",
+			semver: "0.1.0",
 			expectedSemver: SemVer{
 				Major: 0,
 				Minor: 1,
 				Patch: 0,
 			},
+			expectedOK: true,
 		},
 		{
-			name:    "WithPrerelease",
-			version: "0.1.0-beta",
+			name:   "Release",
+			semver: "v0.1.0",
+			expectedSemver: SemVer{
+				Major: 0,
+				Minor: 1,
+				Patch: 0,
+			},
+			expectedOK: true,
+		},
+		{
+			name:   "WithPrerelease",
+			semver: "0.1.0-beta",
 			expectedSemver: SemVer{
 				Major:      0,
 				Minor:      1,
 				Patch:      0,
 				Prerelease: []string{"beta"},
 			},
+			expectedOK: true,
 		},
 		{
-			name:    "WithPrerelease",
-			version: "0.1.0-rc.1",
+			name:   "WithPrerelease",
+			semver: "v0.1.0-rc.1",
 			expectedSemver: SemVer{
 				Major:      0,
 				Minor:      1,
 				Patch:      0,
 				Prerelease: []string{"rc", "1"},
 			},
+			expectedOK: true,
 		},
 		{
-			name:    "WithMetadata",
-			version: "0.1.0+20191006",
+			name:   "WithMetadata",
+			semver: "0.1.0+20200820",
 			expectedSemver: SemVer{
 				Major:    0,
 				Minor:    1,
 				Patch:    0,
-				Metadata: []string{"20191006"},
+				Metadata: []string{"20200820"},
 			},
+			expectedOK: true,
 		},
 		{
-			name:    "WithMetadata",
-			version: "0.1.0+sha.aabbccd",
+			name:   "WithMetadata",
+			semver: "v0.1.0+sha.abcdeff",
 			expectedSemver: SemVer{
 				Major:    0,
 				Minor:    1,
 				Patch:    0,
-				Metadata: []string{"sha", "aabbccd"},
+				Metadata: []string{"sha", "abcdeff"},
 			},
+			expectedOK: true,
 		},
 		{
-			name:    "WithPrereleaseAndMetadata",
-			version: "0.1.0-rc.2+sha.aabbccd.20191006",
+			name:   "WithPrereleaseAndMetadata",
+			semver: "0.1.0-beta+20200820",
 			expectedSemver: SemVer{
 				Major:      0,
 				Minor:      1,
 				Patch:      0,
-				Prerelease: []string{"rc", "2"},
-				Metadata:   []string{"sha", "aabbccd", "20191006"},
+				Prerelease: []string{"beta"},
+				Metadata:   []string{"20200820"},
 			},
+			expectedOK: true,
+		},
+		{
+			name:   "WithPrereleaseAndMetadata",
+			semver: "v0.1.0-rc.1+sha.abcdeff.20200820",
+			expectedSemver: SemVer{
+				Major:      0,
+				Minor:      1,
+				Patch:      0,
+				Prerelease: []string{"rc", "1"},
+				Metadata:   []string{"sha", "abcdeff", "20200820"},
+			},
+			expectedOK: true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			semver, err := Parse(tc.version)
+			semver, ok := Parse(tc.semver)
 
-			if tc.expectedError != "" {
-				assert.Contains(t, err.Error(), tc.expectedError)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tc.expectedSemver, semver)
-			}
+			assert.Equal(t, tc.expectedSemver, semver)
+			assert.Equal(t, tc.expectedOK, ok)
 		})
 	}
 }
 
-func TestSemVer(t *testing.T) {
+func TestAddPrerelease(t *testing.T) {
 	tests := []struct {
-		name            string
-		semver          SemVer
-		expectedVersion string
-		expectedGitTag  string
+		name           string
+		semver         SemVer
+		identifiers    []string
+		expectedSemVer SemVer
 	}{
 		{
 			name: "OK",
 			semver: SemVer{
-				Major: 1,
+				Major: 0,
 				Minor: 2,
-				Patch: 4,
+				Patch: 7,
 			},
-			expectedVersion: "1.2.4",
-			expectedGitTag:  "v1.2.4",
+			identifiers: []string{"rc", "1"},
+			expectedSemVer: SemVer{
+				Major:      0,
+				Minor:      2,
+				Patch:      7,
+				Prerelease: []string{"rc", "1"},
+			},
 		},
 		{
 			name: "WithPrerelease",
 			semver: SemVer{
-				Major:      1,
+				Major:      0,
 				Minor:      2,
-				Patch:      4,
-				Prerelease: []string{"rc", "1"},
+				Patch:      7,
+				Prerelease: []string{"abcdeff"},
 			},
-			expectedVersion: "1.2.4-rc.1",
-			expectedGitTag:  "v1.2.4",
+			identifiers: []string{"rc", "1"},
+			expectedSemVer: SemVer{
+				Major:      0,
+				Minor:      2,
+				Patch:      7,
+				Prerelease: []string{"abcdeff", "rc", "1"},
+			},
 		},
 		{
 			name: "WithMetadata",
 			semver: SemVer{
-				Major:    1,
+				Major:    0,
 				Minor:    2,
-				Patch:    4,
-				Metadata: []string{"sha", "aabbccd"},
+				Patch:    7,
+				Metadata: []string{"20200820"},
 			},
-			expectedVersion: "1.2.4+sha.aabbccd",
-			expectedGitTag:  "v1.2.4",
+			identifiers: []string{"rc", "1"},
+			expectedSemVer: SemVer{
+				Major:      0,
+				Minor:      2,
+				Patch:      7,
+				Prerelease: []string{"rc", "1"},
+				Metadata:   []string{"20200820"},
+			},
 		},
 		{
 			name: "WithPrereleaseAndMetadata",
 			semver: SemVer{
-				Major:      1,
+				Major:      0,
 				Minor:      2,
-				Patch:      4,
-				Prerelease: []string{"rc", "1"},
-				Metadata:   []string{"sha", "aabbccd"},
+				Patch:      7,
+				Prerelease: []string{"abcdeff"},
+				Metadata:   []string{"20200820"},
 			},
-			expectedVersion: "1.2.4-rc.1+sha.aabbccd",
-			expectedGitTag:  "v1.2.4",
+			identifiers: []string{"rc", "1"},
+			expectedSemVer: SemVer{
+				Major:      0,
+				Minor:      2,
+				Patch:      7,
+				Prerelease: []string{"abcdeff", "rc", "1"},
+				Metadata:   []string{"20200820"},
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedVersion, tc.semver.Version())
-			assert.Equal(t, tc.expectedGitTag, tc.semver.GitTag())
+			tc.semver.AddPrerelease(tc.identifiers...)
+			assert.Equal(t, tc.expectedSemVer, tc.semver)
 		})
+	}
+}
+
+func TestAddMetadata(t *testing.T) {
+	tests := []struct {
+		name           string
+		semver         SemVer
+		identifiers    []string
+		expectedSemVer SemVer
+	}{
+		{
+			name: "OK",
+			semver: SemVer{
+				Major: 0,
+				Minor: 2,
+				Patch: 7,
+			},
+			identifiers: []string{"163000"},
+			expectedSemVer: SemVer{
+				Major:    0,
+				Minor:    2,
+				Patch:    7,
+				Metadata: []string{"163000"},
+			},
+		},
+		{
+			name: "WithPrerelease",
+			semver: SemVer{
+				Major:      0,
+				Minor:      2,
+				Patch:      7,
+				Prerelease: []string{"abcdeff"},
+			},
+			identifiers: []string{"163000"},
+			expectedSemVer: SemVer{
+				Major:      0,
+				Minor:      2,
+				Patch:      7,
+				Prerelease: []string{"abcdeff"},
+				Metadata:   []string{"163000"},
+			},
+		},
+		{
+			name: "WithMetadata",
+			semver: SemVer{
+				Major:    0,
+				Minor:    2,
+				Patch:    7,
+				Metadata: []string{"20200820"},
+			},
+			identifiers: []string{"163000"},
+			expectedSemVer: SemVer{
+				Major:    0,
+				Minor:    2,
+				Patch:    7,
+				Metadata: []string{"20200820", "163000"},
+			},
+		},
+		{
+			name: "WithPrereleaseAndMetadata",
+			semver: SemVer{
+				Major:      0,
+				Minor:      2,
+				Patch:      7,
+				Prerelease: []string{"abcdeff"},
+				Metadata:   []string{"20200820"},
+			},
+			identifiers: []string{"163000"},
+			expectedSemVer: SemVer{
+				Major:      0,
+				Minor:      2,
+				Patch:      7,
+				Prerelease: []string{"abcdeff"},
+				Metadata:   []string{"20200820", "163000"},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.semver.AddMetadata(tc.identifiers...)
+			assert.Equal(t, tc.expectedSemVer, tc.semver)
+		})
+	}
+}
+
+func TestNext(t *testing.T) {
+	tests := []struct {
+		semver       SemVer
+		expectedNext SemVer
+	}{
+		{
+			SemVer{},
+			SemVer{Major: 0, Minor: 0, Patch: 1},
+		},
+		{
+			SemVer{Major: 0, Minor: 1, Patch: 0},
+			SemVer{Major: 0, Minor: 1, Patch: 1},
+		},
+		{
+			SemVer{Major: 1, Minor: 0, Patch: 0},
+			SemVer{Major: 1, Minor: 0, Patch: 1},
+		},
+	}
+
+	for _, tc := range tests {
+		assert.Equal(t, tc.expectedNext, tc.semver.Next())
 	}
 }
 
 func TestRelease(t *testing.T) {
 	tests := []struct {
 		semver          SemVer
-		segment         Segment
-		expectedCurrent SemVer
-		expectedNext    SemVer
+		version         Version
+		expectedRelease SemVer
 	}{
 		{
 			SemVer{},
 			Patch,
 			SemVer{Major: 0, Minor: 0, Patch: 0},
-			SemVer{Major: 0, Minor: 0, Patch: 1},
 		},
 		{
 			SemVer{Major: 0, Minor: 1, Patch: 0},
 			Patch,
 			SemVer{Major: 0, Minor: 1, Patch: 0},
-			SemVer{Major: 0, Minor: 1, Patch: 1},
 		},
 		{
 			SemVer{Major: 1, Minor: 2, Patch: 0},
 			Patch,
 			SemVer{Major: 1, Minor: 2, Patch: 0},
-			SemVer{Major: 1, Minor: 2, Patch: 1},
 		},
 		{
 			SemVer{},
 			Minor,
 			SemVer{Major: 0, Minor: 1, Patch: 0},
-			SemVer{Major: 0, Minor: 1, Patch: 1},
 		},
 		{
 			SemVer{Major: 0, Minor: 1, Patch: 0},
 			Minor,
 			SemVer{Major: 0, Minor: 2, Patch: 0},
-			SemVer{Major: 0, Minor: 2, Patch: 1},
 		},
 		{
 			SemVer{Major: 1, Minor: 2, Patch: 0},
 			Minor,
 			SemVer{Major: 1, Minor: 3, Patch: 0},
-			SemVer{Major: 1, Minor: 3, Patch: 1},
 		},
 		{
 			SemVer{},
 			Major,
 			SemVer{Major: 1, Minor: 0, Patch: 0},
-			SemVer{Major: 1, Minor: 0, Patch: 1},
 		},
 		{
 			SemVer{Major: 0, Minor: 1, Patch: 0},
 			Major,
 			SemVer{Major: 1, Minor: 0, Patch: 0},
-			SemVer{Major: 1, Minor: 0, Patch: 1},
 		},
 		{
 			SemVer{Major: 1, Minor: 2, Patch: 0},
 			Major,
 			SemVer{Major: 2, Minor: 0, Patch: 0},
-			SemVer{Major: 2, Minor: 0, Patch: 1},
 		},
 		{
 			SemVer{},
-			Segment(-1),
-			SemVer{},
+			Version(-1),
 			SemVer{},
 		},
 	}
 
 	for _, tc := range tests {
-		current, next := tc.semver.Release(tc.segment)
+		assert.Equal(t, tc.expectedRelease, tc.semver.Release(tc.version))
+	}
+}
 
-		assert.Equal(t, tc.expectedCurrent, current)
-		assert.Equal(t, tc.expectedNext, next)
+func TestString(t *testing.T) {
+	tests := []struct {
+		name            string
+		semver          SemVer
+		expectedVersion string
+	}{
+		{
+			name: "OK",
+			semver: SemVer{
+				Major: 0,
+				Minor: 2,
+				Patch: 7,
+			},
+			expectedVersion: "0.2.7",
+		},
+		{
+			name: "WithPrerelease",
+			semver: SemVer{
+				Major:      0,
+				Minor:      2,
+				Patch:      7,
+				Prerelease: []string{"rc", "1"},
+			},
+			expectedVersion: "0.2.7-rc.1",
+		},
+		{
+			name: "WithMetadata",
+			semver: SemVer{
+				Major:    0,
+				Minor:    2,
+				Patch:    7,
+				Metadata: []string{"20200820"},
+			},
+			expectedVersion: "0.2.7+20200820",
+		},
+		{
+			name: "WithPrereleaseAndMetadata",
+			semver: SemVer{
+				Major:      0,
+				Minor:      2,
+				Patch:      7,
+				Prerelease: []string{"rc", "1"},
+				Metadata:   []string{"20200820"},
+			},
+			expectedVersion: "0.2.7-rc.1+20200820",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedVersion, tc.semver.String())
+		})
 	}
 }
