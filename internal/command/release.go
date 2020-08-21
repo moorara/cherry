@@ -677,7 +677,7 @@ func (r *release) Run(args []string) int {
 		r.ui.Warn("🔓 Temporarily enabling push to master branch ...")
 
 		url := fmt.Sprintf("https://api.github.com/repos/%s/%s/branches/%s/protection/enforce_admins", repoOwner, repoName, gitBranch)
-		req, _ := http.NewRequest("POST", url, nil)
+		req, _ := http.NewRequest("DELETE", url, nil)
 		req = req.WithContext(ctx)
 		req.Header.Set("Authorization", "token "+r.githubToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
@@ -686,13 +686,13 @@ func (r *release) Run(args []string) int {
 
 		res, err := client.Do(req)
 		if err != nil {
-			r.ui.Error(fmt.Sprintf("Error on enabling push to master: %s", err))
+			r.ui.Error(fmt.Sprintf("Error on disabling push to master: %s", err))
 			return releaseGitHubErr
 		}
 		defer res.Body.Close()
 
-		if res.StatusCode != 200 {
-			r.ui.Error(fmt.Sprintf("Error on enabling push to master: invalid status code %d", res.StatusCode))
+		if res.StatusCode != 204 {
+			r.ui.Error(fmt.Sprintf("Error on disabling push to master: invalid status code %d", res.StatusCode))
 			return releaseGitHubErr
 		}
 
@@ -701,7 +701,7 @@ func (r *release) Run(args []string) int {
 			r.ui.Warn("🔒 Re-disabling push to master branch ...")
 
 			url := fmt.Sprintf("https://api.github.com/repos/%s/%s/branches/%s/protection/enforce_admins", repoOwner, repoName, gitBranch)
-			req, _ := http.NewRequest("DELETE", url, nil)
+			req, _ := http.NewRequest("POST", url, nil)
 			req = req.WithContext(ctx)
 			req.Header.Set("Authorization", "token "+r.githubToken)
 			req.Header.Set("Accept", "application/vnd.github.v3+json")
@@ -710,12 +710,12 @@ func (r *release) Run(args []string) int {
 
 			res, err := client.Do(req)
 			if err != nil {
-				r.ui.Error(fmt.Sprintf("Error on disabling push to master: %s", err))
+				r.ui.Error(fmt.Sprintf("Error on enabling push to master: %s", err))
 			}
 			defer res.Body.Close()
 
-			if res.StatusCode != 204 {
-				r.ui.Error(fmt.Sprintf("Error on disabling push to master: invalid status code %d", res.StatusCode))
+			if res.StatusCode != 200 {
+				r.ui.Error(fmt.Sprintf("Error on enabling push to master: invalid status code %d", res.StatusCode))
 			}
 		}()
 	}
