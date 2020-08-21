@@ -1,0 +1,20 @@
+version: "1.0"
+
+language: go
+
+build:
+  cross_compile: true
+  main_file: main.go
+  binary_file: build/server
+  version_package: ./version
+  platforms:
+    - linux-386
+    - linux-amd64
+    - linux-arm
+    - linux-arm64
+    - darwin-amd64
+    - windows-386
+    - windows-amd64
+
+release:
+  build: true
