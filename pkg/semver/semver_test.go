@@ -339,61 +339,6 @@ func TestAddMetadata(t *testing.T) {
 	}
 }
 
-func TestString(t *testing.T) {
-	tests := []struct {
-		name            string
-		semver          SemVer
-		expectedVersion string
-	}{
-		{
-			name: "OK",
-			semver: SemVer{
-				Major: 0,
-				Minor: 2,
-				Patch: 7,
-			},
-			expectedVersion: "0.2.7",
-		},
-		{
-			name: "WithPrerelease",
-			semver: SemVer{
-				Major:      0,
-				Minor:      2,
-				Patch:      7,
-				Prerelease: []string{"rc", "1"},
-			},
-			expectedVersion: "0.2.7-rc.1",
-		},
-		{
-			name: "WithMetadata",
-			semver: SemVer{
-				Major:    0,
-				Minor:    2,
-				Patch:    7,
-				Metadata: []string{"20200820"},
-			},
-			expectedVersion: "0.2.7+20200820",
-		},
-		{
-			name: "WithPrereleaseAndMetadata",
-			semver: SemVer{
-				Major:      0,
-				Minor:      2,
-				Patch:      7,
-				Prerelease: []string{"rc", "1"},
-				Metadata:   []string{"20200820"},
-			},
-			expectedVersion: "0.2.7-rc.1+20200820",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expectedVersion, tc.semver.String())
-		})
-	}
-}
-
 func TestNext(t *testing.T) {
 	tests := []struct {
 		semver       SemVer
@@ -478,5 +423,60 @@ func TestRelease(t *testing.T) {
 
 	for _, tc := range tests {
 		assert.Equal(t, tc.expectedRelease, tc.semver.Release(tc.version))
+	}
+}
+
+func TestString(t *testing.T) {
+	tests := []struct {
+		name            string
+		semver          SemVer
+		expectedVersion string
+	}{
+		{
+			name: "OK",
+			semver: SemVer{
+				Major: 0,
+				Minor: 2,
+				Patch: 7,
+			},
+			expectedVersion: "0.2.7",
+		},
+		{
+			name: "WithPrerelease",
+			semver: SemVer{
+				Major:      0,
+				Minor:      2,
+				Patch:      7,
+				Prerelease: []string{"rc", "1"},
+			},
+			expectedVersion: "0.2.7-rc.1",
+		},
+		{
+			name: "WithMetadata",
+			semver: SemVer{
+				Major:    0,
+				Minor:    2,
+				Patch:    7,
+				Metadata: []string{"20200820"},
+			},
+			expectedVersion: "0.2.7+20200820",
+		},
+		{
+			name: "WithPrereleaseAndMetadata",
+			semver: SemVer{
+				Major:      0,
+				Minor:      2,
+				Patch:      7,
+				Prerelease: []string{"rc", "1"},
+				Metadata:   []string{"20200820"},
+			},
+			expectedVersion: "0.2.7-rc.1+20200820",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expectedVersion, tc.semver.String())
+		})
 	}
 }

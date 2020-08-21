@@ -75,21 +75,6 @@ func (v *SemVer) AddMetadata(s ...string) {
 	v.Metadata = append(v.Metadata, s...)
 }
 
-// String returns a semantic version string (also implements fmt.Stringer).
-func (v SemVer) String() string {
-	var tail string
-
-	if len(v.Prerelease) > 0 {
-		tail += "-" + strings.Join(v.Prerelease, ".")
-	}
-
-	if len(v.Metadata) > 0 {
-		tail += "+" + strings.Join(v.Metadata, ".")
-	}
-
-	return fmt.Sprintf("%d.%d.%d%s", v.Major, v.Minor, v.Patch, tail)
-}
-
 // Next returns the next patch version.
 func (v SemVer) Next() SemVer {
 	return SemVer{
@@ -123,4 +108,19 @@ func (v SemVer) Release(version Version) SemVer {
 	default:
 		return SemVer{}
 	}
+}
+
+// String returns a semantic version string (also implements fmt.Stringer).
+func (v SemVer) String() string {
+	var tail string
+
+	if len(v.Prerelease) > 0 {
+		tail += "-" + strings.Join(v.Prerelease, ".")
+	}
+
+	if len(v.Metadata) > 0 {
+		tail += "+" + strings.Join(v.Metadata, ".")
+	}
+
+	return fmt.Sprintf("%d.%d.%d%s", v.Major, v.Minor, v.Patch, tail)
 }

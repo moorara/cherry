@@ -19,8 +19,8 @@ import (
 const (
 	buildFlagErr = 21
 	buildOSErr   = 22
-	buildGoErr   = 23
-	buildGitErr  = 24
+	buildGitErr  = 23
+	buildGoErr   = 24
 	buildTimeout = 5 * time.Minute
 
 	buildSynopsis = `build artifacts`
@@ -90,10 +90,36 @@ func (b *build) Run(args []string) int {
 		return buildOSErr
 	}
 
-	// Get git information
+	// Run preflight checks
+
+	b.ui.Output("◉ Running preflight checks ...")
 
 	var stdout, stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "git", "status", "--porcelain")
+	cmd := exec.CommandContext(ctx, "git", "version")
+	cmd.Dir = dir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		b.ui.Error(fmt.Sprintf("Error on checking git: %s %s", err.Error(), strings.Trim(stderr.String(), "\n")))
+		return buildGitErr
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	cmd = exec.CommandContext(ctx, "go", "version")
+	cmd.Dir = dir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		b.ui.Error(fmt.Sprintf("Error on checking go: %s %s", err.Error(), strings.Trim(stderr.String(), "\n")))
+		return buildGoErr
+	}
+
+	// Get git information
+
+	stdout.Reset()
+	stderr.Reset()
+	cmd = exec.CommandContext(ctx, "git", "status", "--porcelain")
 	cmd.Dir = dir
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -147,7 +173,7 @@ func (b *build) Run(args []string) int {
 	gitDescribe := strings.Trim(stdout.String(), "\n")
 
 	if len(gitDescribe) == 0 {
-		// No git tag and no previous semantic version -> use the default initial semantic version
+		// No git tag and no previous semantic version -> using the default initial semantic version
 		version = semver.SemVer{
 			Major:      0,
 			Minor:      1,
@@ -156,11 +182,11 @@ func (b *build) Run(args []string) int {
 		}
 	} else if subs := releaseRE.FindStringSubmatch(gitDescribe); len(subs) == 4 {
 		// The tag points to the HEAD commit
-		// example: v0.2.7 --> subs = []string{"v0.2.7", "0", "2", "7"}
+		// Example: v0.2.7 --> subs = []string{"v0.2.7", "0", "2", "7"}
 		version, _ = semver.Parse(subs[0])
 	} else if subs := prereleaseRE.FindStringSubmatch(gitDescribe); len(subs) == 7 {
 		// The tag is the most recent tag reachable from the HEAD commit
-		// example: v0.2.7-10-gabcdeff --> subs = []string{"v0.2.7-10-gabcdeff", "v0.2.7", "0", "2", "7", "10", "abcdeff"}
+		// Example: v0.2.7-10-gabcdeff --> subs = []string{"v0.2.7-10-gabcdeff", "v0.2.7", "0", "2", "7", "10", "abcdeff"}
 		version, _ = semver.Parse(subs[1])
 		version.AddPrerelease(subs[5], subs[6])
 	}

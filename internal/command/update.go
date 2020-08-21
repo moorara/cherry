@@ -74,12 +74,11 @@ func (u *update) Run(args []string) int {
 		Transport: transport,
 	}
 
-	// Get the latest release of Cherry from GitHub
-	// See https://docs.github.com/en/rest/reference/repos#get-the-latest-release
+	// Run preflight checks
 
-	u.ui.Output(fmt.Sprintf("⬇ Finding the latest release of Cherry ..."))
+	u.ui.Output("◉ Running preflight checks ...")
 
-	url := "https://api.github.com/repos/moorara/cherry/releases/latest"
+	url := "https://api.github.com/repos/moorara/cherry"
 	req, _ := http.NewRequest("GET", url, nil)
 	req = req.WithContext(ctx)
 	req.Header.Set("Authorization", "token "+u.githubToken)
@@ -88,6 +87,31 @@ func (u *update) Run(args []string) int {
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := client.Do(req)
+	if err != nil {
+		u.ui.Error(fmt.Sprintf("Error on checking GitHub access: %s", err))
+		return updateGitHubErr
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		u.ui.Error(fmt.Sprintf("Error on checking GitHub access: invalid status code %d", res.StatusCode))
+		return updateGitHubErr
+	}
+
+	// Get the latest release of Cherry from GitHub
+	// See https://docs.github.com/en/rest/reference/repos#get-the-latest-release
+
+	u.ui.Output(fmt.Sprintf("⬇ Finding the latest release of Cherry ..."))
+
+	url = "https://api.github.com/repos/moorara/cherry/releases/latest"
+	req, _ = http.NewRequest("GET", url, nil)
+	req = req.WithContext(ctx)
+	req.Header.Set("Authorization", "token "+u.githubToken)
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+	req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err = client.Do(req)
 	if err != nil {
 		u.ui.Error(fmt.Sprintf("Error on getting the latest release of Cherry from GitHub: %s", err))
 		return updateGitHubErr
@@ -162,13 +186,13 @@ func (u *update) Run(args []string) int {
 
 	file, err := os.OpenFile(binPath, os.O_WRONLY, 0755)
 	if err != nil {
-		u.ui.Error(fmt.Sprintf("Error on openning file for writing: %s", err))
+		u.ui.Error(fmt.Sprintf("Error on openning %s for writing: %s", binPath, err))
 		return updateFileErr
 	}
 
 	_, err = io.Copy(file, res.Body)
 	if err != nil {
-		u.ui.Error(fmt.Sprintf("Error on writing to file: %s", err))
+		u.ui.Error(fmt.Sprintf("Error on writing to %s: %s", binPath, err))
 		return updateFileErr
 	}
 
