@@ -83,7 +83,7 @@ func (b *build) Run(args []string) int {
 		return buildFlagErr
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), updateTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), buildTimeout)
 	defer cancel()
 
 	dir, err := os.Getwd()

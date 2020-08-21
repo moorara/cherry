@@ -124,7 +124,7 @@ func (r *release) Run(args []string) int {
 		version = semver.Patch
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), updateTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), releaseTimeout)
 	defer cancel()
 
 	transport := &http.Transport{}
