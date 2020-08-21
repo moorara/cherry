@@ -4,7 +4,7 @@ import "fmt"
 
 const template = `
 	version:    %s
-	revision:   %s
+	commit:     %s
 	branch:     %s
 	goVersion:  %s
 	buildTool:  %s
@@ -15,8 +15,8 @@ var (
 	// Version is the semantic version
 	Version string
 
-	// Revision is the SHA-1 of the git revision
-	Revision string
+	// Commit is the SHA-1 of the git commit
+	Commit string
 
 	// Branch is the name of the git branch
 	Branch string
@@ -33,5 +33,5 @@ var (
 
 // String returns a string describing the version information in details
 func String() string {
-	return fmt.Sprintf(template, Version, Revision, Branch, GoVersion, BuildTool, BuildTime)
+	return fmt.Sprintf(template, Version, Commit, Branch, GoVersion, BuildTool, BuildTime)
 }

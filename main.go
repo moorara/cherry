@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	configErr = 11
-	specErr   = 12
+	configErr = 101
+	specErr   = 102
 )
 
 func main() {
@@ -54,7 +54,7 @@ func main() {
 			return command.NewBuild(ui, s)
 		},
 		"release": func() (cli.Command, error) {
-			return command.NewRelease(ui, s)
+			return command.NewRelease(ui, s, githubToken)
 		},
 		"update": func() (cli.Command, error) {
 			return command.NewUpdate(ui, githubToken)
