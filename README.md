@@ -66,14 +66,27 @@ The initial release is always `0.1.0`.
 ## Commands
 
 You can run `cherry` or `cherry -help` to see the list of available commands.
-For each command you can then use `-help` flag too see the help text for the command.
+For each command, you can also use `-help` flag too see the help for that command.
 
-### Build
+### init
 
-`cherry build` will compile your binary and injects the build information into the `version` package.
+`cherry init` creates and adds the following files required by Cherry.
+This can be used for initializing a Go repository to work with Cherry.
+
+  - Spec file (`cherry.yaml`)
+  - Version file (`version/version.go`)
+
+### semver
+
+`cherry semver` resolves and prints the current semantic version.
+This can be used to get the current semantic version for building other artifacts such as Docker image.
+
+### build
+
+`cherry build` compiles your binary and injects the build information into the `version` package.
 `cherry build -cross-compile` will build the binaries for all supported platforms.
 
-### Release
+### release
 
 `cherry release` can be used for releasing a **GitHub** repository.
 You can use `-patch`, `-minor`, or `-major` flags to release at different levels.
@@ -81,7 +94,7 @@ You can also use `-comment` flag to include a description for your release.
 
 `CHERRY_GITHUB_TOKEN` environment variable should be set to a **personal access token** with **admin** permission to your repo.
 
-### Update
+### update
 
 `cherry update` will update Cherry to the latest version.
 It downloads the latest release for your system from GitHub and replaces the local binary.
