@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	specErr = 101
+	specErr = 11
 )
 
 func main() {
@@ -43,6 +43,12 @@ func main() {
 	c := cli.NewCLI("cherry", version.String())
 	c.Args = os.Args[1:]
 	c.Commands = map[string]cli.CommandFactory{
+		"init": func() (cli.Command, error) {
+			return command.NewInitCommand(ui)
+		},
+		"semver": func() (cli.Command, error) {
+			return command.NewSemverCommand(ui)
+		},
 		"build": func() (cli.Command, error) {
 			return command.NewBuildCommand(ui, s)
 		},
@@ -51,9 +57,6 @@ func main() {
 		},
 		"update": func() (cli.Command, error) {
 			return command.NewUpdateCommand(ui)
-		},
-		"semver": func() (cli.Command, error) {
-			return command.NewSemverCommand(ui)
 		},
 	}
 

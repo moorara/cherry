@@ -17,10 +17,10 @@ import (
 )
 
 const (
-	buildFlagErr = 201
-	buildOSErr   = 202
-	buildGitErr  = 203
-	buildGoErr   = 204
+	buildFlagErr = 301
+	buildOSErr   = 302
+	buildGitErr  = 303
+	buildGoErr   = 304
 	buildTimeout = 5 * time.Minute
 
 	buildSynopsis = `build artifacts`

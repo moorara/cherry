@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	semverFlagErr = 501
-	semverOSErr   = 502
-	semverGitErr  = 503
+	semverFlagErr = 201
+	semverOSErr   = 202
+	semverGitErr  = 203
 	semverTimeout = 10 * time.Second
 
 	semverSynopsis = `get semantic version`

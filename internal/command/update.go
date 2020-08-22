@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	updateFlagErr   = 401
-	updateGitHubErr = 402
-	updateFileErr   = 403
+	updateFlagErr   = 501
+	updateGitHubErr = 502
+	updateFileErr   = 503
 	updateTimeout   = time.Minute
 
 	updateSynopsis = `update cherry`

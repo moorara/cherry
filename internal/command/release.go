@@ -23,19 +23,19 @@ import (
 )
 
 const (
-	releaseFlagErr       = 301
-	releaseOSErr         = 302
-	releaseGitErr        = 303
-	releaseGoErr         = 304
-	releaseChangelogErr  = 305
-	releaseGitHubErr     = 306
-	releaseGitHubPermErr = 307
-	releaseRemoteURLErr  = 308
-	releaseRemoteRepoErr = 309
-	releaseBranchErr     = 310
-	releaseStatusErr     = 311
-	releaseSemVerErr     = 312
-	releaseUploadErr     = 313
+	releaseFlagErr       = 401
+	releaseOSErr         = 402
+	releaseGitErr        = 403
+	releaseGoErr         = 404
+	releaseChangelogErr  = 405
+	releaseGitHubErr     = 406
+	releaseGitHubPermErr = 407
+	releaseRemoteURLErr  = 408
+	releaseRemoteRepoErr = 409
+	releaseBranchErr     = 410
+	releaseStatusErr     = 411
+	releaseSemVerErr     = 412
+	releaseUploadErr     = 413
 	releaseTimeout       = 10 * time.Minute
 
 	releaseSynopsis = `create a new release`
