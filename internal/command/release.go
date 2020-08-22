@@ -23,19 +23,19 @@ import (
 )
 
 const (
-	releaseFlagErr       = 301
-	releaseOSErr         = 302
-	releaseGitErr        = 303
-	releaseGoErr         = 304
-	releaseChangelogErr  = 305
-	releaseGitHubErr     = 306
-	releasePermErr       = 307
-	releaseRemoteURLErr  = 308
-	releaseRemoteRepoErr = 309
-	releaseBranchErr     = 310
-	releaseStatusErr     = 311
-	releaseSemVerErr     = 312
-	releaseUploadErr     = 313
+	releaseFlagErr       = 401
+	releaseOSErr         = 402
+	releaseGitErr        = 403
+	releaseGoErr         = 404
+	releaseChangelogErr  = 405
+	releaseGitHubErr     = 406
+	releaseGitHubPermErr = 407
+	releaseRemoteURLErr  = 408
+	releaseRemoteRepoErr = 409
+	releaseBranchErr     = 410
+	releaseStatusErr     = 411
+	releaseSemVerErr     = 412
+	releaseUploadErr     = 413
 	releaseTimeout       = 10 * time.Minute
 
 	releaseSynopsis = `create a new release`
@@ -68,44 +68,42 @@ const (
 	`
 )
 
-// release implements cli.Command interface.
-type release struct {
-	ui          cli.Ui
-	spec        spec.Spec
-	githubToken string
+// releaseCommand implements cli.Command interface.
+type releaseCommand struct {
+	ui   cli.Ui
+	spec spec.Spec
 }
 
-// NewRelease creates a release command.
-func NewRelease(ui cli.Ui, s spec.Spec, githubToken string) (cli.Command, error) {
-	return &release{
-		ui:          ui,
-		spec:        s,
-		githubToken: githubToken,
+// NewReleaseCommand creates a release command.
+func NewReleaseCommand(ui cli.Ui, s spec.Spec) (cli.Command, error) {
+	return &releaseCommand{
+		ui:   ui,
+		spec: s,
 	}, nil
 }
 
 // Synopsis returns a short one-line synopsis of the command.
-func (r *release) Synopsis() string {
+func (c *releaseCommand) Synopsis() string {
 	return releaseSynopsis
 }
 
 // Help returns a long help text including usage, description, and list of flags for the command.
-func (r *release) Help() string {
+func (c *releaseCommand) Help() string {
 	return releaseHelp
 }
 
 // Run runs the actual command with the given command-line arguments.
-func (r *release) Run(args []string) int {
+func (c *releaseCommand) Run(args []string) int {
 	var patch, minor, major bool
 	var comment string
 
-	fs := r.spec.Release.FlagSet()
+	fs := c.spec.Release.FlagSet()
 	fs.BoolVar(&patch, "patch", true, "")
 	fs.BoolVar(&minor, "minor", false, "")
 	fs.BoolVar(&major, "major", false, "")
 	fs.StringVar(&comment, "comment", "", "")
 	fs.Usage = func() {
-		r.ui.Output(r.Help())
+		c.ui.Output(c.Help())
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -132,15 +130,63 @@ func (r *release) Run(args []string) int {
 		Transport: transport,
 	}
 
-	dir, err := os.Getwd()
-	if err != nil {
-		r.ui.Error(fmt.Sprintf("Error on getting the current working directory: %s", err))
-		return releaseOSErr
-	}
-
 	// Get remote repository information
 
+	// Run preflight checks
+
+	var dir, githubToken string
 	var repoOwner, repoName string
+
+	{
+		c.ui.Output("◉ Running preflight checks ...")
+
+		var err error
+		dir, err = os.Getwd()
+		if err != nil {
+			c.ui.Error(fmt.Sprintf("Error on getting the current working directory: %s", err))
+			return releaseOSErr
+		}
+
+		githubToken = os.Getenv("CHERRY_GITHUB_TOKEN")
+		if githubToken == "" {
+			c.ui.Error("CHERRY_GITHUB_TOKEN environment variable not set.")
+			return releaseGitHubErr
+		}
+	}
+
+	{
+		var stdout, stderr bytes.Buffer
+		cmd := exec.CommandContext(ctx, "git", "version")
+		cmd.Dir = dir
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			c.ui.Error(fmt.Sprintf("Error on checking git: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			return buildGitErr
+		}
+
+		stdout.Reset()
+		stderr.Reset()
+		cmd = exec.CommandContext(ctx, "go", "version")
+		cmd.Dir = dir
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			c.ui.Error(fmt.Sprintf("Error on checking go: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			return releaseGoErr
+		}
+
+		stdout.Reset()
+		stderr.Reset()
+		cmd = exec.CommandContext(ctx, "github_changelog_generator", "--version")
+		cmd.Dir = dir
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			c.ui.Error(fmt.Sprintf("Error on checking github_changelog_generator: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			return releaseChangelogErr
+		}
+	}
 
 	{
 		var repoDomain string
@@ -153,7 +199,7 @@ func (r *release) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on running git remote get-url --push origin: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on running git remote get-url --push origin: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return releaseGitErr
 		}
 		gitRemoteURL := strings.Trim(stdout.String(), "\n")
@@ -169,51 +215,13 @@ func (r *release) Run(args []string) int {
 			repoDomain = subs[1]
 			repoOwner, repoName = subs[2], subs[3]
 		} else {
-			r.ui.Error(fmt.Sprintf("Invalid git remote url: %s", gitRemoteURL))
+			c.ui.Error(fmt.Sprintf("Invalid git remote url: %s", gitRemoteURL))
 			return releaseRemoteURLErr
 		}
 
 		if strings.ToLower(repoDomain) != "github.com" {
-			r.ui.Error(fmt.Sprintf("Unsupported remote repository: %s", repoDomain))
+			c.ui.Error(fmt.Sprintf("Unsupported remote repository: %s", repoDomain))
 			return releaseRemoteRepoErr
-		}
-	}
-
-	// Run preflight checks
-
-	{
-		r.ui.Output("◉ Running preflight checks ...")
-
-		var stdout, stderr bytes.Buffer
-		cmd := exec.CommandContext(ctx, "git", "version")
-		cmd.Dir = dir
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
-		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on checking git: %s %s", err, strings.Trim(stderr.String(), "\n")))
-			return buildGitErr
-		}
-
-		stdout.Reset()
-		stderr.Reset()
-		cmd = exec.CommandContext(ctx, "go", "version")
-		cmd.Dir = dir
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
-		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on checking go: %s %s", err, strings.Trim(stderr.String(), "\n")))
-			return releaseGoErr
-		}
-
-		stdout.Reset()
-		stderr.Reset()
-		cmd = exec.CommandContext(ctx, "github_changelog_generator", "--version")
-		cmd.Dir = dir
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
-		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on checking github_changelog_generator: %s %s", err, strings.Trim(stderr.String(), "\n")))
-			return releaseChangelogErr
 		}
 	}
 
@@ -229,33 +237,33 @@ func (r *release) Run(args []string) int {
 	}{}
 
 	{
-		r.ui.Output("◉ Checking GitHub permission ...")
+		c.ui.Output("◉ Checking GitHub permission ...")
 
 		// Get the currently authenticated user
 		// See https://docs.github.com/en/rest/reference/users#get-the-authenticated-user
 		url := "https://api.github.com/user"
 		req, _ := http.NewRequest("GET", url, nil)
 		req = req.WithContext(ctx)
-		req.Header.Set("Authorization", "token "+r.githubToken)
+		req.Header.Set("Authorization", "token "+githubToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 		req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 		req.Header.Set("Content-Type", "application/json")
 
 		res, err := client.Do(req)
 		if err != nil {
-			r.ui.Error(fmt.Sprintf("Error on getting authenticated GitHub user: %s", err))
+			c.ui.Error(fmt.Sprintf("Error on getting authenticated GitHub user: %s", err))
 			return releaseGitHubErr
 		}
 		defer res.Body.Close()
 
 		if res.StatusCode != 200 {
-			r.ui.Error(fmt.Sprintf("Error on getting authenticated GitHub user: invalid status code %d", res.StatusCode))
+			c.ui.Error(fmt.Sprintf("Error on getting authenticated GitHub user: invalid status code %d", res.StatusCode))
 			return releaseGitHubErr
 		}
 
 		err = json.NewDecoder(res.Body).Decode(&githubUser)
 		if err != nil {
-			r.ui.Error(fmt.Sprintf("Error on getting authenticated GitHub user: %s", err))
+			c.ui.Error(fmt.Sprintf("Error on getting authenticated GitHub user: %s", err))
 			return releaseGitHubErr
 		}
 
@@ -264,20 +272,20 @@ func (r *release) Run(args []string) int {
 		url = fmt.Sprintf("https://api.github.com/repos/%s/%s/collaborators/%s/permission", repoOwner, repoName, githubUser.Login)
 		req, _ = http.NewRequest("GET", url, nil)
 		req = req.WithContext(ctx)
-		req.Header.Set("Authorization", "token "+r.githubToken)
+		req.Header.Set("Authorization", "token "+githubToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 		req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 		req.Header.Set("Content-Type", "application/json")
 
 		res, err = client.Do(req)
 		if err != nil {
-			r.ui.Error(fmt.Sprintf("Error on checking GitHub user permission: %s", err))
+			c.ui.Error(fmt.Sprintf("Error on checking GitHub user permission: %s", err))
 			return releaseGitHubErr
 		}
 		defer res.Body.Close()
 
 		if res.StatusCode != 200 {
-			r.ui.Error(fmt.Sprintf("Error on checking GitHub user permission: invalid status code %d", res.StatusCode))
+			c.ui.Error(fmt.Sprintf("Error on checking GitHub user permission: invalid status code %d", res.StatusCode))
 			return releaseGitHubErr
 		}
 
@@ -287,13 +295,13 @@ func (r *release) Run(args []string) int {
 
 		err = json.NewDecoder(res.Body).Decode(&githubPermission)
 		if err != nil {
-			r.ui.Error(fmt.Sprintf("Error on checking GitHub user permission: %s", err))
+			c.ui.Error(fmt.Sprintf("Error on checking GitHub user permission: %s", err))
 			return releaseGitHubErr
 		}
 
 		if githubPermission.Permission != "admin" {
-			r.ui.Error("The CHERRY_GITHUB_TOKEN does not have admin permission for releasing.")
-			return releasePermErr
+			c.ui.Error("The CHERRY_GITHUB_TOKEN does not have admin permission for releasing.")
+			return releaseGitHubPermErr
 		}
 	}
 
@@ -308,13 +316,13 @@ func (r *release) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on running git rev-parse --abbrev-ref HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on running git rev-parse --abbrev-ref HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return releaseGitErr
 		}
 		gitBranch = strings.Trim(stdout.String(), "\n")
 
 		if gitBranch != "master" {
-			r.ui.Error("Release can only be done from master branch.")
+			c.ui.Error("Release can only be done from master branch.")
 			return releaseBranchErr
 		}
 	}
@@ -327,20 +335,20 @@ func (r *release) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on running git status --porcelain: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on running git status --porcelain: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return releaseGitErr
 		}
 		gitStatusClean := len(stdout.String()) == 0
 
 		if !gitStatusClean {
-			r.ui.Error("Working directory is not clean and has uncommitted changes.")
+			c.ui.Error("Working directory is not clean and has uncommitted changes.")
 			return releaseStatusErr
 		}
 	}
 
 	// Make sure the current branch has all the latest changes
 	{
-		r.ui.Output("⬇️  Pulling the latest changes on master branch ...")
+		c.ui.Output("⬇️  Pulling the latest changes on master branch ...")
 
 		var stdout, stderr bytes.Buffer
 		cmd := exec.CommandContext(ctx, "git", "pull")
@@ -348,7 +356,7 @@ func (r *release) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on running git pull: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on running git pull: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return releaseGitErr
 		}
 	}
@@ -367,7 +375,7 @@ func (r *release) Run(args []string) int {
 		if err := cmd.Run(); err != nil {
 			// 128 is returned when there is no git tag
 			if exiterr, ok := err.(*exec.ExitError); !ok || exiterr.ExitCode() != 128 {
-				r.ui.Error(fmt.Sprintf("Error on running git describe --tags HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
+				c.ui.Error(fmt.Sprintf("Error on running git describe --tags HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
 				return releaseGitErr
 			}
 		}
@@ -379,7 +387,7 @@ func (r *release) Run(args []string) int {
 		} else {
 			lastSemVer, ok := semver.Parse(gitDescribe)
 			if !ok {
-				r.ui.Error(fmt.Sprintf("Invalid git tag for semantic version: %s", gitDescribe))
+				c.ui.Error(fmt.Sprintf("Invalid git tag for semantic version: %s", gitDescribe))
 				return releaseSemVerErr
 			}
 			releaseSemVer = lastSemVer.Next().Release(version)
@@ -406,7 +414,7 @@ func (r *release) Run(args []string) int {
 	}{}
 
 	{
-		r.ui.Output(fmt.Sprintf("⬆️  Creating a draft release %s ...", ""))
+		c.ui.Output(fmt.Sprintf("⬆️  Creating a draft release %s ...", ""))
 
 		body := new(bytes.Buffer)
 		_ = json.NewEncoder(body).Encode(struct {
@@ -427,26 +435,26 @@ func (r *release) Run(args []string) int {
 		url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases", repoOwner, repoName)
 		req, _ := http.NewRequest("POST", url, body)
 		req = req.WithContext(ctx)
-		req.Header.Set("Authorization", "token "+r.githubToken)
+		req.Header.Set("Authorization", "token "+githubToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 		req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 		req.Header.Set("Content-Type", "application/json")
 
 		res, err := client.Do(req)
 		if err != nil {
-			r.ui.Error(fmt.Sprintf("Error on creating a draft GitHub release: %s", err))
+			c.ui.Error(fmt.Sprintf("Error on creating a draft GitHub release: %s", err))
 			return releaseGitHubErr
 		}
 		defer res.Body.Close()
 
 		if res.StatusCode != 201 {
-			r.ui.Error(fmt.Sprintf("Error on creating a draft GitHub release: invalid status code %d", res.StatusCode))
+			c.ui.Error(fmt.Sprintf("Error on creating a draft GitHub release: invalid status code %d", res.StatusCode))
 			return releaseGitHubErr
 		}
 
 		err = json.NewDecoder(res.Body).Decode(&release)
 		if err != nil {
-			r.ui.Error(fmt.Sprintf("Error on creating a draft GitHub release: %s", err))
+			c.ui.Error(fmt.Sprintf("Error on creating a draft GitHub release: %s", err))
 			return releaseGitHubErr
 		}
 	}
@@ -457,12 +465,12 @@ func (r *release) Run(args []string) int {
 	changelogFile := "CHANGELOG.md"
 
 	{
-		r.ui.Output("➡️  Creating/Updating change log ...")
+		c.ui.Output("➡️  Creating/Updating change log ...")
 
 		var stdout, stderr bytes.Buffer
 		cmd := exec.CommandContext(ctx,
 			"github_changelog_generator",
-			"--token", r.githubToken,
+			"--token", githubToken,
 			"--user", repoOwner,
 			"--project", repoName,
 			"--no-filter-by-milestone",
@@ -473,13 +481,13 @@ func (r *release) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on generating change log: %s %s %s", err, strings.Trim(stdout.String(), "\n"), strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on generating change log: %s %s %s", err, strings.Trim(stdout.String(), "\n"), strings.Trim(stderr.String(), "\n")))
 			return releaseChangelogErr
 		}
 
 		file, err := os.Open(filepath.Join(dir, changelogFile))
 		if err != nil {
-			r.ui.Error(fmt.Sprintf("Error on opening change log file: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on opening change log file: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return releaseChangelogErr
 		}
 		defer file.Close()
@@ -487,14 +495,14 @@ func (r *release) Run(args []string) int {
 		// Regex for the start of current release
 		startRE, err := regexp.Compile(fmt.Sprintf(`^## \[%s\]`, releaseTag))
 		if err != nil {
-			r.ui.Error(fmt.Sprintf("Error on compiling regex: %s", err))
+			c.ui.Error(fmt.Sprintf("Error on compiling regex: %s", err))
 			return releaseChangelogErr
 		}
 
 		// Regex for the end of current release
 		endRE, err := regexp.Compile(`^(##|\\\*)`)
 		if err != nil {
-			r.ui.Error(fmt.Sprintf("Error on compiling regex: %s", err))
+			c.ui.Error(fmt.Sprintf("Error on compiling regex: %s", err))
 			return releaseChangelogErr
 		}
 
@@ -515,7 +523,7 @@ func (r *release) Run(args []string) int {
 		}
 
 		if err := scanner.Err(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on scanning change log: %s", err))
+			c.ui.Error(fmt.Sprintf("Error on scanning change log: %s", err))
 			return releaseChangelogErr
 		}
 
@@ -524,7 +532,7 @@ func (r *release) Run(args []string) int {
 
 	// Create the release commit and tag
 	{
-		r.ui.Output(fmt.Sprintf("➡️  Creating release commit and tag %s ...", releaseSemVer))
+		c.ui.Output(fmt.Sprintf("➡️  Creating release commit and tag %s ...", releaseSemVer))
 
 		var stdout, stderr bytes.Buffer
 		cmd := exec.CommandContext(ctx, "git", "add", changelogFile)
@@ -532,7 +540,7 @@ func (r *release) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on running git add: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on running git add: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return releaseGitErr
 		}
 
@@ -544,7 +552,7 @@ func (r *release) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on running git commit -m: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on running git commit -m: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return releaseGitErr
 		}
 
@@ -556,7 +564,7 @@ func (r *release) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on running git tag -a -m: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on running git tag -a -m: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return releaseGitErr
 		}
 	}
@@ -564,25 +572,25 @@ func (r *release) Run(args []string) int {
 	// Building artifacts (binaries) and uploading them to GitHub
 	// See https://developer.github.com/v3/repos/releases/#upload-a-release-asset
 
-	if r.spec.Release.Build {
-		r.ui.Output("➡️  Building artifacts ...")
+	if c.spec.Release.Build {
+		c.ui.Output("➡️  Building artifacts ...")
 
-		b := &build{
-			ui:        r.ui,
-			spec:      r.spec,
+		bc := &buildCommand{
+			ui:        c.ui,
+			spec:      c.spec,
 			artifacts: []string{},
 		}
 
-		code := b.Run([]string{})
+		code := bc.Run([]string{})
 		if code != 0 {
 			return code
 		}
 
-		r.ui.Output(fmt.Sprintf("➡️️  Uploading artifacts to release %s ...", release.Name))
+		c.ui.Output(fmt.Sprintf("➡️️  Uploading artifacts to release %s ...", release.Name))
 
-		doneCh := make(chan error, len(b.artifacts))
+		doneCh := make(chan error, len(bc.artifacts))
 
-		for _, artifact := range b.artifacts {
+		for _, artifact := range bc.artifacts {
 			go func(artifact string) {
 				assetPath := filepath.Clean(artifact)
 				assetName := filepath.Base(assetPath)
@@ -624,7 +632,7 @@ func (r *release) Run(args []string) int {
 				url = fmt.Sprintf("%s?name=%s", url, netURL.QueryEscape(assetName))
 				req, _ := http.NewRequest("POST", url, assetFile)
 				req = req.WithContext(ctx)
-				req.Header.Set("Authorization", "token "+r.githubToken)
+				req.Header.Set("Authorization", "token "+githubToken)
 				req.Header.Set("Accept", "application/vnd.github.v3+json")
 				req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 				req.Header.Set("Content-Type", mimeType)
@@ -663,9 +671,9 @@ func (r *release) Run(args []string) int {
 			}(artifact)
 		}
 
-		for range b.artifacts {
+		for range bc.artifacts {
 			if err := <-doneCh; err != nil {
-				r.ui.Error(fmt.Sprintf("Error on uploading artifact: %s", err))
+				c.ui.Error(fmt.Sprintf("Error on uploading artifact: %s", err))
 				return releaseUploadErr
 			}
 		}
@@ -674,55 +682,55 @@ func (r *release) Run(args []string) int {
 	// Enable direct push to master and defering disabling it back
 
 	{
-		r.ui.Warn("🔓 Temporarily enabling push to master branch ...")
+		c.ui.Warn("🔓 Temporarily enabling push to master branch ...")
 
 		url := fmt.Sprintf("https://api.github.com/repos/%s/%s/branches/%s/protection/enforce_admins", repoOwner, repoName, gitBranch)
 		req, _ := http.NewRequest("DELETE", url, nil)
 		req = req.WithContext(ctx)
-		req.Header.Set("Authorization", "token "+r.githubToken)
+		req.Header.Set("Authorization", "token "+githubToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 		req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 		req.Header.Set("Content-Type", "application/json")
 
 		res, err := client.Do(req)
 		if err != nil {
-			r.ui.Error(fmt.Sprintf("Error on disabling push to master: %s", err))
+			c.ui.Error(fmt.Sprintf("Error on disabling push to master: %s", err))
 			return releaseGitHubErr
 		}
 		defer res.Body.Close()
 
 		if res.StatusCode != 204 {
-			r.ui.Error(fmt.Sprintf("Error on disabling push to master: invalid status code %d", res.StatusCode))
+			c.ui.Error(fmt.Sprintf("Error on disabling push to master: invalid status code %d", res.StatusCode))
 			return releaseGitHubErr
 		}
 
 		// Make sure we re-enable the master branch protection
 		defer func() {
-			r.ui.Warn("🔒 Re-disabling push to master branch ...")
+			c.ui.Warn("🔒 Re-disabling push to master branch ...")
 
 			url := fmt.Sprintf("https://api.github.com/repos/%s/%s/branches/%s/protection/enforce_admins", repoOwner, repoName, gitBranch)
 			req, _ := http.NewRequest("POST", url, nil)
 			req = req.WithContext(ctx)
-			req.Header.Set("Authorization", "token "+r.githubToken)
+			req.Header.Set("Authorization", "token "+githubToken)
 			req.Header.Set("Accept", "application/vnd.github.v3+json")
 			req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 			req.Header.Set("Content-Type", "application/json")
 
 			res, err := client.Do(req)
 			if err != nil {
-				r.ui.Error(fmt.Sprintf("Error on enabling push to master: %s", err))
+				c.ui.Error(fmt.Sprintf("Error on enabling push to master: %s", err))
 			}
 			defer res.Body.Close()
 
 			if res.StatusCode != 200 {
-				r.ui.Error(fmt.Sprintf("Error on enabling push to master: invalid status code %d", res.StatusCode))
+				c.ui.Error(fmt.Sprintf("Error on enabling push to master: invalid status code %d", res.StatusCode))
 			}
 		}()
 	}
 
 	// Push release commit to GitHub
 	{
-		r.ui.Info(fmt.Sprintf("⬆️  Pushing release commit %s ...", releaseSemVer))
+		c.ui.Info(fmt.Sprintf("⬆️  Pushing release commit %s ...", releaseSemVer))
 
 		var stdout, stderr bytes.Buffer
 		cmd := exec.CommandContext(ctx, "git", "push")
@@ -730,14 +738,14 @@ func (r *release) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on running git push: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on running git push: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return releaseGitErr
 		}
 	}
 
 	// Push release tag to GitHub
 	{
-		r.ui.Info(fmt.Sprintf("⬆️  Pushing release tag %s ...", releaseTag))
+		c.ui.Info(fmt.Sprintf("⬆️  Pushing release tag %s ...", releaseTag))
 
 		var stdout, stderr bytes.Buffer
 		cmd := exec.CommandContext(ctx, "git", "push", "origin", releaseTag)
@@ -745,14 +753,14 @@ func (r *release) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on running git push origin: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on running git push origin: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return releaseGitErr
 		}
 	}
 
 	// Publishing GitHub release
 	{
-		r.ui.Info(fmt.Sprintf("⬆️  Publishing release %s ...", release.Name))
+		c.ui.Info(fmt.Sprintf("⬆️  Publishing release %s ...", release.Name))
 
 		body := new(bytes.Buffer)
 		_ = json.NewEncoder(body).Encode(struct {
@@ -774,26 +782,26 @@ func (r *release) Run(args []string) int {
 		url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/%d", repoOwner, repoName, release.ID)
 		req, _ := http.NewRequest("PATCH", url, body)
 		req = req.WithContext(ctx)
-		req.Header.Set("Authorization", "token "+r.githubToken)
+		req.Header.Set("Authorization", "token "+githubToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 		req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 		req.Header.Set("Content-Type", "application/json")
 
 		res, err := client.Do(req)
 		if err != nil {
-			r.ui.Error(fmt.Sprintf("Error on editing GitHub release: %s", err))
+			c.ui.Error(fmt.Sprintf("Error on editing GitHub release: %s", err))
 			return releaseGitHubErr
 		}
 		defer res.Body.Close()
 
 		if res.StatusCode != 200 {
-			r.ui.Error(fmt.Sprintf("Error on editing GitHub release: invalid status code %d", res.StatusCode))
+			c.ui.Error(fmt.Sprintf("Error on editing GitHub release: invalid status code %d", res.StatusCode))
 			return releaseGitHubErr
 		}
 
 		err = json.NewDecoder(res.Body).Decode(&release)
 		if err != nil {
-			r.ui.Error(fmt.Sprintf("Error on editing GitHub release: %s", err))
+			c.ui.Error(fmt.Sprintf("Error on editing GitHub release: %s", err))
 			return releaseGitHubErr
 		}
 	}

@@ -12,8 +12,6 @@ Currently, Cherry only supports [Go](https://golang.org) for building and [GitHu
 
 For Go applications, Cherry supports cross-compiling and injecting metadata into the binaries.
 
-For releasing, Cherry supports text files (`VERSION`) and JSON files (`package.json`).
-
 ## Prerequisites/Dependencies
 
 You need to have the following tools installed and ready.
@@ -46,17 +44,36 @@ The docker image for Cherry includes all the required tools and is accessible at
 
 You can take a look at [examples](./examples) to see how you can use and configure Cherry.
 
-### Commands
+## Versioning
+
+Cherry uses Semantic Versioning 2.0.0 as described [here](https://semver.org).
+For injecting versioning and other metadata into your binaries,
+you need to have a `version` package with the following exported variables in it:
+
+```go
+var (
+  Version   string
+  Commit    string
+  Branch    string
+  GoVersion string
+  BuildTool string
+  BuildTime string
+)
+```
+
+The initial release is always `0.1.0`.
+
+## Commands
 
 You can run `cherry` or `cherry -help` to see the list of available commands.
 For each command you can then use `-help` flag too see the help text for the command.
 
-**`build`**
+### Build
 
 `cherry build` will compile your binary and injects the build information into the `version` package.
 `cherry build -cross-compile` will build the binaries for all supported platforms.
 
-**`release`**
+### Release
 
 `cherry release` can be used for releasing a **GitHub** repository.
 You can use `-patch`, `-minor`, or `-major` flags to release at different levels.
@@ -64,7 +81,7 @@ You can also use `-comment` flag to include a description for your release.
 
 `CHERRY_GITHUB_TOKEN` environment variable should be set to a **personal access token** with **admin** permission to your repo.
 
-**`update`**
+### Update
 
 `cherry update` will update Cherry to the latest version.
 It downloads the latest release for your system from GitHub and replaces the local binary.
