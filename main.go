@@ -44,13 +44,16 @@ func main() {
 	c.Args = os.Args[1:]
 	c.Commands = map[string]cli.CommandFactory{
 		"build": func() (cli.Command, error) {
-			return command.NewBuild(ui, s)
+			return command.NewBuildCommand(ui, s)
 		},
 		"release": func() (cli.Command, error) {
-			return command.NewRelease(ui, s)
+			return command.NewReleaseCommand(ui, s)
 		},
 		"update": func() (cli.Command, error) {
-			return command.NewUpdate(ui)
+			return command.NewUpdateCommand(ui)
+		},
+		"semver": func() (cli.Command, error) {
+			return command.NewSemverCommand(ui)
 		},
 	}
 

@@ -43,16 +43,16 @@ const (
 	`
 )
 
-// build implements cli.Command interface.
-type build struct {
+// buildCommand implements cli.Command interface.
+type buildCommand struct {
 	ui        cli.Ui
 	spec      spec.Spec
 	artifacts []string
 }
 
-// NewBuild creates a build command.
-func NewBuild(ui cli.Ui, s spec.Spec) (cli.Command, error) {
-	return &build{
+// NewBuildCommand creates a build command.
+func NewBuildCommand(ui cli.Ui, s spec.Spec) (cli.Command, error) {
+	return &buildCommand{
 		ui:        ui,
 		spec:      s,
 		artifacts: []string{},
@@ -60,23 +60,23 @@ func NewBuild(ui cli.Ui, s spec.Spec) (cli.Command, error) {
 }
 
 // Synopsis returns a short one-line synopsis of the command.
-func (b *build) Synopsis() string {
+func (c *buildCommand) Synopsis() string {
 	return buildSynopsis
 }
 
 // Help returns a long help text including usage, description, and list of flags for the command.
-func (b *build) Help() string {
+func (c *buildCommand) Help() string {
 	var buf bytes.Buffer
 	t := template.Must(template.New("help").Parse(buildHelp))
-	_ = t.Execute(&buf, b)
+	_ = t.Execute(&buf, c)
 	return buf.String()
 }
 
 // Run runs the actual command with the given command-line arguments.
-func (b *build) Run(args []string) int {
-	fs := b.spec.Build.FlagSet()
+func (c *buildCommand) Run(args []string) int {
+	fs := c.spec.Build.FlagSet()
 	fs.Usage = func() {
-		b.ui.Output(b.Help())
+		c.ui.Output(c.Help())
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -91,12 +91,12 @@ func (b *build) Run(args []string) int {
 	var dir string
 
 	{
-		// b.ui.Output("◉ Running preflight checks ...")
+		// c.ui.Output("◉ Running preflight checks ...")
 
 		var err error
 		dir, err = os.Getwd()
 		if err != nil {
-			b.ui.Error(fmt.Sprintf("Error on getting the current working directory: %s", err))
+			c.ui.Error(fmt.Sprintf("Error on getting the current working directory: %s", err))
 			return buildOSErr
 		}
 	}
@@ -108,7 +108,7 @@ func (b *build) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			b.ui.Error(fmt.Sprintf("Error on checking git: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on checking git: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return buildGitErr
 		}
 
@@ -119,7 +119,7 @@ func (b *build) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			b.ui.Error(fmt.Sprintf("Error on checking go: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on checking go: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return buildGoErr
 		}
 	}
@@ -136,8 +136,8 @@ func (b *build) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			b.ui.Error(fmt.Sprintf("Error on running git status --porcelain: %s %s", err, strings.Trim(stderr.String(), "\n")))
-			return buildGitErr
+			c.ui.Error(fmt.Sprintf("Error on running git status --porcelain: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			return semverGitErr
 		}
 		gitStatusClean = len(stdout.String()) == 0
 
@@ -148,7 +148,7 @@ func (b *build) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			b.ui.Error(fmt.Sprintf("Error on running git rev-parse HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on running git rev-parse HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return buildGitErr
 		}
 		gitSHA = strings.Trim(stdout.String(), "\n")
@@ -161,7 +161,7 @@ func (b *build) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			b.ui.Error(fmt.Sprintf("Error on running git rev-parse --abbrev-ref HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on running git rev-parse --abbrev-ref HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return buildGitErr
 		}
 		gitBranch = strings.Trim(stdout.String(), "\n")
@@ -183,8 +183,8 @@ func (b *build) Run(args []string) int {
 		if err := cmd.Run(); err != nil {
 			// 128 is returned when there is no git tag
 			if exiterr, ok := err.(*exec.ExitError); !ok || exiterr.ExitCode() != 128 {
-				b.ui.Error(fmt.Sprintf("Error on running git describe --tags HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
-				return buildGitErr
+				c.ui.Error(fmt.Sprintf("Error on running git describe --tags HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
+				return semverGitErr
 			}
 		}
 		gitDescribe := strings.Trim(stdout.String(), "\n")
@@ -224,7 +224,7 @@ func (b *build) Run(args []string) int {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			b.ui.Error(fmt.Sprintf("Error on running go version: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on running go version: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return buildGoErr
 		}
 		goVersion = regexp.MustCompile(`go\d+\.\d+(\.\d+)?`).FindString(stdout.String())
@@ -236,12 +236,12 @@ func (b *build) Run(args []string) int {
 
 	{
 		var stdout, stderr bytes.Buffer
-		cmd := exec.CommandContext(ctx, "go", "list", b.spec.Build.VersionPackage)
+		cmd := exec.CommandContext(ctx, "go", "list", c.spec.Build.VersionPackage)
 		cmd.Dir = dir
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			b.ui.Error(fmt.Sprintf("Error on running go list: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			c.ui.Error(fmt.Sprintf("Error on running go list: %s %s", err, strings.Trim(stderr.String(), "\n")))
 			return buildGoErr
 		}
 		versionPkg = strings.Trim(stdout.String(), "\n")
@@ -252,7 +252,7 @@ func (b *build) Run(args []string) int {
 	var ldFlags string
 
 	{
-		buildTool := fmt.Sprintf("%s %s", b.spec.ToolName, b.spec.ToolVersion)
+		buildTool := fmt.Sprintf("%s %s", c.spec.ToolName, c.spec.ToolVersion)
 		buildTime := time.Now().UTC().Format(time.RFC3339Nano)
 
 		versionFlag := fmt.Sprintf("-X %s.Version=%s", versionPkg, version)
@@ -266,35 +266,35 @@ func (b *build) Run(args []string) int {
 
 	// Build binaries
 	{
-		if !b.spec.Build.CrossCompile {
-			err := b.build(ctx, dir, ldFlags, b.spec.Build.BinaryFile)
+		if !c.spec.Build.CrossCompile {
+			err := c.build(ctx, dir, ldFlags, c.spec.Build.BinaryFile)
 			if err != nil {
-				b.ui.Error(fmt.Sprintf("Error on building binary: %s", err))
+				c.ui.Error(fmt.Sprintf("Error on building binary: %s", err))
 				return buildGoErr
 			}
 
-			b.artifacts = append(b.artifacts, b.spec.Build.BinaryFile)
+			c.artifacts = append(c.artifacts, c.spec.Build.BinaryFile)
 		} else {
 			// Cross-compiling
-			for _, platform := range b.spec.Build.Platforms {
+			for _, platform := range c.spec.Build.Platforms {
 				vals := strings.Split(platform, "-")
 				if err := os.Setenv("GOOS", vals[0]); err != nil {
-					b.ui.Error(fmt.Sprintf("Error on setting environment variable GOOS: %s", err))
+					c.ui.Error(fmt.Sprintf("Error on setting environment variable GOOS: %s", err))
 					return buildOSErr
 				}
 				if err := os.Setenv("GOARCH", vals[1]); err != nil {
-					b.ui.Error(fmt.Sprintf("Error on setting environment variable GOARCH: %s", err))
+					c.ui.Error(fmt.Sprintf("Error on setting environment variable GOARCH: %s", err))
 					return buildOSErr
 				}
 
-				binFile := fmt.Sprintf("%s-%s", b.spec.Build.BinaryFile, platform)
-				err := b.build(ctx, dir, ldFlags, binFile)
+				binFile := fmt.Sprintf("%s-%s", c.spec.Build.BinaryFile, platform)
+				err := c.build(ctx, dir, ldFlags, binFile)
 				if err != nil {
-					b.ui.Error(fmt.Sprintf("Error on building binary: %s", err))
+					c.ui.Error(fmt.Sprintf("Error on building binary: %s", err))
 					return buildGoErr
 				}
 
-				b.artifacts = append(b.artifacts, binFile)
+				c.artifacts = append(c.artifacts, binFile)
 			}
 
 			os.Unsetenv("GOOS")
@@ -305,7 +305,7 @@ func (b *build) Run(args []string) int {
 	return 0
 }
 
-func (b *build) build(ctx context.Context, dir, ldFlags, binFile string) error {
+func (c *buildCommand) build(ctx context.Context, dir, ldFlags, binFile string) error {
 	args := []string{"build"}
 	if ldFlags != "" {
 		args = append(args, "-ldflags", ldFlags)
@@ -313,7 +313,7 @@ func (b *build) build(ctx context.Context, dir, ldFlags, binFile string) error {
 	if binFile != "" {
 		args = append(args, "-o", binFile)
 	}
-	args = append(args, b.spec.Build.MainFile)
+	args = append(args, c.spec.Build.MainFile)
 
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "go", args...)
@@ -324,7 +324,7 @@ func (b *build) build(ctx context.Context, dir, ldFlags, binFile string) error {
 		return fmt.Errorf("%s %s", err, strings.Trim(stderr.String(), "\n"))
 	}
 
-	b.ui.Info(fmt.Sprintf("🍒 %s", binFile))
+	c.ui.Info(fmt.Sprintf("🍒 %s", binFile))
 
 	return nil
 }
