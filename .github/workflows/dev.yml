@@ -34,6 +34,6 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Build
-        uses: moorara/actions/cherry@master
-        with:
-          args: build -cross-compile=false
+        run: |
+          go build
+          ./cherry build -cross-compile=false

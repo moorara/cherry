@@ -9,12 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
+      - name: Build
+        run: go build
       - name: Build Latest Image
-        run: make docker docker_tag=$(cat VERSION)
+        run: make docker docker_tag=$(./cherry semver)
       - name: Push Latest Image
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         run: |
           docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
-          make push-latest docker_tag=$(cat VERSION)
+          make push-latest docker_tag=$(./cherry semver)
