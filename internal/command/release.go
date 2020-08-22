@@ -29,7 +29,7 @@ const (
 	releaseGoErr         = 304
 	releaseChangelogErr  = 305
 	releaseGitHubErr     = 306
-	releasePermErr       = 307
+	releaseGitHubPermErr = 307
 	releaseRemoteURLErr  = 308
 	releaseRemoteRepoErr = 309
 	releaseBranchErr     = 310
@@ -70,17 +70,15 @@ const (
 
 // release implements cli.Command interface.
 type release struct {
-	ui          cli.Ui
-	spec        spec.Spec
-	githubToken string
+	ui   cli.Ui
+	spec spec.Spec
 }
 
 // NewRelease creates a release command.
-func NewRelease(ui cli.Ui, s spec.Spec, githubToken string) (cli.Command, error) {
+func NewRelease(ui cli.Ui, s spec.Spec) (cli.Command, error) {
 	return &release{
-		ui:          ui,
-		spec:        s,
-		githubToken: githubToken,
+		ui:   ui,
+		spec: s,
 	}, nil
 }
 
@@ -132,15 +130,63 @@ func (r *release) Run(args []string) int {
 		Transport: transport,
 	}
 
-	dir, err := os.Getwd()
-	if err != nil {
-		r.ui.Error(fmt.Sprintf("Error on getting the current working directory: %s", err))
-		return releaseOSErr
-	}
-
 	// Get remote repository information
 
+	// Run preflight checks
+
+	var dir, githubToken string
 	var repoOwner, repoName string
+
+	{
+		r.ui.Output("◉ Running preflight checks ...")
+
+		var err error
+		dir, err = os.Getwd()
+		if err != nil {
+			r.ui.Error(fmt.Sprintf("Error on getting the current working directory: %s", err))
+			return releaseOSErr
+		}
+
+		githubToken = os.Getenv("CHERRY_GITHUB_TOKEN")
+		if githubToken == "" {
+			r.ui.Error("CHERRY_GITHUB_TOKEN environment variable not set.")
+			return releaseGitHubErr
+		}
+	}
+
+	{
+		var stdout, stderr bytes.Buffer
+		cmd := exec.CommandContext(ctx, "git", "version")
+		cmd.Dir = dir
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			r.ui.Error(fmt.Sprintf("Error on checking git: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			return buildGitErr
+		}
+
+		stdout.Reset()
+		stderr.Reset()
+		cmd = exec.CommandContext(ctx, "go", "version")
+		cmd.Dir = dir
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			r.ui.Error(fmt.Sprintf("Error on checking go: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			return releaseGoErr
+		}
+
+		stdout.Reset()
+		stderr.Reset()
+		cmd = exec.CommandContext(ctx, "github_changelog_generator", "--version")
+		cmd.Dir = dir
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			r.ui.Error(fmt.Sprintf("Error on checking github_changelog_generator: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			return releaseChangelogErr
+		}
+	}
 
 	{
 		var repoDomain string
@@ -179,44 +225,6 @@ func (r *release) Run(args []string) int {
 		}
 	}
 
-	// Run preflight checks
-
-	{
-		r.ui.Output("◉ Running preflight checks ...")
-
-		var stdout, stderr bytes.Buffer
-		cmd := exec.CommandContext(ctx, "git", "version")
-		cmd.Dir = dir
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
-		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on checking git: %s %s", err, strings.Trim(stderr.String(), "\n")))
-			return buildGitErr
-		}
-
-		stdout.Reset()
-		stderr.Reset()
-		cmd = exec.CommandContext(ctx, "go", "version")
-		cmd.Dir = dir
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
-		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on checking go: %s %s", err, strings.Trim(stderr.String(), "\n")))
-			return releaseGoErr
-		}
-
-		stdout.Reset()
-		stderr.Reset()
-		cmd = exec.CommandContext(ctx, "github_changelog_generator", "--version")
-		cmd.Dir = dir
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
-		if err := cmd.Run(); err != nil {
-			r.ui.Error(fmt.Sprintf("Error on checking github_changelog_generator: %s %s", err, strings.Trim(stderr.String(), "\n")))
-			return releaseChangelogErr
-		}
-	}
-
 	// Check GitHub permission
 	// See https://docs.github.com/en/rest/reference/repos#get-repository-permissions-for-a-user
 
@@ -236,7 +244,7 @@ func (r *release) Run(args []string) int {
 		url := "https://api.github.com/user"
 		req, _ := http.NewRequest("GET", url, nil)
 		req = req.WithContext(ctx)
-		req.Header.Set("Authorization", "token "+r.githubToken)
+		req.Header.Set("Authorization", "token "+githubToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 		req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 		req.Header.Set("Content-Type", "application/json")
@@ -264,7 +272,7 @@ func (r *release) Run(args []string) int {
 		url = fmt.Sprintf("https://api.github.com/repos/%s/%s/collaborators/%s/permission", repoOwner, repoName, githubUser.Login)
 		req, _ = http.NewRequest("GET", url, nil)
 		req = req.WithContext(ctx)
-		req.Header.Set("Authorization", "token "+r.githubToken)
+		req.Header.Set("Authorization", "token "+githubToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 		req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 		req.Header.Set("Content-Type", "application/json")
@@ -293,7 +301,7 @@ func (r *release) Run(args []string) int {
 
 		if githubPermission.Permission != "admin" {
 			r.ui.Error("The CHERRY_GITHUB_TOKEN does not have admin permission for releasing.")
-			return releasePermErr
+			return releaseGitHubPermErr
 		}
 	}
 
@@ -427,7 +435,7 @@ func (r *release) Run(args []string) int {
 		url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases", repoOwner, repoName)
 		req, _ := http.NewRequest("POST", url, body)
 		req = req.WithContext(ctx)
-		req.Header.Set("Authorization", "token "+r.githubToken)
+		req.Header.Set("Authorization", "token "+githubToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 		req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 		req.Header.Set("Content-Type", "application/json")
@@ -462,7 +470,7 @@ func (r *release) Run(args []string) int {
 		var stdout, stderr bytes.Buffer
 		cmd := exec.CommandContext(ctx,
 			"github_changelog_generator",
-			"--token", r.githubToken,
+			"--token", githubToken,
 			"--user", repoOwner,
 			"--project", repoName,
 			"--no-filter-by-milestone",
@@ -624,7 +632,7 @@ func (r *release) Run(args []string) int {
 				url = fmt.Sprintf("%s?name=%s", url, netURL.QueryEscape(assetName))
 				req, _ := http.NewRequest("POST", url, assetFile)
 				req = req.WithContext(ctx)
-				req.Header.Set("Authorization", "token "+r.githubToken)
+				req.Header.Set("Authorization", "token "+githubToken)
 				req.Header.Set("Accept", "application/vnd.github.v3+json")
 				req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 				req.Header.Set("Content-Type", mimeType)
@@ -679,7 +687,7 @@ func (r *release) Run(args []string) int {
 		url := fmt.Sprintf("https://api.github.com/repos/%s/%s/branches/%s/protection/enforce_admins", repoOwner, repoName, gitBranch)
 		req, _ := http.NewRequest("DELETE", url, nil)
 		req = req.WithContext(ctx)
-		req.Header.Set("Authorization", "token "+r.githubToken)
+		req.Header.Set("Authorization", "token "+githubToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 		req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 		req.Header.Set("Content-Type", "application/json")
@@ -703,7 +711,7 @@ func (r *release) Run(args []string) int {
 			url := fmt.Sprintf("https://api.github.com/repos/%s/%s/branches/%s/protection/enforce_admins", repoOwner, repoName, gitBranch)
 			req, _ := http.NewRequest("POST", url, nil)
 			req = req.WithContext(ctx)
-			req.Header.Set("Authorization", "token "+r.githubToken)
+			req.Header.Set("Authorization", "token "+githubToken)
 			req.Header.Set("Accept", "application/vnd.github.v3+json")
 			req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 			req.Header.Set("Content-Type", "application/json")
@@ -774,7 +782,7 @@ func (r *release) Run(args []string) int {
 		url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/%d", repoOwner, repoName, release.ID)
 		req, _ := http.NewRequest("PATCH", url, body)
 		req = req.WithContext(ctx)
-		req.Header.Set("Authorization", "token "+r.githubToken)
+		req.Header.Set("Authorization", "token "+githubToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 		req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 		req.Header.Set("Content-Type", "application/json")

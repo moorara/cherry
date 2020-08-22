@@ -11,8 +11,7 @@ import (
 )
 
 const (
-	configErr = 101
-	specErr   = 102
+	specErr = 101
 )
 
 func main() {
@@ -28,12 +27,6 @@ func main() {
 			ErrorColor:  cli.UiColorRed,
 			WarnColor:   cli.UiColorYellow,
 		},
-	}
-
-	githubToken := os.Getenv("CHERRY_GITHUB_TOKEN")
-	if githubToken == "" {
-		ui.Error("CHERRY_GITHUB_TOKEN environment variable needs to be set to a GitHub token.")
-		os.Exit(configErr)
 	}
 
 	// Read the spec from file if any
@@ -54,10 +47,10 @@ func main() {
 			return command.NewBuild(ui, s)
 		},
 		"release": func() (cli.Command, error) {
-			return command.NewRelease(ui, s, githubToken)
+			return command.NewRelease(ui, s)
 		},
 		"update": func() (cli.Command, error) {
-			return command.NewUpdate(ui, githubToken)
+			return command.NewUpdate(ui)
 		},
 	}
 

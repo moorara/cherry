@@ -86,16 +86,22 @@ func (b *build) Run(args []string) int {
 	ctx, cancel := context.WithTimeout(context.Background(), buildTimeout)
 	defer cancel()
 
-	dir, err := os.Getwd()
-	if err != nil {
-		b.ui.Error(fmt.Sprintf("Error on getting the current working directory: %s", err))
-		return buildOSErr
-	}
-
 	// Run preflight checks
+
+	var dir string
+
 	{
 		// b.ui.Output("◉ Running preflight checks ...")
 
+		var err error
+		dir, err = os.Getwd()
+		if err != nil {
+			b.ui.Error(fmt.Sprintf("Error on getting the current working directory: %s", err))
+			return buildOSErr
+		}
+	}
+
+	{
 		var stdout, stderr bytes.Buffer
 		cmd := exec.CommandContext(ctx, "git", "version")
 		cmd.Dir = dir

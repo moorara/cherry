@@ -4,6 +4,8 @@ language: go
 
 build:
   cross_compile: true
+  main_file: main.go
+  binary_file: bin/cherry
 
 release:
   build: true

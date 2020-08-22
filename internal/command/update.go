@@ -33,15 +33,13 @@ const (
 
 // update implements cli.Command interface.
 type update struct {
-	ui          cli.Ui
-	githubToken string
+	ui cli.Ui
 }
 
 // NewUpdate creates an update command.
-func NewUpdate(ui cli.Ui, githubToken string) (cli.Command, error) {
+func NewUpdate(ui cli.Ui) (cli.Command, error) {
 	return &update{
-		ui:          ui,
-		githubToken: githubToken,
+		ui: ui,
 	}, nil
 }
 
@@ -75,13 +73,25 @@ func (u *update) Run(args []string) int {
 	}
 
 	// Run preflight checks
+
+	var githubToken string
+
 	{
 		u.ui.Output("◉ Running preflight checks ...")
+
+		githubToken = os.Getenv("CHERRY_GITHUB_TOKEN")
+		if githubToken == "" {
+			u.ui.Error("CHERRY_GITHUB_TOKEN environment variable not set.")
+			return updateGitHubErr
+		}
+	}
+
+	{
 
 		url := "https://api.github.com/repos/moorara/cherry"
 		req, _ := http.NewRequest("GET", url, nil)
 		req = req.WithContext(ctx)
-		req.Header.Set("Authorization", "token "+u.githubToken)
+		req.Header.Set("Authorization", "token "+githubToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 		req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 		req.Header.Set("Content-Type", "application/json")
@@ -132,7 +142,7 @@ func (u *update) Run(args []string) int {
 		url := "https://api.github.com/repos/moorara/cherry/releases/latest"
 		req, _ := http.NewRequest("GET", url, nil)
 		req = req.WithContext(ctx)
-		req.Header.Set("Authorization", "token "+u.githubToken)
+		req.Header.Set("Authorization", "token "+githubToken)
 		req.Header.Set("Accept", "application/vnd.github.v3+json")
 		req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 		req.Header.Set("Content-Type", "application/json")
@@ -167,7 +177,7 @@ func (u *update) Run(args []string) int {
 		url := fmt.Sprintf("https://github.com/moorara/cherry/releases/download/%s/%s", release.TagName, assetName)
 		req, _ := http.NewRequest("GET", url, nil)
 		req = req.WithContext(ctx)
-		req.Header.Set("Authorization", "token "+u.githubToken)
+		req.Header.Set("Authorization", "token "+githubToken)
 		req.Header.Set("User-Agent", "cherry") // ref: https://docs.github.com/en/rest/overview/resources-in-the-rest-api#user-agent-required
 
 		res, err := client.Do(req)
