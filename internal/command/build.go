@@ -137,7 +137,7 @@ func (c *buildCommand) Run(args []string) int {
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
 			c.ui.Error(fmt.Sprintf("Error on running git status --porcelain: %s %s", err, strings.Trim(stderr.String(), "\n")))
-			return semverGitErr
+			return buildGitErr
 		}
 		gitStatusClean = len(stdout.String()) == 0
 
@@ -184,7 +184,7 @@ func (c *buildCommand) Run(args []string) int {
 			// 128 is returned when there is no git tag
 			if exiterr, ok := err.(*exec.ExitError); !ok || exiterr.ExitCode() != 128 {
 				c.ui.Error(fmt.Sprintf("Error on running git describe --tags HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
-				return semverGitErr
+				return buildGitErr
 			}
 		}
 		gitDescribe := strings.Trim(stdout.String(), "\n")
