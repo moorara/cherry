@@ -191,11 +191,21 @@ func (c *buildCommand) Run(args []string) int {
 
 		if len(gitDescribe) == 0 {
 			// No git tag and no previous semantic version -> using the default initial semantic version
+
+			var stdout, stderr bytes.Buffer
+			cmd := exec.CommandContext(ctx, "git", "rev-list", "--count", "HEAD")
+			cmd.Dir = dir
+			cmd.Stdout = &stdout
+			cmd.Stderr = &stderr
+			if err := cmd.Run(); err != nil {
+				c.ui.Error(fmt.Sprintf("Error on running git rev-list --count HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
+				return semverGitErr
+			}
+			gitCommitCount := strings.Trim(stdout.String(), "\n")
+
 			version = semver.SemVer{
-				Major:      0,
-				Minor:      1,
-				Patch:      0,
-				Prerelease: []string{gitShortSHA},
+				Major: 0, Minor: 1, Patch: 0,
+				Prerelease: []string{gitCommitCount, gitShortSHA},
 			}
 		} else if subs := releaseRE.FindStringSubmatch(gitDescribe); len(subs) == 4 {
 			// The tag points to the HEAD commit
@@ -205,6 +215,7 @@ func (c *buildCommand) Run(args []string) int {
 			// The tag is the most recent tag reachable from the HEAD commit
 			// Example: v0.2.7-10-gabcdeff --> subs = []string{"v0.2.7-10-gabcdeff", "v0.2.7", "0", "2", "7", "10", "abcdeff"}
 			version, _ = semver.Parse(subs[1])
+			version = version.Next()
 			version.AddPrerelease(subs[5], subs[6])
 		}
 
