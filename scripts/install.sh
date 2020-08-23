@@ -15,8 +15,8 @@ set -eu
 get_latest_release() {
   os="$1"
   arch="$2"
-  release_url="https://github.com/moorara/cherry/releases"
-  bin_pattern="/moorara/cherry/releases/download/v.*/cherry-$os-$arch"
+  release_url="https://github.com/flybits/cherry/releases"
+  bin_pattern="/flybits/cherry/releases/download/v.*/cherry-$os-$arch"
 
   if hash curl 2>/dev/null; then
     content=$(curl -sL $release_url)
