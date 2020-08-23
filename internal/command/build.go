@@ -252,8 +252,11 @@ func (c *buildCommand) Run(args []string) int {
 	var ldFlags string
 
 	{
-		buildTool := fmt.Sprintf("%s %s", c.spec.ToolName, c.spec.ToolVersion)
 		buildTime := time.Now().UTC().Format(time.RFC3339Nano)
+		buildTool := c.spec.ToolName
+		if c.spec.ToolVersion != "" {
+			buildTool += "@" + c.spec.ToolVersion
+		}
 
 		versionFlag := fmt.Sprintf("-X %s.Version=%s", versionPkg, version)
 		commitFlag := fmt.Sprintf("-X %s.Commit=%s", versionPkg, gitShortSHA)
