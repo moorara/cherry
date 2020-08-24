@@ -126,24 +126,11 @@ func (c *buildCommand) Run(args []string) int {
 
 	// Get git information
 
-	var gitStatusClean bool
 	var gitSHA, gitShortSHA, gitBranch string
 
 	{
 		var stdout, stderr bytes.Buffer
-		cmd := exec.CommandContext(ctx, "git", "status", "--porcelain")
-		cmd.Dir = dir
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
-		if err := cmd.Run(); err != nil {
-			c.ui.Error(fmt.Sprintf("Error on running git status --porcelain: %s %s", err, strings.Trim(stderr.String(), "\n")))
-			return buildGitErr
-		}
-		gitStatusClean = len(stdout.String()) == 0
-
-		stdout.Reset()
-		stderr.Reset()
-		cmd = exec.CommandContext(ctx, "git", "rev-parse", "HEAD")
+		cmd := exec.CommandContext(ctx, "git", "rev-parse", "HEAD")
 		cmd.Dir = dir
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
@@ -172,11 +159,32 @@ func (c *buildCommand) Run(args []string) int {
 	var version semver.SemVer
 
 	{
-		releaseRE := regexp.MustCompile(`^v?([0-9]+)\.([0-9]+)\.([0-9]+)$`)
-		prereleaseRE := regexp.MustCompile(`^(v?([0-9]+)\.([0-9]+)\.([0-9]+))-([0-9]+)-g([0-9a-f]+)$`)
-
 		var stdout, stderr bytes.Buffer
-		cmd := exec.CommandContext(ctx, "git", "describe", "--tags", "HEAD")
+		cmd := exec.CommandContext(ctx, "git", "status", "--porcelain")
+		cmd.Dir = dir
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			c.ui.Error(fmt.Sprintf("Error on running git status --porcelain: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			return buildGitErr
+		}
+		gitStatusClean := len(stdout.String()) == 0
+
+		stdout.Reset()
+		stderr.Reset()
+		cmd = exec.CommandContext(ctx, "git", "rev-list", "--count", "HEAD")
+		cmd.Dir = dir
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			c.ui.Error(fmt.Sprintf("Error on running git rev-list --count HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			return buildGitErr
+		}
+		gitCommitCount := strings.Trim(stdout.String(), "\n")
+
+		stdout.Reset()
+		stderr.Reset()
+		cmd = exec.CommandContext(ctx, "git", "describe", "--tags", "HEAD")
 		cmd.Dir = dir
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
@@ -189,38 +197,45 @@ func (c *buildCommand) Run(args []string) int {
 		}
 		gitDescribe := strings.Trim(stdout.String(), "\n")
 
+		releaseRE := regexp.MustCompile(`^v?([0-9]+)\.([0-9]+)\.([0-9]+)$`)
+		prereleaseRE := regexp.MustCompile(`^(v?([0-9]+)\.([0-9]+)\.([0-9]+))-([0-9]+)-g([0-9a-f]+)$`)
+
 		if len(gitDescribe) == 0 {
 			// No git tag and no previous semantic version -> using the default initial semantic version
 
-			var stdout, stderr bytes.Buffer
-			cmd := exec.CommandContext(ctx, "git", "rev-list", "--count", "HEAD")
-			cmd.Dir = dir
-			cmd.Stdout = &stdout
-			cmd.Stderr = &stderr
-			if err := cmd.Run(); err != nil {
-				c.ui.Error(fmt.Sprintf("Error on running git rev-list --count HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
-				return semverGitErr
-			}
-			gitCommitCount := strings.Trim(stdout.String(), "\n")
-
 			version = semver.SemVer{
 				Major: 0, Minor: 1, Patch: 0,
-				Prerelease: []string{gitCommitCount, gitShortSHA},
+				Prerelease: []string{gitCommitCount},
+			}
+
+			if gitStatusClean {
+				version.AddPrerelease(gitShortSHA)
+			} else {
+				version.AddPrerelease("dev")
 			}
 		} else if subs := releaseRE.FindStringSubmatch(gitDescribe); len(subs) == 4 {
 			// The tag points to the HEAD commit
 			// Example: v0.2.7 --> subs = []string{"v0.2.7", "0", "2", "7"}
+
 			version, _ = semver.Parse(subs[0])
+
+			if !gitStatusClean {
+				version = version.Next()
+				version.AddPrerelease("0", "dev")
+			}
 		} else if subs := prereleaseRE.FindStringSubmatch(gitDescribe); len(subs) == 7 {
 			// The tag is the most recent tag reachable from the HEAD commit
 			// Example: v0.2.7-10-gabcdeff --> subs = []string{"v0.2.7-10-gabcdeff", "v0.2.7", "0", "2", "7", "10", "abcdeff"}
+
 			version, _ = semver.Parse(subs[1])
 			version = version.Next()
-			version.AddPrerelease(subs[5], subs[6])
-		}
+			version.AddPrerelease(subs[5])
 
-		if !gitStatusClean {
-			version.AddPrerelease("dev")
+			if gitStatusClean {
+				version.AddPrerelease(subs[6])
+			} else {
+				version.AddPrerelease("dev")
+			}
 		}
 	}
 

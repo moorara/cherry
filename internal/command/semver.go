@@ -98,6 +98,7 @@ func (c *semverCommand) Run(args []string) int {
 	// Get git information
 
 	var gitStatusClean bool
+	var gitCommitCount string
 	var gitSHA, gitShortSHA string
 
 	{
@@ -111,6 +112,18 @@ func (c *semverCommand) Run(args []string) int {
 			return semverGitErr
 		}
 		gitStatusClean = len(stdout.String()) == 0
+
+		stdout.Reset()
+		stderr.Reset()
+		cmd = exec.CommandContext(ctx, "git", "rev-list", "--count", "HEAD")
+		cmd.Dir = dir
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			c.ui.Error(fmt.Sprintf("Error on running git rev-list --count HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
+			return semverGitErr
+		}
+		gitCommitCount = strings.Trim(stdout.String(), "\n")
 
 		stdout.Reset()
 		stderr.Reset()
@@ -128,9 +141,6 @@ func (c *semverCommand) Run(args []string) int {
 
 	// Resolve the current semantic version
 	{
-		releaseRE := regexp.MustCompile(`^v?([0-9]+)\.([0-9]+)\.([0-9]+)$`)
-		prereleaseRE := regexp.MustCompile(`^(v?([0-9]+)\.([0-9]+)\.([0-9]+))-([0-9]+)-g([0-9a-f]+)$`)
-
 		var stdout, stderr bytes.Buffer
 		cmd := exec.CommandContext(ctx, "git", "describe", "--tags", "HEAD")
 		cmd.Dir = dir
@@ -145,38 +155,45 @@ func (c *semverCommand) Run(args []string) int {
 		}
 		gitDescribe := strings.Trim(stdout.String(), "\n")
 
+		releaseRE := regexp.MustCompile(`^v?([0-9]+)\.([0-9]+)\.([0-9]+)$`)
+		prereleaseRE := regexp.MustCompile(`^(v?([0-9]+)\.([0-9]+)\.([0-9]+))-([0-9]+)-g([0-9a-f]+)$`)
+
 		if len(gitDescribe) == 0 {
 			// No git tag and no previous semantic version -> using the default initial semantic version
 
-			var stdout, stderr bytes.Buffer
-			cmd := exec.CommandContext(ctx, "git", "rev-list", "--count", "HEAD")
-			cmd.Dir = dir
-			cmd.Stdout = &stdout
-			cmd.Stderr = &stderr
-			if err := cmd.Run(); err != nil {
-				c.ui.Error(fmt.Sprintf("Error on running git rev-list --count HEAD: %s %s", err, strings.Trim(stderr.String(), "\n")))
-				return semverGitErr
-			}
-			gitCommitCount := strings.Trim(stdout.String(), "\n")
-
 			c.version = semver.SemVer{
 				Major: 0, Minor: 1, Patch: 0,
-				Prerelease: []string{gitCommitCount, gitShortSHA},
+				Prerelease: []string{gitCommitCount},
+			}
+
+			if gitStatusClean {
+				c.version.AddPrerelease(gitShortSHA)
+			} else {
+				c.version.AddPrerelease("dev")
 			}
 		} else if subs := releaseRE.FindStringSubmatch(gitDescribe); len(subs) == 4 {
 			// The tag points to the HEAD commit
 			// Example: v0.2.7 --> subs = []string{"v0.2.7", "0", "2", "7"}
+
 			c.version, _ = semver.Parse(subs[0])
+
+			if !gitStatusClean {
+				c.version = c.version.Next()
+				c.version.AddPrerelease("0", "dev")
+			}
 		} else if subs := prereleaseRE.FindStringSubmatch(gitDescribe); len(subs) == 7 {
 			// The tag is the most recent tag reachable from the HEAD commit
 			// Example: v0.2.7-10-gabcdeff --> subs = []string{"v0.2.7-10-gabcdeff", "v0.2.7", "0", "2", "7", "10", "abcdeff"}
+
 			c.version, _ = semver.Parse(subs[1])
 			c.version = c.version.Next()
-			c.version.AddPrerelease(subs[5], subs[6])
-		}
+			c.version.AddPrerelease(subs[5])
 
-		if !gitStatusClean {
-			c.version.AddPrerelease("dev")
+			if gitStatusClean {
+				c.version.AddPrerelease(subs[6])
+			} else {
+				c.version.AddPrerelease("dev")
+			}
 		}
 
 		c.ui.Output(c.version.String())
