@@ -7,5 +7,5 @@ require (
 	github.com/mitchellh/cli v1.0.0
 	github.com/moorara/konfig v0.3.2
 	github.com/stretchr/testify v1.4.0
-	gopkg.in/yaml.v2 v2.2.7
+	gopkg.in/yaml.v2 v2.2.8
 )

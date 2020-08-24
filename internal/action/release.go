@@ -118,10 +118,11 @@ func NewRelease(ui cui.CUI, workDir, githubToken string, s spec.Spec) Action {
 			},
 		},
 		step8: &step.ChangelogGenerate{
-			WorkDir:     workDir,
-			GitHubToken: githubToken,
-			Repo:        "TBD",
-			Tag:         "TBD",
+			WorkDir:       workDir,
+			GitHubToken:   githubToken,
+			GitHubUser:    "TBD",
+			GitHubProject: "TBD",
+			Tag:           "TBD",
 		},
 		step9: &step.GitAdd{
 			WorkDir: workDir,
@@ -294,7 +295,8 @@ func (r *release) Dry(ctx context.Context) error {
 	}
 
 	// Dry -- Create/Update change log
-	r.step8.Repo = r.step1.Result.Repo
+	r.step8.GitHubUser = r.step1.Result.Owner
+	r.step8.GitHubProject = r.step1.Result.Name
 	r.step8.Tag = curr.GitTag()
 	if err := r.step8.Dry(ctx); err != nil {
 		return err
@@ -470,7 +472,8 @@ func (r *release) Run(ctx context.Context) error {
 	r.ui.Outputf("➡️  Creating/Updating change log ...")
 
 	// Create/Update change log
-	r.step8.Repo = r.step1.Result.Repo
+	r.step8.GitHubUser = r.step1.Result.Owner
+	r.step8.GitHubProject = r.step1.Result.Name
 	r.step8.Tag = curr.GitTag()
 	if err := r.step8.Run(ctx); err != nil {
 		return err

@@ -27,7 +27,7 @@ func createMockHTTPServer(mocks ...mockHTTP) *httptest.Server {
 	for _, m := range mocks {
 		r.Methods(m.Method).Path(m.Path).HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(m.StatusCode)
-			w.Write([]byte(m.ResponseBody))
+			_, _ = w.Write([]byte(m.ResponseBody))
 		})
 	}
 

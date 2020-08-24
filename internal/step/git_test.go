@@ -20,8 +20,6 @@ func TestParseGitURL(t *testing.T) {
 		{
 			name:          "Empty",
 			output:        ``,
-			expectedOwner: "",
-			expectedName:  "",
 			expectedError: "failed to get git repository url",
 		},
 		{
@@ -30,49 +28,61 @@ func TestParseGitURL(t *testing.T) {
 			origin	moorara/cherry (fetch)
 			origin	moorara/cherry (push)
 			`,
-			expectedOwner: "",
-			expectedName:  "",
 			expectedError: "failed to get git repository name",
 		},
 		{
-			name: "HTTPSSchema",
-			output: `
-			origin	https://github.com/moorara/cherry (fetch)
-			origin	https://github.com/moorara/cherry (push)
-			`,
-			expectedOwner: "moorara",
-			expectedName:  "cherry",
-			expectedError: "",
-		},
-		{
-			name: "HTTPSSchemaWithGit",
-			output: `
-			origin	https://github.com/moorara/cherry.git (fetch)
-			origin	https://github.com/moorara/cherry.git (push)
-			`,
-			expectedOwner: "moorara",
-			expectedName:  "cherry",
-			expectedError: "",
-		},
-		{
-			name: "SSHSchema",
+			name: "SSH#1",
 			output: `
 			origin	git@github.com:moorara/cherry (fetch)
 			origin	git@github.com:moorara/cherry (push)
 			`,
 			expectedOwner: "moorara",
 			expectedName:  "cherry",
-			expectedError: "",
 		},
 		{
-			name: "SSHSchemaWithGit",
+			name: "SSH#2",
 			output: `
 			origin	git@github.com:moorara/cherry.git (fetch)
 			origin	git@github.com:moorara/cherry.git (push)
 			`,
 			expectedOwner: "moorara",
 			expectedName:  "cherry",
-			expectedError: "",
+		},
+		{
+			name: "HTTPS#1",
+			output: `
+			origin	https://github.com/moorara/cherry (fetch)
+			origin	https://github.com/moorara/cherry (push)
+			`,
+			expectedOwner: "moorara",
+			expectedName:  "cherry",
+		},
+		{
+			name: "HTTPS#2",
+			output: `
+			origin	https://github.com/moorara/cherry.git (fetch)
+			origin	https://github.com/moorara/cherry.git (push)
+			`,
+			expectedOwner: "moorara",
+			expectedName:  "cherry",
+		},
+		{
+			name: "CustomSSH#1",
+			output: `
+			origin	ssh://git@github.com/moorara/cherry (fetch)
+			origin	ssh://git@github.com/moorara/cherry (push)
+			`,
+			expectedOwner: "moorara",
+			expectedName:  "cherry",
+		},
+		{
+			name: "CustomSSH#2",
+			output: `
+			origin	ssh://git@github.com/moorara/cherry.git (fetch)
+			origin	ssh://git@github.com/moorara/cherry.git (push)
+			`,
+			expectedOwner: "moorara",
+			expectedName:  "cherry",
 		},
 	}
 
