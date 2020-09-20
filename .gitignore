@@ -1,15 +1,15 @@
 # Compiled files
-main
-cherry
-cherry-*
+/main
+/cherry
 
 # Build directories
-/bin
-/build
+/bin/**
+/build/**
 
 # Test files
 *.log
 *.out
 *.test
-cover.html
-coverage.html
+
+# Misc files
+*.html
