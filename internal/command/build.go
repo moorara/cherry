@@ -30,10 +30,10 @@ const (
 
 	Flags:
 
-		-cross-compile:    build the binary for all platforms                (default: {{.Spec.Build.CrossCompile}})
-		-main-file:        path to main.go file                              (default: {{.Spec.Build.MainFile}})
-		-binary-file:      path for binary files                             (default: {{.Spec.Build.BinaryFile}})
-		-version-package:  relative path to package containing version info  (default: {{.Spec.Build.VersionPackage}})
+		-cross-compile:    build the binary for all platforms                (default: {{.Build.CrossCompile}})
+		-main-file:        path to main.go file                              (default: {{.Build.MainFile}})
+		-binary-file:      path for binary files                             (default: {{.Build.BinaryFile}})
+		-version-package:  relative path to package containing version info  (default: {{.Build.VersionPackage}})
 
 	Examples:
 
@@ -68,7 +68,7 @@ func (c *buildCommand) Synopsis() string {
 func (c *buildCommand) Help() string {
 	var buf bytes.Buffer
 	t := template.Must(template.New("help").Parse(buildHelp))
-	_ = t.Execute(&buf, c)
+	_ = t.Execute(&buf, c.spec)
 	return buf.String()
 }
 
