@@ -1,6 +1,16 @@
 # Changelog
 
-## [v0.5.0](https://github.com/moorara/cherry/tree/v0.5.0) (2020-08-23)
+## [v0.5.1](https://github.com/moorara/cherry/tree/v0.5.1) (2020-09-27)
+
+[Full Changelog](https://github.com/moorara/cherry/compare/v0.5.0...v0.5.1)
+
+**Merged pull requests:**
+
+- Fix build command help description [\#173](https://github.com/moorara/cherry/pull/173) ([moorara](https://github.com/moorara))
+- Update module mitchellh/cli to v1.1.2 [\#172](https://github.com/moorara/cherry/pull/172) ([renovate[bot]](https://github.com/apps/renovate))
+- Update .gitignore [\#171](https://github.com/moorara/cherry/pull/171) ([moorara](https://github.com/moorara))
+
+## [v0.5.0](https://github.com/moorara/cherry/tree/v0.5.0) (2020-08-24)
 
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.4.4...v0.5.0)
 
@@ -183,7 +193,6 @@
 - Fix parallel upload issue [\#74](https://github.com/moorara/cherry/pull/74) ([moorara](https://github.com/moorara))
 - Support parallel upload [\#73](https://github.com/moorara/cherry/pull/73) ([moorara](https://github.com/moorara))
 - Fix push tag issue [\#71](https://github.com/moorara/cherry/pull/71) ([moorara](https://github.com/moorara))
-- Update Go modules [\#60](https://github.com/moorara/cherry/pull/60) ([moorara](https://github.com/moorara))
 
 ## [v0.2.4](https://github.com/moorara/cherry/tree/v0.2.4) (2019-02-05)
 
@@ -219,6 +228,7 @@
 
 - Add community files [\#62](https://github.com/moorara/cherry/pull/62) ([moorara](https://github.com/moorara))
 - Fix update bug [\#61](https://github.com/moorara/cherry/pull/61) ([moorara](https://github.com/moorara))
+- Update Go modules [\#60](https://github.com/moorara/cherry/pull/60) ([moorara](https://github.com/moorara))
 
 ## [v0.2.1](https://github.com/moorara/cherry/tree/v0.2.1) (2019-01-18)
 
@@ -253,11 +263,14 @@
 **Merged pull requests:**
 
 - Improve Release [\#51](https://github.com/moorara/cherry/pull/51) ([moorara](https://github.com/moorara))
-- Improve experience! [\#50](https://github.com/moorara/cherry/pull/50) ([moorara](https://github.com/moorara))
 
 ## [v0.1.8](https://github.com/moorara/cherry/tree/v0.1.8) (2019-01-16)
 
 [Full Changelog](https://github.com/moorara/cherry/compare/v0.1.7...v0.1.8)
+
+**Merged pull requests:**
+
+- Improve experience! [\#50](https://github.com/moorara/cherry/pull/50) ([moorara](https://github.com/moorara))
 
 ## [v0.1.7](https://github.com/moorara/cherry/tree/v0.1.7) (2019-01-16)
 
