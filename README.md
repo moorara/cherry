@@ -1,3 +1,13 @@
+# ARCHIVED
+
+I started building Cherry exactly 2 years ago. It was an experimental tool that worked very well.
+Since then, it is used in real-world development teams for production purposes successfully.
+
+After 2 years, I took the learnings and experience with Cherry and built a new tool with a new vision.
+You can now start using [Gelato](https://github.com/moorara/gelato).
+Gelato currently provides the same features as Cherry, but it eliminates the external dependency on _git_ and _github_changelog_generator_.
+
+
 [![Build Status][workflow-image]][workflow-url]
 [![Go Report Card][goreport-image]][goreport-url]
 [![Test Coverage][coverage-image]][coverage-url]
